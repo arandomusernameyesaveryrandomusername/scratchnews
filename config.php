@@ -1,6 +1,6 @@
 <?php
 // 1. Hardcoded Database Credentials (Bypassing Vercel's broken env variables)
-define('DB_HOST', '://aivencloud.com');      
+define('DB_HOST', 'scratchnews-scratchnews.d.aivencloud.com');     
 define('DB_NAME', 'defaultdb'); 
 define('DB_USER', 'avnadmin');         
 define('DB_PASS', 'AVNS_HAnT8Zz_XidX6H6_lV7'); // 👈 Paste your real revealed Aiven password here
