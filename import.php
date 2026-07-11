@@ -24,7 +24,6 @@ try {
     // Execute the full migration
     if ($conn->multi_query($sql)) {
         echo "<h1>🎉 SUCCESS! Your entire InfinityFree database and live rows migrated perfectly!</h1>";
-        echo "<p>Go ahead and test your main homepage now.</p>";
     }
 
 } catch (mysqli_sql_exception $e) {
