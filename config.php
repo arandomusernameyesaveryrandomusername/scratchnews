@@ -16,7 +16,14 @@ function getDB(): mysqli {
     if ($conn === null) {
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
         try {
-            $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+            // Create an empty connection object first
+            $conn = mysqli_init();
+            
+            // Add this exact line to allow secure SSL connections to Aiven
+            $conn->ssl_set(NULL, NULL, NULL, NULL, NULL);
+            
+            // Establish the connection
+            $conn->real_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
             $conn->set_charset('utf8mb4');
         } catch (mysqli_sql_exception $e) {
             http_response_code(500);
