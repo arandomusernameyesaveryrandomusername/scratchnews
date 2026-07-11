@@ -18,7 +18,7 @@ function getDB(): mysqli {
         try {
             $conn = mysqli_init();
             $conn->ssl_set(NULL, NULL, NULL, NULL, NULL);
-            $conn->real_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME, (int)DB_PORT, null, MYSQLI_CLIENT_SSL);
+            $conn->real_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME, null, null, MYSQLI_CLIENT_SSL);
             $conn->set_charset('utf8mb4');
         } catch (mysqli_sql_exception $e) {
             http_response_code(500);
