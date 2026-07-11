@@ -16,14 +16,20 @@ function getDB(): mysqli {
     if ($conn === null) {
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
         try {
-            // Create an empty connection object first
             $conn = mysqli_init();
             
-            // Add this exact line to allow secure SSL connections to Aiven
+            // Allow secure SSL connections to Aiven
             $conn->ssl_set(NULL, NULL, NULL, NULL, NULL);
             
-            // Establish the connection
-            $conn->real_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+            // Handle the custom Aiven port numbers safely
+            $host = DB_HOST;
+            $port = 3306;
+            if (strpos($host, ':') !== false) {
+                list($host, $port) = explode(':', $host);
+            }
+            
+            // Establish the connection with the port separate
+            $conn->real_connect($host, DB_USER, DB_PASS, DB_NAME, (int)$port);
             $conn->set_charset('utf8mb4');
         } catch (mysqli_sql_exception $e) {
             http_response_code(500);
@@ -32,3 +38,4 @@ function getDB(): mysqli {
     }
     return $conn;
 }
+
