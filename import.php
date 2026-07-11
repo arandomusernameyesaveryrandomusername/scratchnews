@@ -5,7 +5,7 @@ try {
     // 1. Enter the clean text hostname (DO NOT include mysql:// or :13306)
     $host = 'scratchnews-scratchnews.d.aivencloud.com'; 
     $user = 'avnadmin';
-    $pass = 'AVNS_HAnT8Zz_XidX6H6_lV7'; 
+    $pass = 'AVNS_mAOAv_6PmX9CtpKB6Kx'; 
     $name = 'defaultdb';
     $port = 24839;
 
