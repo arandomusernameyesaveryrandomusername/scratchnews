@@ -7,7 +7,7 @@ try {
     $user = 'avnadmin';
     $pass = 'AVNS_HAnT8Zz_XidX6H6_lV7'; 
     $name = 'defaultdb';
-    $port = 13306; 
+    $port = 24839;
 
     $conn = mysqli_init();
     $conn->ssl_set(NULL, NULL, NULL, NULL, NULL);
