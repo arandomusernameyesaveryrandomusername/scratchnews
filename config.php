@@ -1,20 +1,14 @@
 <?php
 // 1. Hardcoded Database Credentials (Bypassing Vercel's broken env variables)
-define('DB_HOST', 'scratchnews-scratchnews.d.aivencloud.com');     
-define('DB_NAME', 'defaultdb'); 
-define('DB_USER', 'avnadmin');         
-define('DB_PASS', 'AVNS_HAnT8Zz_XidX6H6_lV7'); // 👈 Paste your real revealed Aiven password here
-define('DB_PORT', 24839);
+define('DB_HOST', 'sql206.infinityfree.com');      
+define('DB_NAME', 'if0_41416197_scratchnews'); 
+define('DB_USER', 'if0_41416197');         
+define('DB_PASS', 'ltaqe0ytjXmcdHl');
 
-// 2. Admin Credentials
 define('ADMIN_USER', 'ScratchNews');
 define('ADMIN_PASS_HASH', '$2y$10$lXSP7uyjOPjXW04m3PtPdOwixC4a2mkkV2V8NlDRVrKhJQrD7Uh7e');
-
-// 3. Site Configuration
 define('SITE_NAME', 'ScratchNews');
-
-// 4. Brevo Email Credentials
-define('BREVO_API_KEY', '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'); // 👈 Paste your new Brevo key here if you changed it
+define('BREVO_API_KEY', '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');
 define('BREVO_SENDER_EMAIL', 'david.todb@gmail.com');
 
 function getDB(): mysqli {
