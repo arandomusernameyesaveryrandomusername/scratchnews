@@ -3,7 +3,7 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 try {
     // 1. Separate the text host from the numeric port cleanly
-    $host = '://aivencloud.com'; 
+    $host = 'scratchnews-scratchnews.d.aivencloud.com'; 
     $user = 'avnadmin';
     $pass = 'AVNS_HAnT8Zz_XidX6H6_lV7'; 
     $name = 'defaultdb';
