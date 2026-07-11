@@ -1,5 +1,4 @@
 <?php
-// 1. Hardcoded Database Credentials (Bypassing Vercel's broken env variables)
 define('DB_HOST', 'sql206.infinityfree.com');      
 define('DB_NAME', 'if0_41416197_scratchnews'); 
 define('DB_USER', 'if0_41416197');         
@@ -16,9 +15,7 @@ function getDB(): mysqli {
     if ($conn === null) {
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
         try {
-            $conn = mysqli_init();
-            $conn->ssl_set(NULL, NULL, NULL, NULL, NULL);
-            $conn->real_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME, null, null, MYSQLI_CLIENT_SSL);
+            $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
             $conn->set_charset('utf8mb4');
         } catch (mysqli_sql_exception $e) {
             http_response_code(500);
