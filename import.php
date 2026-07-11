@@ -2,8 +2,8 @@
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 try {
-    // 1. Separate the text host from the numeric port cleanly
-    $host = 'scratchnews-scratchnews.d.aivencloud.com'; 
+    // 1. Enter the clean text hostname (DO NOT include mysql:// or :13306)
+    $host = '://aivencloud.com'; 
     $user = 'avnadmin';
     $pass = 'AVNS_HAnT8Zz_XidX6H6_lV7'; 
     $name = 'defaultdb';
@@ -12,7 +12,7 @@ try {
     $conn = mysqli_init();
     $conn->ssl_set(NULL, NULL, NULL, NULL, NULL);
     
-    // Pass the port explicitly as a standalone number at the end
+    // Explicit port structure
     $conn->real_connect($host, $user, $pass, $name, (int)$port, null, MYSQLI_CLIENT_SSL);
     $conn->set_charset('utf8mb4');
 
