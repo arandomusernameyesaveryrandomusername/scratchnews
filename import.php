@@ -2,37 +2,23 @@
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 try {
-    // 1. We hardcode the details directly to bypass Vercel's broken environment wrapper
-    $host = '://aivencloud.com';
+    // 1. Separate the text host from the numeric port cleanly
+    $host = '://aivencloud.com'; 
     $user = 'avnadmin';
-    $pass = 'AVNS_HAnT8Zz_XidX6H6_lV7'; // Paste your actual revealed Aiven password here
+    $pass = 'AVNS_HAnT8Zz_XidX6H6_lV7'; 
     $name = 'defaultdb';
-    $port = 13306; // Paste your exact Aiven port number here
+    $port = 13306; 
 
     $conn = mysqli_init();
     $conn->ssl_set(NULL, NULL, NULL, NULL, NULL);
-    $conn->real_connect($host, $user, $pass, $name, $port, null, MYSQLI_CLIENT_SSL);
+    
+    // Pass the port explicitly as a standalone number at the end
+    $conn->real_connect($host, $user, $pass, $name, (int)$port, null, MYSQLI_CLIENT_SSL);
     $conn->set_charset('utf8mb4');
 
     // 2. Your raw schema execution queries
     $sql = "
-    CREATE TABLE IF NOT EXISTS articles (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    summary VARCHAR(500) NOT NULL,
-    content TEXT NOT NULL,
-    author VARCHAR(100) NOT NULL DEFAULT 'ScratchNews Staff',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE IF NOT EXISTS visits (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    ip_address VARCHAR(45) NOT NULL,
-    page VARCHAR(255) NOT NULL,
-    user_agent VARCHAR(255) NOT NULL,
-    visited_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    /* PASTE YOUR SCHEMA.SQL TEXT HERE */
     ";
 
     if ($conn->multi_query($sql)) {
