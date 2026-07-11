@@ -1,8 +1,22 @@
 <?php
-require_once 'config.php';
-$conn = getDB();
-$sql = "
-CREATE TABLE IF NOT EXISTS articles (
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+try {
+    // 1. We hardcode the details directly to bypass Vercel's broken environment wrapper
+    $host = '://aivencloud.com';
+    $user = 'avnadmin';
+    $pass = 'AVNS_HAnT8Zz_XidX6H6_lV7'; // Paste your actual revealed Aiven password here
+    $name = 'defaultdb';
+    $port = 13306; // Paste your exact Aiven port number here
+
+    $conn = mysqli_init();
+    $conn->ssl_set(NULL, NULL, NULL, NULL, NULL);
+    $conn->real_connect($host, $user, $pass, $name, $port, null, MYSQLI_CLIENT_SSL);
+    $conn->set_charset('utf8mb4');
+
+    // 2. Your raw schema execution queries
+    $sql = "
+    CREATE TABLE IF NOT EXISTS articles (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     summary VARCHAR(500) NOT NULL,
@@ -19,11 +33,14 @@ CREATE TABLE IF NOT EXISTS visits (
     user_agent VARCHAR(255) NOT NULL,
     visited_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-";
-if ($conn->multi_query($sql)) {
-    echo "<h1>Success! Your database tables have been created perfectly.</h1>";
-    echo "<p>You can now delete import.php from GitHub and test your main website.</p>";
-} else {
-    echo "<h1>❌ Error building tables:</h1> <p>" . $conn->error . "</p>";
+    ";
+
+    if ($conn->multi_query($sql)) {
+        echo "<h1>🎉 SUCCESS! Your database tables are created.</h1>";
+    }
+
+} catch (mysqli_sql_exception $e) {
+    echo "<h1>❌ Connection Error:</h1>";
+    echo "<p>" . $e->getMessage() . "</p>";
 }
 ?>
