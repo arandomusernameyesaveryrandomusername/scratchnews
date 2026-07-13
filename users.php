@@ -30,7 +30,7 @@ $pending = getPendingSubmissions();
 <title>Pending Submissions - <?= e(SITE_NAME) ?></title>
 <link rel="stylesheet" href="/assets/style.css?v=9">
 </head>
-<body>
+<body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
 <?php require_once __DIR__ . '/nav.php'; ?>
 <main>
     <h2>Pending Submissions</h2>

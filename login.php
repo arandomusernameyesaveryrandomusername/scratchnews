@@ -11,7 +11,7 @@ $articles = getAllArticles();
 <title>Dashboard - <?= e(SITE_NAME) ?></title>
 <link rel="stylesheet" href="/assets/style.css?v=2">
 </head>
-<body>
+<body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
 <?php require_once __DIR__ . '/nav.php'; ?>
 <main>
     <a href="/admin/create.php" class="btn">+ New Article</a>

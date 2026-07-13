@@ -33,7 +33,7 @@ $users = getAllUsers();
 <title>Users - <?= e(SITE_NAME) ?></title>
 <link rel="stylesheet" href="/assets/style.css">
 </head>
-<body>
+<body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
 <?php require_once __DIR__ . '/nav.php'; ?>
 <main>
     <h2>Users (<?= count($users) ?>)</h2>

@@ -1,14 +1,6 @@
 <?php
 require_once __DIR__ . '/auth.php';
 
-$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-$article = getArticleById($id);
-
-if (!$article) {
-    header('Location: /admin/');
-    exit;
-}
-
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = trim($_POST['title'] ?? '');
@@ -19,12 +11,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($title === '' || $summary === '' || $content === '') {
         $error = 'Title, summary, and content are all required.';
     } else {
-        updateArticle($id, $title, $summary, $content, $author ?: 'ScratchNews Staff');
-        header('Location: /admin/?updated=' . $id);
+        $id = createArticle($title, $summary, $content, $author ?: 'ScratchNews Staff');
+        header('Location: /login/?created=' . $id);
         exit;
     }
-    // Keep edited values on screen if validation failed
-    $article = ['id' => $id, 'title' => $title, 'summary' => $summary, 'content' => $content, 'author' => $author];
 }
 ?>
 <!DOCTYPE html>
@@ -33,24 +23,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
-<title>Edit Article - <?= e(SITE_NAME) ?></title>
+<title>New Article - <?= e(SITE_NAME) ?></title>
 <link rel="stylesheet" href="/assets/style.css?v=2">
-    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
 </head>
-<body>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
 <?php require_once __DIR__ . '/nav.php'; ?>
 <main>
-    <h2>Edit Article #<?= (int)$id ?></h2>
+    <h2>New Article</h2>
     <?php if ($error): ?><div class="alert error"><?= e($error) ?></div><?php endif; ?>
     <form method="post">
         <label for="title">Title</label>
-        <input type="text" id="title" name="title" value="<?= e($article['title']) ?>" required>
+        <input type="text" id="title" name="title" value="<?= e($_POST['title'] ?? '') ?>" required>
 
-        <label for="summary">Summary (shown on homepage)</label>
-        <input type="text" id="summary" name="summary" value="<?= e($article['summary']) ?>" required>
+        <label for="summary">Summary</label>
+        <input type="text" id="summary" name="summary" value="<?= e($_POST['summary'] ?? '') ?>" required>
 
         <label for="author">Author</label>
-        <input type="text" id="author" name="author" value="<?= e($article['author']) ?>">
+        <input type="text" id="author" name="author" value="<?= e($_POST['author'] ?? 'ScratchNews Staff') ?>">
 
         <label for="content">Full Article Content</label>
 <div id="toolbar">
@@ -70,14 +61,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <option selected value="">Normal</option>
         <option value="large">Large</option>
         <option value="huge">Huge</option>
-    </select>
+    </select>    
     <button class="ql-link" title="Insert link">🔗</button>
 </div>
-<div id="editor-container"><?= $article['content'] ?></div>
+<div id="editor-container"><?= $_POST['content'] ?? '' ?></div>
 <textarea id="content" name="content" style="display:none;"></textarea>
 
-        <button class="btn" type="submit">Save Changes</button>
-        <a href="/admin/" class="btn secondary">Cancel</a>
+        <button class="btn" type="submit">Publish Article</button>
+        <a href="/login/" class="btn secondary">Cancel</a>
     </form>
 </main>
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>

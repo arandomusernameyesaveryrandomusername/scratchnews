@@ -1,19 +1,30 @@
 <?php
-require_once __DIR__ . '/functions.php';
-session_start();
+require_once __DIR__ . '/auth.php';
 
-$success = false;
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$article = getArticleById($id);
+
+if (!$article) {
+    header('Location: /admin/');
+    exit;
+}
+
 $error = '';
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $message = trim($_POST['message'] ?? '');
-    if ($message === '') {
-        $error = 'Please enter some feedback before submitting.';
+    $title = trim($_POST['title'] ?? '');
+    $summary = trim($_POST['summary'] ?? '');
+    $content = trim($_POST['content'] ?? '');
+    $author = trim($_POST['author'] ?? 'ScratchNews Staff');
+
+    if ($title === '' || $summary === '' || $content === '') {
+        $error = 'Title, summary, and content are all required.';
     } else {
-        $userId = !empty($_SESSION['reader_id']) ? (int)$_SESSION['reader_id'] : null;
-        submitFeedback($userId, $message);
-        $success = true;
+        updateArticle($id, $title, $summary, $content, $author ?: 'ScratchNews Staff');
+        header('Location: /admin/?updated=' . $id);
+        exit;
     }
+    // Keep edited values on screen if validation failed
+    $article = ['id' => $id, 'title' => $title, 'summary' => $summary, 'content' => $content, 'author' => $author];
 }
 ?>
 <!DOCTYPE html>
@@ -21,37 +32,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
-<title>Feedback - <?= e(SITE_NAME) ?></title>
-<link rel="stylesheet" href="/assets/style.css?v=9">
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<title>Edit Article - <?= e(SITE_NAME) ?></title>
+<link rel="stylesheet" href="/assets/style.css?v=2">
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
 </head>
-<body>
-<header>
-    <a href="/" class="logo-link">
-<svg viewBox="0,0,136.90609,31.33279" class="logo-svg" xmlns="http://www.w3.org/2000/svg"><g transform="translate(-172.33195,-164.3336)"><g stroke-miterlimit="10"><text transform="translate(217.16808,185.69599) scale(0.5,0.5)" font-size="40" fill="#ffffff" stroke="#ffaa33" stroke-width="3" font-family="Scratch" font-weight="normal" text-anchor="start"><tspan x="0" dy="0">ScratchNews</tspan></text><text transform="translate(217.16808,185.69599) scale(0.5,0.5)" font-size="40" fill="#ffffff" stroke="none" stroke-width="1" font-family="Scratch" font-weight="normal" text-anchor="start"><tspan x="0" dy="0">ScratchNews</tspan></text><path d="M181.04509,195.64879h-8.71313v-10.6397h8.71313z" fill="#cc8829" stroke="none"/><path d="M176.88045,195.6664v-20.46677l3.90302,-0.07587l0.09189,-5.0222h6.64479v20.71239l-3.91923,0.16783l-0.04923,4.68462z" fill="#ffaa33" stroke="none"/><path d="M201.40189,164.35122h8.71313v10.6397h-8.71313z" fill="#cc8829" stroke="none"/><path d="M205.56653,164.33361v20.46677l-3.90302,0.07587l-0.09189,5.0222h-6.64479v-20.71239l3.91923,-0.16783l0.04923,-4.68462z" fill="#ffaa33" stroke="none"/><path d="M190.06459,189.91166l-0.03808,-3.62362l-3.03158,-0.12982v-16.02128h5.13983l0.07108,3.88473l3.01904,0.05869v15.8313z" fill="#ffaa33" stroke="none"/></g></g></svg>
-    </a>
-    <nav><a href="/">Home</a></nav>
-</header>
+<body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
+<?php require_once __DIR__ . '/nav.php'; ?>
 <main>
-    <h2>Feedback</h2>
-    <p>Got a suggestion, bug report, or idea for ScratchNews? Let us know below.</p>
+    <h2>Edit Article #<?= (int)$id ?></h2>
+    <?php if ($error): ?><div class="alert error"><?= e($error) ?></div><?php endif; ?>
+    <form method="post">
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" value="<?= e($article['title']) ?>" required>
 
-    <?php if ($success): ?>
-        <div class="alert success">Thanks for the feedback! We read every submission.</div>
-    <?php else: ?>
-        <?php if ($error): ?><div class="alert error"><?= e($error) ?></div><?php endif; ?>
-        <form method="post">
-            <label for="message">Your feedback</label>
-            <textarea name="message" id="message" required></textarea>
-            <button class="btn" type="submit">Submit</button>
-        </form>
-    <?php endif; ?>
+        <label for="summary">Summary (shown on homepage)</label>
+        <input type="text" id="summary" name="summary" value="<?= e($article['summary']) ?>" required>
+
+        <label for="author">Author</label>
+        <input type="text" id="author" name="author" value="<?= e($article['author']) ?>">
+
+        <label for="content">Full Article Content</label>
+<div id="toolbar">
+    <button class="ql-bold" title="Bold (Ctrl+B)"><b>B</b></button>
+    <button class="ql-italic" title="Italic (Ctrl+I)"><i>I</i></button>
+    <button class="ql-strike" title="Strikethrough"><s>S</s></button>
+    <select class="ql-header" title="Heading">
+        <option value="1">Heading 1</option>
+        <option value="2">Heading 2</option>
+        <option value="3">Heading 3</option>
+        <option selected value="">Normal</option>
+    </select>
+    <select class="ql-color" title="Text color"></select>
+    <select class="ql-background" title="Highlight color"></select>
+    <select class="ql-size" title="Text size">
+        <option value="small">Small</option>
+        <option selected value="">Normal</option>
+        <option value="large">Large</option>
+        <option value="huge">Huge</option>
+    </select>
+    <button class="ql-link" title="Insert link">🔗</button>
+</div>
+<div id="editor-container"><?= $article['content'] ?></div>
+<textarea id="content" name="content" style="display:none;"></textarea>
+
+        <button class="btn" type="submit">Save Changes</button>
+        <a href="/admin/" class="btn secondary">Cancel</a>
+    </form>
 </main>
-<footer>
-    &copy; <?= e(SITE_NAME) ?>
-    <?php if (!empty($_SESSION['reader_username'])): ?>
-        &middot; <a href="/delete-account">Delete Account</a>
-    <?php endif; ?>
-</footer>
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script>
+var quill = new Quill('#editor-container', {
+    theme: 'snow',
+    modules: { toolbar: '#toolbar' }
+});
+document.querySelector('form').addEventListener('submit', function() {
+    document.querySelector('#content').value = quill.root.innerHTML;
+});
+</script>
 </body>
 </html>

@@ -67,7 +67,7 @@ $articles = getAllArticles();
 <title>Move Article - <?= e(SITE_NAME) ?></title>
 <link rel="stylesheet" href="/assets/style.css?v=9">
 </head>
-<body>
+<body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
 <?php require_once __DIR__ . '/nav.php'; ?>
 <main>
     <h2>Move Article</h2>
