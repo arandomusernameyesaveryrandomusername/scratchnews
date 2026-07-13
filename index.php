@@ -10,7 +10,7 @@ $articles = getAllArticles();
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
-<title>TEST <?= e(SITE_NAME) ?></title>
+<title><?= e(SITE_NAME) ?></title>
 <link rel="stylesheet" href="/assets/style.css?v=2">
 </head>
 <body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
