@@ -10,7 +10,7 @@ $articles = getAllArticles();
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
-<title><?= e(SITE_NAME) ?></title>
+<title>TEST <?= e(SITE_NAME) ?></title>
 <link rel="stylesheet" href="/assets/style.css?v=2">
 </head>
 <body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
@@ -26,7 +26,7 @@ $articles = getAllArticles();
 </form>
 <nav>
     <?php if (!empty($_SESSION['reader_username'])): ?>
-        <span>Test Hi, <?= e($_SESSION['reader_username']) ?>!</span>
+        <span>Hi, <?= e($_SESSION['reader_username']) ?>!</span>
         <?php if (empty($_SESSION['is_admin'])): ?>
         <a href="/submit.php">Submit Article</a>
         <?php endif; ?>
