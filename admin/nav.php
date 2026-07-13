@@ -1,95 +1,18 @@
-<?php
-require_once __DIR__ . '/../functions.php';
-require_once __DIR__ . '/auth.php';
-
-$db = getDB();
-$error = '';
-$success = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $oldId = (int)($_POST['old_id'] ?? 0);
-    $newId = (int)($_POST['new_id'] ?? 0);
-
-    if ($oldId <= 0 || $newId <= 0) {
-        $error = 'Both IDs must be positive numbers.';
-    } elseif ($oldId === $newId) {
-        $error = 'New ID must be different from the current ID.';
-    } else {
-        $stmt = $db->prepare("SELECT id FROM articles WHERE id = ?");
-        $stmt->bind_param("i", $oldId);
-        $stmt->execute();
-        $exists = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-
-        $stmt = $db->prepare("SELECT id FROM articles WHERE id = ?");
-        $stmt->bind_param("i", $newId);
-        $stmt->execute();
-        $targetTaken = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-
-        if (!$exists) {
-            $error = "Article #$oldId doesn't exist.";
-        } elseif ($targetTaken) {
-            $error = "ID #$newId is already in use by another article. Move or delete that one first.";
-        } else {
-            $db->query("SET FOREIGN_KEY_CHECKS=0");
-
-            $stmt = $db->prepare("UPDATE articles SET id = ? WHERE id = ?");
-            $stmt->bind_param("ii", $newId, $oldId);
-            $stmt->execute();
-            $stmt->close();
-
-            $stmt = $db->prepare("UPDATE comments SET article_id = ? WHERE article_id = ?");
-            $stmt->bind_param("ii", $newId, $oldId);
-            $stmt->execute();
-            $stmt->close();
-
-            $stmt = $db->prepare("UPDATE likes SET article_id = ? WHERE article_id = ?");
-            $stmt->bind_param("ii", $newId, $oldId);
-            $stmt->execute();
-            $stmt->close();
-
-            $db->query("SET FOREIGN_KEY_CHECKS=1");
-
-            $success = "Moved article from #$oldId to #$newId.";
-        }
-    }
-}
-
-$articles = getAllArticles();
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
-<title>Move Article - <?= e(SITE_NAME) ?></title>
-<link rel="stylesheet" href="/assets/style.css?v=9">
-</head>
-<body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
-<?php require_once __DIR__ . '/nav.php'; ?>
-<main>
-    <h2>Move Article</h2>
-
-    <?php if ($error): ?><div class="alert error"><?= e($error) ?></div><?php endif; ?>
-    <?php if ($success): ?><div class="alert success"><?= e($success) ?></div><?php endif; ?>
-
-    <form method="post">
-        <label for="old_id">Current ID</label>
-        <input type="number" id="old_id" name="old_id" required>
-        <label for="new_id">New ID</label>
-        <input type="number" id="new_id" name="new_id" required>
-        <button class="btn" type="submit">Move</button>
-    </form>
-
-    <h3 style="margin-top:2rem;">Current Articles</h3>
-    <table>
-        <tr><th>ID</th><th>Title</th></tr>
-        <?php foreach ($articles as $a): ?>
-            <tr><td>#<?= (int)$a['id'] ?></td><td><?= e($a['title']) ?></td></tr>
-        <?php endforeach; ?>
-    </table>
-</main>
-</body>
-</html>
+<header>
+    <a href="/" class="logo-link">
+<svg viewBox="0,0,98.76611,31.33279" class="logo-svg" xmlns="http://www.w3.org/2000/svg"><g transform="translate(-172.33196,-164.33361)"><g stroke-miterlimit="10"><text transform="translate(217.16809,185.696) scale(0.5,0.5)" font-size="40" fill="#ffffff" stroke="#ffaa33" stroke-width="3" font-family="Scratch" font-weight="normal" text-anchor="start"><tspan x="0" dy="0">Admin</tspan></text><text transform="translate(217.16809,185.696) scale(0.5,0.5)" font-size="40" fill="#ffffff" stroke="none" stroke-width="1" font-family="Scratch" font-weight="normal" text-anchor="start"><tspan x="0" dy="0">Admin</tspan></text><path d="M181.04509,195.6488h-8.71313v-10.6397h8.71313z" fill="#cc8829" stroke="none"/><path d="M176.88046,195.66641v-20.46677l3.90302,-0.07587l0.09189,-5.0222h6.64479v20.71239l-3.91923,0.16783l-0.04923,4.68462z" fill="#ffaa33" stroke="none"/><path d="M201.4019,164.35123h8.71313v10.6397h-8.71313z" fill="#cc8829" stroke="none"/><path d="M205.56654,164.33362v20.46677l-3.90302,0.07587l-0.09189,5.0222h-6.64479v-20.71239l3.91923,-0.16783l0.04923,-4.68462z" fill="#ffaa33" stroke="none"/><path d="M190.0646,189.91167l-0.03808,-3.62362l-3.03158,-0.12982v-16.02128h5.13983l0.07108,3.88473l3.01904,0.05869v15.8313z" fill="#ffaa33" stroke="none"/></g></g></svg>
+</a>
+    <nav class="admin-nav">
+        <button class="admin-nav-toggle" onclick="document.getElementById('adminMenu').classList.toggle('open')">Menu &#9662;</button>
+        <div id="adminMenu" class="admin-nav-menu">
+            <a href="/admin">Dashboard</a>
+            <a href="/logout">Log Out</a>
+            <a href="/admin/visits.php">Visitor Log</a>
+            <a href="/admin/submissions.php">Submissions</a>
+            <a href="/admin/feedback.php">Feedback</a>
+            <a href="/admin/move.php">Move Article</a>
+            <a href="/admin/reports.php">Reports</a>
+            <a href="/admin/users.php">Users</a>
+        </div>
+    </nav>
+</header>

@@ -1,78 +1,30 @@
 <?php
-require_once __DIR__ . '/../functions.php';
 require_once __DIR__ . '/auth.php';
-
-$message = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $userId = (int)($_POST['user_id'] ?? 0);
-    $action = $_POST['action'] ?? '';
-
-    if ($userId > 0 && in_array($action, ['ban', 'unban', 'delete'])) {
-        if ($action === 'ban') {
-            banUser($userId);
-            $message = 'User banned.';
-        } elseif ($action === 'unban') {
-            unbanUser($userId);
-            $message = 'User unbanned.';
-        } else {
-            anonymizeUser($userId);
-            $message = 'User deleted and anonymized.';
-        }
-    }
-}
-
-$users = getAllUsers();
+$visits = getRecentVisits(200);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
-<title>Users - <?= e(SITE_NAME) ?></title>
-<link rel="stylesheet" href="/assets/style.css">
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<title>Dashboard - <?= e(SITE_NAME) ?></title>
+<link rel="stylesheet" href="/assets/style.css?v=2">
 </head>
 <body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
 <?php require_once __DIR__ . '/nav.php'; ?>
 <main>
-    <h2>Users (<?= count($users) ?>)</h2>
-    <?php if ($message): ?><div class="alert success"><?= e($message) ?></div><?php endif; ?>
+    <h2>Visitor Log</h2>
+    <p>Showing the most recent 200 visits.</p>
     <table>
-        <tr><th>Username</th><th>Email</th><th>Admin</th><th>Verified</th><th>Joined</th><th>Status</th><th>Actions</th></tr>
-        <?php foreach ($users as $u): ?>
-            <tr>
-                <td><a href="/@<?= e($u['username']) ?>">@<?= e($u['username']) ?></a></td>
-                <td><?= e($u['email']) ?></td>
-                <td><?= $u['is_admin'] ? 'Yes' : '—' ?></td>
-                <td><?= $u['email_verified'] ? 'Yes' : 'No' ?></td>
-                <td><?= date('M j, Y', strtotime($u['created_at'])) ?></td>
-                <td><?= $u['is_banned'] ? '<span style="color:#a33; font-weight:600;">Banned</span>' : 'Active' ?></td>
-                <td class="actions" style="white-space:nowrap;">
-                    <?php if (!$u['is_admin']): ?>
-                        <?php if ($u['is_banned']): ?>
-                        <a href="#" onclick="document.getElementById('unban<?= (int)$u['id'] ?>').submit(); return false;">Unban</a>
-                        <form id="unban<?= (int)$u['id'] ?>" method="post" style="display:none;">
-                            <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
-                            <input type="hidden" name="action" value="unban">
-                        </form>
-                        <?php else: ?>
-                        <a href="#" onclick="if(confirm('Ban this user?')) document.getElementById('ban<?= (int)$u['id'] ?>').submit(); return false;">Ban</a>
-                        <form id="ban<?= (int)$u['id'] ?>" method="post" style="display:none;">
-                            <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
-                            <input type="hidden" name="action" value="ban">
-                        </form>
-                        <?php endif; ?>
-                        <a href="#" onclick="if(confirm('Delete this user?')) document.getElementById('del<?= (int)$u['id'] ?>').submit(); return false;">Delete</a>
-                        <form id="del<?= (int)$u['id'] ?>" method="post" style="display:none;">
-                            <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
-                            <input type="hidden" name="action" value="delete">
-                        </form>
-                    <?php else: ?>
-                        —
-                    <?php endif; ?>
-                </td>
-            </tr>
+        <tr><th>Time</th><th>IP Address</th><th>Page</th><th>User Agent</th></tr>
+        <?php foreach ($visits as $v): ?>
+        <tr>
+            <td><?= date('M j, Y g:i A', strtotime($v['visited_at'])) ?></td>
+            <td><?= e($v['ip_address']) ?></td>
+            <td><?= e($v['page']) ?></td>
+            <td style="max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><?= e($v['user_agent']) ?></td>
+        </tr>
         <?php endforeach; ?>
     </table>
 </main>

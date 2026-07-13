@@ -5,21 +5,24 @@ require_once __DIR__ . '/auth.php';
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $submissionId = (int)($_POST['submission_id'] ?? 0);
+    $userId = (int)($_POST['user_id'] ?? 0);
     $action = $_POST['action'] ?? '';
 
-    if ($submissionId > 0 && in_array($action, ['approve', 'reject'])) {
-        if ($action === 'approve') {
-            approveSubmission($submissionId);
-            $message = 'Submission approved and published.';
+    if ($userId > 0 && in_array($action, ['ban', 'unban', 'delete'])) {
+        if ($action === 'ban') {
+            banUser($userId);
+            $message = 'User banned.';
+        } elseif ($action === 'unban') {
+            unbanUser($userId);
+            $message = 'User unbanned.';
         } else {
-            rejectSubmission($submissionId);
-            $message = 'Submission rejected.';
+            anonymizeUser($userId);
+            $message = 'User deleted and anonymized.';
         }
     }
 }
 
-$pending = getPendingSubmissions();
+$users = getAllUsers();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -27,39 +30,51 @@ $pending = getPendingSubmissions();
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
-<title>Pending Submissions - <?= e(SITE_NAME) ?></title>
-<link rel="stylesheet" href="/assets/style.css?v=9">
+<title>Users - <?= e(SITE_NAME) ?></title>
+<link rel="stylesheet" href="/assets/style.css">
 </head>
 <body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
 <?php require_once __DIR__ . '/nav.php'; ?>
 <main>
-    <h2>Pending Submissions</h2>
-
+    <h2>Users (<?= count($users) ?>)</h2>
     <?php if ($message): ?><div class="alert success"><?= e($message) ?></div><?php endif; ?>
-
-    <?php if (empty($pending)): ?>
-        <p>No pending submissions right now.</p>
-    <?php else: ?>
-        <?php foreach ($pending as $sub): ?>
-            <div class="submission-card" style="border:1px solid #ccc; border-radius:8px; padding:1rem; margin-bottom:1.5rem;">
-                <h3><?= e($sub['title']) ?></h3>
-                <p><strong>By:</strong> <a href="/@<?= e($sub['username']) ?>"><?= e($sub['username']) ?></a> &middot; <?= e($sub['created_at']) ?></p>
-                <p><em><?= e($sub['summary']) ?></em></p>
-                <div class="submission-content"><?= $sub['content'] /* already sanitized on submit */ ?></div>
-
-                <form method="post" style="display:inline;">
-                    <input type="hidden" name="submission_id" value="<?= (int)$sub['id'] ?>">
-                    <input type="hidden" name="action" value="approve">
-                    <button class="btn" type="submit">Approve</button>
-                </form>
-                <form method="post" style="display:inline;">
-                    <input type="hidden" name="submission_id" value="<?= (int)$sub['id'] ?>">
-                    <input type="hidden" name="action" value="reject">
-                    <button class="btn" type="submit" style="background:#a33;">Reject</button>
-                </form>
-            </div>
+    <table>
+        <tr><th>Username</th><th>Email</th><th>Admin</th><th>Verified</th><th>Joined</th><th>Status</th><th>Actions</th></tr>
+        <?php foreach ($users as $u): ?>
+            <tr>
+                <td><a href="/@<?= e($u['username']) ?>">@<?= e($u['username']) ?></a></td>
+                <td><?= e($u['email']) ?></td>
+                <td><?= $u['is_admin'] ? 'Yes' : '—' ?></td>
+                <td><?= $u['email_verified'] ? 'Yes' : 'No' ?></td>
+                <td><?= date('M j, Y', strtotime($u['created_at'])) ?></td>
+                <td><?= $u['is_banned'] ? '<span style="color:#a33; font-weight:600;">Banned</span>' : 'Active' ?></td>
+                <td class="actions" style="white-space:nowrap;">
+                    <?php if (!$u['is_admin']): ?>
+                        <?php if ($u['is_banned']): ?>
+                        <a href="#" onclick="document.getElementById('unban<?= (int)$u['id'] ?>').submit(); return false;">Unban</a>
+                        <form id="unban<?= (int)$u['id'] ?>" method="post" style="display:none;">
+                            <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
+                            <input type="hidden" name="action" value="unban">
+                        </form>
+                        <?php else: ?>
+                        <a href="#" onclick="if(confirm('Ban this user?')) document.getElementById('ban<?= (int)$u['id'] ?>').submit(); return false;">Ban</a>
+                        <form id="ban<?= (int)$u['id'] ?>" method="post" style="display:none;">
+                            <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
+                            <input type="hidden" name="action" value="ban">
+                        </form>
+                        <?php endif; ?>
+                        <a href="#" onclick="if(confirm('Delete this user?')) document.getElementById('del<?= (int)$u['id'] ?>').submit(); return false;">Delete</a>
+                        <form id="del<?= (int)$u['id'] ?>" method="post" style="display:none;">
+                            <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
+                            <input type="hidden" name="action" value="delete">
+                        </form>
+                    <?php else: ?>
+                        —
+                    <?php endif; ?>
+                </td>
+            </tr>
         <?php endforeach; ?>
-    <?php endif; ?>
+    </table>
 </main>
 </body>
 </html>
