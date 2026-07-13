@@ -1,0 +1,6 @@
+2026-07-09 02:29:32 | HTTP 201 | curl_error:  | response: {"messageId":"<202607090629.34410680741@smtp-relay.mailin.fr>"}
+
+2026-07-12 13:25:40 | HTTP 201 | curl_error:  | response: {"messageId":"<202607121725.85615482405@smtp-relay.mailin.fr>"}
+
+2026-07-12 15:00:06 | HTTP 201 | curl_error:  | response: {"messageId":"<202607121900.97789427898@smtp-relay.mailin.fr>"}
+
