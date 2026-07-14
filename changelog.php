@@ -20,6 +20,7 @@ session_start();
 </header>
 <main>
     <h2>Changelog</h2>
+    <p>v0.13 - Images.</p>
     <p>v0.12.1 - Static Pages (about, changelog, community guidelines) added to replace admin pages</p>
     <p>[Jul14] v0.12 - Added Dislike, Share, new icons for social features, and moved social features at the top</p>
     <p>[Jul12] v0.11 - Moderation features: report comments, ban users, delete users and ban IPs.</p>  
