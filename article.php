@@ -106,6 +106,7 @@ if (!$article) {
                     <div class="share-menu" id="shareMenu">
                         <button type="button" class="share-option" data-share="copy">Copy Link</button>
                         <button type="button" class="share-option" data-share="discord">Share to Discord</button>
+                        <button type="button" class="share-option" data-share="more" id="shareMoreBtn" style="display:none;">More...</button>
                     </div>
                 </div>
             </div>
@@ -165,9 +166,16 @@ if (!$article) {
     shareMenu.addEventListener('click', function(e) { e.stopPropagation(); });
     var pageUrl = window.location.href;
     var pageTitle = <?= json_encode($article['title'] ?? '') ?>;
+    var shareMoreBtn = document.getElementById('shareMoreBtn');
+    if (navigator.share) shareMoreBtn.style.display = 'block';
     shareMenu.querySelectorAll('.share-option').forEach(function(btn) {
         btn.addEventListener('click', function() {
             var type = btn.getAttribute('data-share');
+            if (type === 'more') {
+                shareMenu.classList.remove('open');
+                navigator.share({ title: pageTitle, url: pageUrl }).catch(function() {});
+                return;
+            }
             var text = type === 'discord' ? ('Check out "' + pageTitle + '" on ScratchNews: ' + pageUrl) : pageUrl;
             navigator.clipboard.writeText(text).then(function() {
                 var original = btn.textContent;
