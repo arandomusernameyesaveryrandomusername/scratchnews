@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label><input type="checkbox" name="remove_image" value="1"> Remove image</label>
             </div>
         <?php endif; ?>
-        <input type="file" id="cover_image" name="cover_image" accept="image/jpeg,image/png,image/gif,image/webp">
+        <input type="file" id="cover_image" name="cover_image" accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml">
 
         <label for="content">Full Article Content</label>
 <div id="toolbar">

@@ -674,15 +674,41 @@ function getNextArticleId(): int {
 function saveUploadedImage(array $file): ?string {
     if (empty($file['tmp_name']) || $file['error'] !== UPLOAD_ERR_OK) return null;
     if ($file['size'] > 3 * 1024 * 1024) throw new RuntimeException('Image must be under 3MB.');
+
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $detectedType = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
+
+    $dir = __DIR__ . '/assets/uploads/articles';
+    if (!is_dir($dir)) mkdir($dir, 0755, true);
+
+    if ($ext === 'svg' || in_array($detectedType, ['image/svg+xml', 'text/xml', 'text/html', 'text/plain'], true)) {
+        $content = file_get_contents($file['tmp_name']);
+        if ($content === false || stripos($content, '<svg') === false) {
+            throw new RuntimeException('File is not a valid SVG.');
+        }
+        $content = sanitizeSvg($content);
+        $filename = bin2hex(random_bytes(8)) . '.svg';
+        file_put_contents($dir . '/' . $filename, $content);
+        return '/assets/uploads/articles/' . $filename;
+    }
+
     $info = getimagesize($file['tmp_name']);
     if (!$info) throw new RuntimeException('File is not a valid image.');
     $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif', 'image/webp' => 'webp'];
-    if (!isset($allowed[$info['mime']])) throw new RuntimeException('Only JPG, PNG, GIF, or WEBP images are allowed.');
-    $dir = __DIR__ . '/assets/uploads/articles';
-    if (!is_dir($dir)) mkdir($dir, 0755, true);
+    if (!isset($allowed[$info['mime']])) throw new RuntimeException('Only JPG, PNG, GIF, WEBP, or SVG images are allowed.');
     $filename = bin2hex(random_bytes(8)) . '.' . $allowed[$info['mime']];
     move_uploaded_file($file['tmp_name'], $dir . '/' . $filename);
     return '/assets/uploads/articles/' . $filename;
+}
+
+function sanitizeSvg(string $svg): string {
+    $svg = preg_replace('#<script\b[^>]*>.*?</script>#is', '', $svg);
+    $svg = preg_replace('#<foreignObject\b[^>]*>.*?</foreignObject>#is', '', $svg);
+    $svg = preg_replace('/\son\w+\s*=\s*("[^"]*"|\'[^\']*\')/i', '', $svg);
+    $svg = preg_replace('/(href|xlink:href)\s*=\s*("javascript:[^"]*"|\'javascript:[^\']*\')/i', '$1="#"', $svg);
+    return $svg;
 }
 
 function deleteUploadedImage(?string $url): void {

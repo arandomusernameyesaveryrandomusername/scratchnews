@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <input type="text" id="author" name="author" value="<?= e($_POST['author'] ?? 'ScratchNews Staff') ?>">
 
         <label for="cover_image">Cover Image (optional)</label>
-        <input type="file" id="cover_image" name="cover_image" accept="image/jpeg,image/png,image/gif,image/webp">
+        <input type="file" id="cover_image" name="cover_image" accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml">
 
         <label for="content">Full Article Content</label>
 <div id="toolbar">
