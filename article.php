@@ -120,7 +120,10 @@ if (!$article) {
         <form method="post">
             <input type="hidden" name="action" value="comment">
             <textarea name="content" placeholder="Add a comment..." required></textarea>
-            <button class="btn" type="submit">Post Comment</button>
+            <button class="btn btn-comment" type="submit">
+                <img src="/assets/icons/comment.svg" alt="" class="icon-svg-sm btn-icon">
+                Comment
+            </button>
         </form>
     <?php elseif (!$isBanned): ?>
         <p><a href="/signin">Log in</a> or <a href="/register">sign up</a> to comment.</p>
