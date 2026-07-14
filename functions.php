@@ -174,7 +174,7 @@ function renderCommentThread(array $comment, bool $canReply, int $depth = 0, boo
 
     if ($canReply) {
         $formId = 'reply-form-' . (int)$comment['id'];
-        $html .= '<button type="button" class="reply-toggle" onclick="document.getElementById(\'' . $formId . '\').classList.toggle(\'open\')">Reply</button>';
+        $html .= '<button type="button" class="reply-toggle" title="Reply" onclick="document.getElementById(\'' . $formId . '\').classList.toggle(\'open\')"><img src="/assets/icons/reply.svg" class="icon-svg-sm" alt=""> Reply</button>';
         $html .= '<form method="post" class="reply-form" id="' . $formId . '">';
         $html .= '<input type="hidden" name="action" value="comment">';
         $html .= '<input type="hidden" name="parent_id" value="' . (int)$comment['id'] . '">';
@@ -187,7 +187,7 @@ function renderCommentThread(array $comment, bool $canReply, int $depth = 0, boo
         $html .= ' <form method="post" class="report-form" onsubmit="return confirm(\'Report this comment for review?\');">';
         $html .= '<input type="hidden" name="action" value="report">';
         $html .= '<input type="hidden" name="comment_id" value="' . (int)$comment['id'] . '">';
-        $html .= '<button type="submit" class="reply-toggle">Report</button>';
+        $html .= '<button type="submit" class="reply-toggle" title="Report"><img src="/assets/icons/report.svg" class="icon-svg-sm" alt=""> Report</button>';
         $html .= '</form>';
     }
 
@@ -233,9 +233,56 @@ function toggleLike(int $articleId, int $userId): bool {
         $stmt->bind_param('ii', $articleId, $userId);
         $stmt->execute();
         $stmt->close();
+        $del = $db->prepare("DELETE FROM dislikes WHERE article_id = ? AND user_id = ?");
+        $del->bind_param('ii', $articleId, $userId);
+        $del->execute();
+        $del->close();
         return true;
     }
 }
+
+// ---- Dislikes ----
+function getDislikeCount(int $articleId): int {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT COUNT(*) AS cnt FROM dislikes WHERE article_id = ?");
+    $stmt->bind_param('i', $articleId);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return (int)$row['cnt'];
+}
+
+function hasUserDisliked(int $articleId, int $userId): bool {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT id FROM dislikes WHERE article_id = ? AND user_id = ?");
+    $stmt->bind_param('ii', $articleId, $userId);
+    $stmt->execute();
+    $found = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return (bool)$found;
+}
+
+function toggleDislike(int $articleId, int $userId): bool {
+    $db = getDB();
+    if (hasUserDisliked($articleId, $userId)) {
+        $stmt = $db->prepare("DELETE FROM dislikes WHERE article_id = ? AND user_id = ?");
+        $stmt->bind_param('ii', $articleId, $userId);
+        $stmt->execute();
+        $stmt->close();
+        return false;
+    } else {
+        $stmt = $db->prepare("INSERT INTO dislikes (article_id, user_id) VALUES (?, ?)");
+        $stmt->bind_param('ii', $articleId, $userId);
+        $stmt->execute();
+        $stmt->close();
+        $del = $db->prepare("DELETE FROM likes WHERE article_id = ? AND user_id = ?");
+        $del->bind_param('ii', $articleId, $userId);
+        $del->execute();
+        $del->close();
+        return true;
+    }
+}
+
 // ---- Profile / account deletion helpers ----
 function getUserById(int $id): ?array {
     $db = getDB();

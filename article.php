@@ -15,6 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $article && !empty($_SESSION['reade
         header('Location: /article/' . $article['id']);
         exit;
     }
+    if (($_POST['action'] ?? '') === 'dislike' && !$isBanned) {
+        toggleDislike($article['id'], $_SESSION['reader_id']);
+        header('Location: /article/' . $article['id']);
+        exit;
+    }
     if (($_POST['action'] ?? '') === 'comment' && !$isBanned) {
         $content = trim($_POST['content'] ?? '');
         $parentId = !empty($_POST['parent_id']) ? (int)$_POST['parent_id'] : null;
@@ -34,6 +39,8 @@ $comments = $article ? getCommentsForArticle($article['id']) : [];
 $commentTree = $article ? buildCommentTree($comments) : [];
 $likeCount = $article ? getLikeCount($article['id']) : 0;
 $liked = ($article && !empty($_SESSION['reader_id'])) ? hasUserLiked($article['id'], $_SESSION['reader_id']) : false;
+$dislikeCount = $article ? getDislikeCount($article['id']) : 0;
+$disliked = ($article && !empty($_SESSION['reader_id'])) ? hasUserDisliked($article['id'], $_SESSION['reader_id']) : false;
 
 if (!$article) {
     http_response_code(404);
@@ -48,6 +55,37 @@ if (!$article) {
 <title><?= $article ? e($article['title']) . ' - ' . e(SITE_NAME) : 'Article not found' ?></title>
 <link rel="stylesheet" href="/assets/style.css?v=2">
 </head>
+<script>
+(function() {
+    var shareBtn = document.getElementById('shareBtn');
+    var shareMenu = document.getElementById('shareMenu');
+    if (!shareBtn) return;
+    shareBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        shareMenu.classList.toggle('open');
+    });
+    document.addEventListener('click', function() {
+        shareMenu.classList.remove('open');
+    });
+    shareMenu.addEventListener('click', function(e) { e.stopPropagation(); });
+    var pageUrl = window.location.href;
+    var pageTitle = <?= json_encode($article['title'] ?? '') ?>;
+    shareMenu.querySelectorAll('.share-option').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var type = btn.getAttribute('data-share');
+            var text = type === 'discord' ? ('Check out "' + pageTitle + '" on ScratchNews: ' + pageUrl) : pageUrl;
+            navigator.clipboard.writeText(text).then(function() {
+                var original = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(function() {
+                    btn.textContent = original;
+                    shareMenu.classList.remove('open');
+                }, 900);
+            });
+        });
+    });
+})();
+</script>
 <body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
 <header id="siteHeader">
     <a href="/" class="logo-link">
@@ -77,18 +115,35 @@ if (!$article) {
                     · Updated <?= date('F j, Y', strtotime($article['updated_at'])) ?>
                 <?php endif; ?>
             </div>
+            <div class="engage-bar">
+                <form method="post">
+                    <input type="hidden" name="action" value="like">
+                    <button class="icon-btn <?= $liked ? 'active' : '' ?>" type="submit" <?= (empty($_SESSION['reader_id']) || $isBanned) ? 'disabled' : '' ?> title="<?= $liked ? 'Unlike' : 'Like' ?>">
+                        <img src="/assets/icons/<?= $liked ? 'like' : 'unlike' ?>.svg" alt="Like" class="icon-svg">
+                        <span class="icon-count"><?= $likeCount ?></span>
+                    </button>
+                </form>
+                <form method="post">
+                    <input type="hidden" name="action" value="dislike">
+                    <button class="icon-btn <?= $disliked ? 'active' : '' ?>" type="submit" <?= (empty($_SESSION['reader_id']) || $isBanned) ? 'disabled' : '' ?> title="<?= $disliked ? 'Remove dislike' : 'Dislike' ?>">
+                        <img src="/assets/icons/<?= $disliked ? 'dislike' : 'undislike' ?>.svg" alt="Dislike" class="icon-svg">
+                        <span class="icon-count"><?= $dislikeCount ?></span>
+                    </button>
+                </form>
+                <div class="share-wrap">
+                    <button type="button" class="icon-btn" id="shareBtn" title="Share">
+                        <img src="/assets/icons/share.svg" alt="Share" class="icon-svg">
+                    </button>
+                    <div class="share-menu" id="shareMenu">
+                        <button type="button" class="share-option" data-share="copy">Copy Link</button>
+                        <button type="button" class="share-option" data-share="discord">Share to Discord</button>
+                    </div>
+                </div>
+            </div>
+            <?php if ($isBanned): ?>
+                <p class="meta">Your account is restricted from liking and commenting.</p>
+            <?php endif; ?>
             <div class="content"><?= $article['content'] ?></div>
-            <div class="likes-section">
-    <form method="post">
-        <input type="hidden" name="action" value="like">
-        <button class="btn" type="submit" <?= (empty($_SESSION['reader_id']) || $isBanned) ? 'disabled' : '' ?>>
-            <?= $liked ? '💔 Unlike' : '❤️ Like' ?> (<?= $likeCount ?>)
-        </button>
-    </form>
-    <?php if ($isBanned): ?>
-        <p class="meta">Your account is restricted from liking and commenting.</p>
-    <?php endif; ?>
-</div>
             <div class="comments-section">
     <h3>Comments (<?= count($comments) ?>)</h3>
     <?php if (!empty($_SESSION['reader_id']) && !$isBanned): ?>
