@@ -77,6 +77,9 @@ if (!$article) {
     <?php if ($article): ?>
         <div class="full-article">
             <h1><?= e($article['title']) ?></h1>
+            <?php if (!empty($article['image_url'])): ?>
+                <img src="<?= e($article['image_url']) ?>" alt="" class="article-cover-image" style="max-width:100%;height:auto;">
+            <?php endif; ?>
             <div class="meta">
                 By <?= e($article['author']) ?> ·
                 Published <?= date('F j, Y', strtotime($article['created_at'])) ?>

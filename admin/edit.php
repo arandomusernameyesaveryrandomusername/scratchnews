@@ -19,12 +19,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($title === '' || $summary === '' || $content === '') {
         $error = 'Title, summary, and content are all required.';
     } else {
-        updateArticle($id, $title, $summary, $content, $author ?: 'ScratchNews Staff');
-        header('Location: /admin/?updated=' . $id);
-        exit;
+        try {
+            $imageUrl = $article['image_url'] ?? null;
+            if (!empty($_POST['remove_image']) && $imageUrl) {
+                deleteUploadedImage($imageUrl);
+                $imageUrl = null;
+            }
+            if (!empty($_FILES['cover_image']['tmp_name'])) {
+                $newUrl = saveUploadedImage($_FILES['cover_image']);
+                if ($newUrl) {
+                    if ($imageUrl) deleteUploadedImage($imageUrl);
+                    $imageUrl = $newUrl;
+                }
+            }
+            updateArticle($id, $title, $summary, $content, $author ?: 'ScratchNews Staff', $imageUrl);
+            header('Location: /admin/?updated=' . $id);
+            exit;
+        } catch (RuntimeException $e) {
+            $error = $e->getMessage();
+        }
     }
-    // Keep edited values on screen if validation failed
-    $article = ['id' => $id, 'title' => $title, 'summary' => $summary, 'content' => $content, 'author' => $author];
+    $article = ['id' => $id, 'title' => $title, 'summary' => $summary, 'content' => $content, 'author' => $author, 'image_url' => $imageUrl ?? null];
 }
 ?>
 <!DOCTYPE html>
@@ -42,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <main>
     <h2>Edit Article #<?= (int)$id ?></h2>
     <?php if ($error): ?><div class="alert error"><?= e($error) ?></div><?php endif; ?>
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         <label for="title">Title</label>
         <input type="text" id="title" name="title" value="<?= e($article['title']) ?>" required>
 
@@ -51,6 +66,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <label for="author">Author</label>
         <input type="text" id="author" name="author" value="<?= e($article['author']) ?>">
+
+        <label for="cover_image">Cover Image (optional)</label>
+        <?php if (!empty($article['image_url'])): ?>
+            <div class="cover-preview">
+                <img src="<?= e($article['image_url']) ?>" alt="" style="max-width:200px;display:block;margin-bottom:8px;">
+                <label><input type="checkbox" name="remove_image" value="1"> Remove image</label>
+            </div>
+        <?php endif; ?>
+        <input type="file" id="cover_image" name="cover_image" accept="image/jpeg,image/png,image/gif,image/webp">
 
         <label for="content">Full Article Content</label>
 <div id="toolbar">
@@ -72,6 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <option value="huge">Huge</option>
     </select>
     <button class="ql-link" title="Insert link">🔗</button>
+    <button class="ql-image" title="Insert image">🖼️</button>
 </div>
 <div id="editor-container"><?= $article['content'] ?></div>
 <textarea id="content" name="content" style="display:none;"></textarea>
@@ -81,11 +106,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </form>
 </main>
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 <script>
 var quill = new Quill('#editor-container', {
     theme: 'snow',
     modules: { toolbar: '#toolbar' }
+});
+quill.getModule('toolbar').addHandler('image', function() {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function() {
+        var file = input.files[0];
+        if (!file) return;
+        var formData = new FormData();
+        formData.append('image', file);
+        fetch('/admin/upload-image.php', { method: 'POST', body: formData })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.url) {
+                    var range = quill.getSelection(true);
+                    quill.insertEmbed(range.index, 'image', data.url);
+                } else {
+                    alert(data.error || 'Upload failed.');
+                }
+            });
+    };
+    input.click();
 });
 document.querySelector('form').addEventListener('submit', function() {
     document.querySelector('#content').value = quill.root.innerHTML;
