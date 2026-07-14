@@ -53,7 +53,7 @@ if (!$article) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <title><?= $article ? e($article['title']) . ' - ' . e(SITE_NAME) : 'Article not found' ?></title>
-<link rel="stylesheet" href="/assets/style.css?v=2">
+<link rel="stylesheet" href="/assets/style.css?v=3">
 </head>
 <body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
 <header id="siteHeader">
