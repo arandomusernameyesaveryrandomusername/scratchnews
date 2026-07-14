@@ -22,13 +22,13 @@ session_start();
     <h2>Community Guidelines</h2>
     <p>community guidelines so that the site doesn't go kaboom. disrespecting these guidelines will result in a ban/permanent account deletion</p>
 
-    <h3><br>1: Respect the Scratch Community Guidelines.</br><h3>
-    <p>Every action that you make on this has to not violate any of the Scratch Community Guidelines. <a href="https://scratch.mit.edu/community_guidelines">(seen here.)</a>
-    This includes comments, replies and articles.</p>
-    <i>ScratchNews is a site about Scratch-related news; therefore, Scratchers will use it; therefore, Scratch <br>requires</br> the website to make the website as safe as Scratch itself or safer, and if ScratchNews isn't safer than Scratch, then say goodbye to the idea of Scratchers using it.</i>
-    <h3><br>2: Do not social spam.</br><h3>
-    <p>Feels so tempting, doesn't it? Why not make another account, like your own article and get the numbers up and pumping? <br>NO. JUST NO.</br></p>
-    <i>Social spamming takes minimal effort, puts your article further in the search, but ruins the experience for everyone. Nobody wants an article with a million likes to show up whenever they're searching literally ANYTHING!</i>
+    <h3><b>1: Respect the Scratch Community Guidelines.</b></h3><br>
+    <p>Every action that you make on this has to not violate any of the Scratch Community Guidelines. <a href="https://scratch.mit.edu/community_guidelines">(seen here.)</a><br>
+    This includes comments, replies and articles.</p><br>
+    <i>ScratchNews is a site about Scratch-related news; therefore, Scratchers will use it; therefore, Scratch <b>requires</b> the website to make the website as safe as Scratch itself or safer, and if ScratchNews isn't safer than Scratch, then say goodbye to the idea of Scratchers using it.</i><br>
+    <h3><b>2: Do not social spam.</b><h3><br>
+    <p>Feels so tempting, doesn't it? Why not make another account, like your own article and get the numbers up and pumping? <b>NO. JUST NO.</b></p><br>
+    <i>Social spamming takes minimal effort, puts your article further in the search, but ruins the experience for everyone. Nobody wants an article with a million likes to show up whenever they're searching literally ANYTHING!</i><br>
     
     <p>these are all the rules now go enjoy the website</p>
 </main>

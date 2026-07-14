@@ -21,29 +21,29 @@ session_start();
 <main>
     <h2>Changelog</h2>
     <p>[Jul14] v0.12 - Added Dislike, Share, new icons for social features, and moved social features at the top
-
+<br>
     [Jul12] v0.11 - Moderation features: report comments, ban users, delete users and ban IPs.
-        
+<br>  
     v0.1 - Biggest update YET! Reply, reply to replies, website redesign (articles in different boxes), smooth size change, SEARCH BAR, unified menu for admins...
-
+<br>
     v0.09 - Added Feedback page, moving ID articles for admins
-
+<br>
     [Jul10] v0.08 - Delete Account at bottom of page, non-admin users can submit articles and get results via email, fixed /article/id linking before id is defined
-
+<br>
     [Jul9] v0.07 - Email Verification
-
+<br>
     [Jul8] v0.06 - Users, Delete Account at /delete-account
-
+<br>
     [Jul7/8?] v0.05 - Link Text, fixed Admin tab showing to non-admin users
-
+<br>
     [Jul7] v0.04 - Introduced account creation beyond admin, likes and comments. You will see a test comment below showing the new feature
-
+<br>
     [Jul6] v0.03 - Formatting! Bold, Italic, Strikethrough, Headers, Colors, Color text and highlight color text!
-
+<br>
     v0.02 - Branding. Logo and top page color.
-
+<br>
     v0.01 - View articles and edit/create articles. Only the dev can create articles.
-
+<br>
     [Jul5, 2026] v0.00 - Initial website, launched at scratchnews.freedev.app
 </main>
 <?php include __DIR__ . '/includes/footer.php'; ?>
