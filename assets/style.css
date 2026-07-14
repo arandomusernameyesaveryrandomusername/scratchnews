@@ -276,9 +276,9 @@ body.dark .alert.error { background: #4a1f1f; color: #ff8080; }
 body.dark .alert.success { background: #1f4a26; color: #7fdb8f; }
 .engage-bar { display: flex; align-items: center; gap: 0.6rem; margin: 1rem 0 1.4rem; }
 .icon-btn {
+    all: unset;
+    box-sizing: border-box;
     display: inline-flex; align-items: center; gap: 0.35rem;
-    background: none; border: none; box-shadow: none; outline: none;
-    appearance: none; -webkit-appearance: none;
     cursor: pointer;
     padding: 0.4rem 0.6rem; border-radius: 8px;
     font-family: inherit; font-weight: 600; font-size: 0.9rem; color: #555;
