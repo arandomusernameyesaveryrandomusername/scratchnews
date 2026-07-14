@@ -22,28 +22,31 @@ function getArticleById(int $id): ?array {
 
 // Allow only safe formatting tags in article content (bold, italic, headers, colors via span, etc.)
 function sanitizeArticleHtml(string $html): string {
-    $allowed = '<p><br><strong><b><em><i><s><strike><u><h1><h2><h3><span><ul><ol><li><blockquote><a>';
-    return strip_tags($html, $allowed);
+    $allowed = '<p><br><strong><b><em><i><s><strike><u><h1><h2><h3><span><ul><ol><li><blockquote><a><img>';
+    $html = strip_tags($html, $allowed);
+    $html = preg_replace('/\son\w+\s*=\s*("[^"]*"|\'[^\']*\')/i', '', $html);
+    $html = preg_replace('/(href|src)\s*=\s*("javascript:[^"]*"|\'javascript:[^\']*\')/i', '$1="#"', $html);
+    return $html;
 }
 
 // Create a new article, returns the new ID
-function createArticle(string $title, string $summary, string $content, string $author): int {
+function createArticle(string $title, string $summary, string $content, string $author, ?string $imageUrl = null): int {
     $db = getDB();
     $content = sanitizeArticleHtml($content);
     $id = getNextArticleId();
-    $stmt = $db->prepare("INSERT INTO articles (id, title, summary, content, author) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param('issss', $id, $title, $summary, $content, $author);
+    $stmt = $db->prepare("INSERT INTO articles (id, title, summary, content, author, image_url) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param('isssss', $id, $title, $summary, $content, $author, $imageUrl);
     $stmt->execute();
     $stmt->close();
     return $id;
 }
 
 // Update an existing article
-function updateArticle(int $id, string $title, string $summary, string $content, string $author): bool {
+function updateArticle(int $id, string $title, string $summary, string $content, string $author, ?string $imageUrl = null): bool {
     $db = getDB();
     $content = sanitizeArticleHtml($content);
-    $stmt = $db->prepare("UPDATE articles SET title = ?, summary = ?, content = ?, author = ? WHERE id = ?");
-    $stmt->bind_param('ssssi', $title, $summary, $content, $author, $id);
+    $stmt = $db->prepare("UPDATE articles SET title = ?, summary = ?, content = ?, author = ?, image_url = ? WHERE id = ?");
+    $stmt->bind_param('sssssi', $title, $summary, $content, $author, $imageUrl, $id);
     $ok = $stmt->execute();
     $stmt->close();
     return $ok;
@@ -52,6 +55,10 @@ function updateArticle(int $id, string $title, string $summary, string $content,
 // Delete an article
 function deleteArticle(int $id): bool {
     $db = getDB();
+    $article = getArticleById($id);
+    if ($article && !empty($article['image_url'])) {
+        deleteUploadedImage($article['image_url']);
+    }
     $stmt = $db->prepare("DELETE FROM articles WHERE id = ?");
     $stmt->bind_param('i', $id);
     $ok = $stmt->execute();
@@ -454,10 +461,9 @@ function approveSubmission($id) {
         return false;
     }
 
-    // Insert into articles using the submitter's username as author
-    $id = getNextArticleId();
+    $articleId = getNextArticleId();
     $stmt = $db->prepare("INSERT INTO articles (id, title, summary, content, author) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("issss", $id, $submission['title'], $submission['summary'], $submission['content'], $submission['username']);
+    $stmt->bind_param("issss", $articleId, $submission['title'], $submission['summary'], $submission['content'], $submission['username']);
     $stmt->execute();
     $stmt->close();
 
@@ -663,4 +669,27 @@ function getNextArticleId(): int {
     ");
     $row = $result->fetch_assoc();
     return $row['next_id'] ? (int)$row['next_id'] : 1;
+}
+
+function saveUploadedImage(array $file): ?string {
+    if (empty($file['tmp_name']) || $file['error'] !== UPLOAD_ERR_OK) return null;
+    if ($file['size'] > 3 * 1024 * 1024) throw new RuntimeException('Image must be under 3MB.');
+    $info = getimagesize($file['tmp_name']);
+    if (!$info) throw new RuntimeException('File is not a valid image.');
+    $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif', 'image/webp' => 'webp'];
+    if (!isset($allowed[$info['mime']])) throw new RuntimeException('Only JPG, PNG, GIF, or WEBP images are allowed.');
+    $dir = __DIR__ . '/assets/uploads/articles';
+    if (!is_dir($dir)) mkdir($dir, 0755, true);
+    $filename = bin2hex(random_bytes(8)) . '.' . $allowed[$info['mime']];
+    move_uploaded_file($file['tmp_name'], $dir . '/' . $filename);
+    return '/assets/uploads/articles/' . $filename;
+}
+
+function deleteUploadedImage(?string $url): void {
+    if (!$url) return;
+    $path = __DIR__ . $url;
+    $uploadsRoot = realpath(__DIR__ . '/assets/uploads');
+    if (is_file($path) && $uploadsRoot && strpos(realpath($path), $uploadsRoot) === 0) {
+        unlink($path);
+    }
 }
