@@ -700,6 +700,7 @@ function saveUploadedImage(array $file): ?string {
     if (!isset($allowed[$info['mime']])) throw new RuntimeException('Only JPG, PNG, GIF, WEBP, or SVG images are allowed.');
     $filename = bin2hex(random_bytes(8)) . '.' . $allowed[$info['mime']];
     move_uploaded_file($file['tmp_name'], $dir . '/' . $filename);
+    resizeImageIfNeeded($dir . '/' . $filename, $info['mime']);
     return '/assets/uploads/articles/' . $filename;
 }
 
@@ -736,4 +737,39 @@ function getPopularArticles(int $limit = 12): array {
     $rows = $result->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
     return $rows;
+}
+
+function resizeImageIfNeeded(string $path, string $mime, int $maxDim = 1600): void {
+    if (!extension_loaded('gd') || $mime === 'image/gif') return;
+    $info = getimagesize($path);
+    if (!$info) return;
+    [$width, $height] = $info;
+    if ($width <= $maxDim && $height <= $maxDim) return;
+
+    $ratio = min($maxDim / $width, $maxDim / $height);
+    $newWidth = (int) round($width * $ratio);
+    $newHeight = (int) round($height * $ratio);
+
+    switch ($mime) {
+        case 'image/jpeg': $src = imagecreatefromjpeg($path); break;
+        case 'image/png': $src = imagecreatefrompng($path); break;
+        case 'image/webp': $src = imagecreatefromwebp($path); break;
+        default: return;
+    }
+    if (!$src) return;
+
+    $dst = imagecreatetruecolor($newWidth, $newHeight);
+    if ($mime === 'image/png') {
+        imagealphablending($dst, false);
+        imagesavealpha($dst, true);
+    }
+    imagecopyresampled($dst, $src, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+    switch ($mime) {
+        case 'image/jpeg': imagejpeg($dst, $path, 85); break;
+        case 'image/png': imagepng($dst, $path, 6); break;
+        case 'image/webp': imagewebp($dst, $path, 85); break;
+    }
+    imagedestroy($src);
+    imagedestroy($dst);
 }
