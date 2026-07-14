@@ -54,7 +54,7 @@ $results = $query !== '' ? searchArticles($query) : [];
         </div>
     <?php endif; ?>
 </main>
-<footer>&copy; <?= e(SITE_NAME) ?> &middot; <a href="/feedback.php">Feedback</a></footer>
+<?php include __DIR__ . '/includes/footer.php'; ?>
 <script>
     window.addEventListener('scroll', function() {
         var header = document.getElementById('siteHeader');

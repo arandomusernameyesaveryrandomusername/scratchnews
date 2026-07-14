@@ -47,11 +47,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
     <?php endif; ?>
 </main>
-<footer>
-    &copy; <?= e(SITE_NAME) ?>
-    <?php if (!empty($_SESSION['reader_username'])): ?>
-        &middot; <a href="/delete-account">Delete Account</a>
-    <?php endif; ?>
-</footer>
+<?php include __DIR__ . '/includes/footer.php'; ?>
 </body>
 </html>

@@ -63,13 +63,7 @@ $articles = getAllArticles();
         <?php endif; ?>
     <?php endif; ?>
 </main>
-<footer>
-    &copy; <?= e(SITE_NAME) ?>
-    <?php if (!empty($_SESSION['reader_username'])): ?>
-        &middot; <a href="/delete-account">Delete Account</a>
-    <?php endif; ?>
-    &middot; <a href="/feedback.php">Feedback</a>
-</footer>
+<?php include __DIR__ . '/includes/footer.php'; ?>
 <script>
     window.addEventListener('scroll', function() {
         var header = document.getElementById('siteHeader');
