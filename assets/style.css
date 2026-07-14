@@ -276,7 +276,7 @@ body.dark .comment { border-bottom: 1px solid #2a2d31; }
 body.dark .comment .meta { color: #888; }
 body.dark .alert.error { background: #4a1f1f; color: #ff8080; }
 body.dark .alert.success { background: #1f4a26; color: #7fdb8f; }
-.engage-bar { display: flex; align-items: center; gap: 0.6rem; margin: 1rem 0 1.4rem; }
+.engage-bar { display: flex; align-items: center; gap: 1.2rem; margin: 1rem 0 1.4rem; }
 .icon-btn {
     all: unset;
     box-sizing: border-box;
@@ -317,3 +317,5 @@ body.dark .share-option:hover { background: #26292e; }
 }
 .reply-toggle { margin-right: 0.6rem; }
 .report-form { margin-left: 0.6rem; }
+.btn-comment { display: inline-flex; align-items: center; gap: 0.4rem; width: auto; padding: 0 1.1rem; }
+.btn-icon { width: 17px; height: 17px; filter: brightness(0) invert(1); }
