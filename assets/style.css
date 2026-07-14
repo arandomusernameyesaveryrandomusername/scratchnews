@@ -68,7 +68,8 @@ main.home-main { max-width: 1080px; }
 .article-card h2 { margin-top: 0; }
 .article-featured h2 a, .article-card h2 a { color: var(--ink); text-decoration: none; }
 .article-featured h2 a:hover, .article-card h2 a:hover { color: var(--brand); }
-
+body.dark .article-featured h2 a, body.dark .article-card h2 a { color: #f0f0f0; }
+body.dark .article-featured h2 a:hover, body.dark .article-card h2 a:hover { color: var(--brand-bright); }
 .article-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
