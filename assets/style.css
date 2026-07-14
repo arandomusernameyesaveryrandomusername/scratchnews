@@ -303,3 +303,11 @@ body.dark .icon-btn { color: #ccc; }
 body.dark .icon-btn:hover:not(:disabled) { background: rgba(255,255,255,0.08); }
 body.dark .share-menu { background: #1e2125; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
 body.dark .share-option:hover { background: #26292e; }
+.engage-bar form {
+    background: none;
+    padding: 0;
+    box-shadow: none;
+    max-width: none;
+    display: inline-flex;
+}
+.reply-toggle { margin-right: 0.6rem; }

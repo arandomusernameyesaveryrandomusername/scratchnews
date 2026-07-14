@@ -55,37 +55,6 @@ if (!$article) {
 <title><?= $article ? e($article['title']) . ' - ' . e(SITE_NAME) : 'Article not found' ?></title>
 <link rel="stylesheet" href="/assets/style.css?v=2">
 </head>
-<script>
-(function() {
-    var shareBtn = document.getElementById('shareBtn');
-    var shareMenu = document.getElementById('shareMenu');
-    if (!shareBtn) return;
-    shareBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        shareMenu.classList.toggle('open');
-    });
-    document.addEventListener('click', function() {
-        shareMenu.classList.remove('open');
-    });
-    shareMenu.addEventListener('click', function(e) { e.stopPropagation(); });
-    var pageUrl = window.location.href;
-    var pageTitle = <?= json_encode($article['title'] ?? '') ?>;
-    shareMenu.querySelectorAll('.share-option').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var type = btn.getAttribute('data-share');
-            var text = type === 'discord' ? ('Check out "' + pageTitle + '" on ScratchNews: ' + pageUrl) : pageUrl;
-            navigator.clipboard.writeText(text).then(function() {
-                var original = btn.textContent;
-                btn.textContent = 'Copied!';
-                setTimeout(function() {
-                    btn.textContent = original;
-                    shareMenu.classList.remove('open');
-                }, 900);
-            });
-        });
-    });
-})();
-</script>
 <body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
 <header id="siteHeader">
     <a href="/" class="logo-link">
@@ -180,6 +149,37 @@ if (!$article) {
             header.classList.remove('shrink');
         }
     });
+</script>
+<script>
+(function() {
+    var shareBtn = document.getElementById('shareBtn');
+    var shareMenu = document.getElementById('shareMenu');
+    if (!shareBtn) return;
+    shareBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        shareMenu.classList.toggle('open');
+    });
+    document.addEventListener('click', function() {
+        shareMenu.classList.remove('open');
+    });
+    shareMenu.addEventListener('click', function(e) { e.stopPropagation(); });
+    var pageUrl = window.location.href;
+    var pageTitle = <?= json_encode($article['title'] ?? '') ?>;
+    shareMenu.querySelectorAll('.share-option').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var type = btn.getAttribute('data-share');
+            var text = type === 'discord' ? ('Check out "' + pageTitle + '" on ScratchNews: ' + pageUrl) : pageUrl;
+            navigator.clipboard.writeText(text).then(function() {
+                var original = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(function() {
+                    btn.textContent = original;
+                    shareMenu.classList.remove('open');
+                }, 900);
+            });
+        });
+    });
+})();
 </script>
 </body>
 </html>
