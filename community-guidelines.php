@@ -26,7 +26,7 @@ session_start();
     <p>Every action that you make on this has to not violate any of the Scratch Community Guidelines. <a href="https://scratch.mit.edu/community_guidelines">(seen here.)</a><br>
     This includes comments, replies and articles.</p><br>
     <i>ScratchNews is a site about Scratch-related news; therefore, Scratchers will use it; therefore, Scratch <b>requires</b> the website to make the website as safe as Scratch itself or safer, and if ScratchNews isn't safer than Scratch, then say goodbye to the idea of Scratchers using it.</i><br>
-    <h3><b>2: Do not social spam.</b><h3>
+    <h3><b>2: Do not social spam.</b></h3>
     <p>Feels so tempting, doesn't it? Why not make another account, like your own article and get the numbers up and pumping? <b>NO. JUST NO.</b></p><br>
     <i>Social spamming takes minimal effort, puts your article further in the search, but ruins the experience for everyone. Nobody wants an article with a million likes to show up whenever they're searching literally ANYTHING!</i><br>
     
