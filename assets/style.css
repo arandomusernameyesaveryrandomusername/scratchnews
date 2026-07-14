@@ -181,10 +181,12 @@ html {
     border: none;
     color: #cc8829;
     cursor: pointer;
-    padding: 0;
+    padding: 0.25rem 0.4rem; margin: -0.25rem -0.4rem; border-radius: 6px;
     font-size: 0.9rem;
     font-family: inherit;
+    transition: background 0.15s ease;
 }
+.reply-toggle:hover { background: rgba(0,0,0,0.06); }
 .reply-form { display: none; margin-top: 0.5rem; }
 .reply-form.open { display: block; }
 .search-form {
@@ -280,11 +282,11 @@ body.dark .alert.success { background: #1f4a26; color: #7fdb8f; }
     box-sizing: border-box;
     display: inline-flex; align-items: center; gap: 0.35rem;
     cursor: pointer;
-    padding: 0.4rem 0.6rem; border-radius: 8px;
+    padding: 0.35rem 0.5rem; margin: -0.35rem -0.5rem; border-radius: 8px;
     font-family: inherit; font-weight: 600; font-size: 0.9rem; color: #555;
-    transition: background 0.15s ease, transform 0.1s ease;
+    transition: background 0.15s ease;
 }
-.icon-btn:hover:not(:disabled) { background: rgba(0,0,0,0.06); transform: scale(1.04); }
+.icon-btn:hover:not(:disabled) { background: rgba(0,0,0,0.06); }
 .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .icon-svg { width: 24px; height: 24px; object-fit: contain; }
 .icon-svg-sm { width: 15px; height: 15px; vertical-align: -2px; margin-right: 3px; }
@@ -303,6 +305,7 @@ body.dark .alert.success { background: #1f4a26; color: #7fdb8f; }
 .share-option:hover { background: #f0f0f0; }
 body.dark .icon-btn { color: #ccc; }
 body.dark .icon-btn:hover:not(:disabled) { background: rgba(255,255,255,0.08); }
+body.dark .reply-toggle:hover { background: rgba(255,255,255,0.08); }
 body.dark .share-menu { background: #1e2125; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
 body.dark .share-option:hover { background: #26292e; }
 .engage-bar form {
