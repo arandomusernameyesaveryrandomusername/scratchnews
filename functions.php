@@ -693,3 +693,21 @@ function deleteUploadedImage(?string $url): void {
         unlink($path);
     }
 }
+
+function getPopularArticles(int $limit = 12): array {
+    $db = getDB();
+    $stmt = $db->prepare(
+        "SELECT a.*, COUNT(l.article_id) AS like_count
+         FROM articles a
+         LEFT JOIN likes l ON l.article_id = a.id
+         GROUP BY a.id
+         ORDER BY like_count DESC, a.created_at DESC
+         LIMIT ?"
+    );
+    $stmt->bind_param('i', $limit);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $rows = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $rows;
+}

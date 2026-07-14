@@ -3,6 +3,7 @@ require_once __DIR__ . '/functions.php';
 session_start();
 logVisit('/');
 $articles = getAllArticles();
+$popular = getPopularArticles(12);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -11,7 +12,7 @@ $articles = getAllArticles();
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <title><?= e(SITE_NAME) ?></title>
-<link rel="stylesheet" href="/assets/style.css?v=2">
+<link rel="stylesheet" href="/assets/style.css?v=10">
 </head>
 <body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
 <header id="siteHeader">
@@ -44,22 +45,70 @@ $articles = getAllArticles();
     <?php if (empty($articles)): ?>
         <p>No articles yet. Log in to the <a href="/admin/">login panel</a> to publish the first one.</p>
     <?php else: ?>
-        <?php $featured = $articles[0]; $rest = array_slice($articles, 1); ?>
-        <div class="article-featured">
-            <h2><a href="/article/<?= (int)$featured['id'] ?>"><?= e($featured['title']) ?></a></h2>
-            <div class="meta">By <?= e($featured['author']) ?> &middot; <?= date('F j, Y', strtotime($featured['created_at'])) ?></div>
-            <div class="summary"><?= e($featured['summary']) ?></div>
-        </div>
-        <?php if (!empty($rest)): ?>
-        <div class="article-grid">
-            <?php foreach ($rest as $a): ?>
-                <div class="article-card">
-                    <h2><a href="/article/<?= (int)$a['id'] ?>"><?= e($a['title']) ?></a></h2>
-                    <div class="meta">By <?= e($a['author']) ?> &middot; <?= date('F j, Y', strtotime($a['created_at'])) ?></div>
-                    <div class="summary"><?= e($a['summary']) ?></div>
+        <?php
+            $featured = $articles[0];
+            $side = array_slice($articles, 1, 2);
+            $shownIds = array_map(fn($a) => $a['id'], array_merge([$featured], $side));
+            $latestRow = array_values(array_filter($articles, fn($a) => !in_array($a['id'], $shownIds)));
+        ?>
+        <div class="hero">
+            <a href="/article/<?= (int)$featured['id'] ?>" class="hero-featured">
+                <?php if (!empty($featured['image_url'])): ?>
+                    <img src="<?= e($featured['image_url']) ?>" alt="" class="hero-featured-img">
+                <?php endif; ?>
+                <div class="hero-featured-body">
+                    <h2><?= e($featured['title']) ?></h2>
+                    <div class="meta">By <?= e($featured['author']) ?> &middot; <?= date('F j, Y', strtotime($featured['created_at'])) ?></div>
                 </div>
-            <?php endforeach; ?>
+            </a>
+            <?php if (!empty($side)): ?>
+            <div class="hero-side">
+                <?php foreach ($side as $a): ?>
+                    <a href="/article/<?= (int)$a['id'] ?>" class="hero-side-card">
+                        <?php if (!empty($a['image_url'])): ?>
+                            <img src="<?= e($a['image_url']) ?>" alt="" class="hero-side-img">
+                        <?php endif; ?>
+                        <div class="hero-side-title"><?= e($a['title']) ?></div>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
         </div>
+
+        <?php if (!empty($latestRow)): ?>
+        <section class="row-section">
+            <h3 class="row-title">Latest</h3>
+            <div class="row-scroll">
+                <?php foreach ($latestRow as $a): ?>
+                    <a href="/article/<?= (int)$a['id'] ?>" class="row-card">
+                        <?php if (!empty($a['image_url'])): ?>
+                            <img src="<?= e($a['image_url']) ?>" alt="" class="row-card-img">
+                        <?php else: ?>
+                            <div class="row-card-img row-card-img-placeholder"></div>
+                        <?php endif; ?>
+                        <div class="row-card-title"><?= e($a['title']) ?></div>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        </section>
+        <?php endif; ?>
+
+        <?php if (!empty($popular)): ?>
+        <section class="row-section">
+            <h3 class="row-title">Popular</h3>
+            <div class="row-scroll">
+                <?php foreach ($popular as $a): ?>
+                    <a href="/article/<?= (int)$a['id'] ?>" class="row-card">
+                        <?php if (!empty($a['image_url'])): ?>
+                            <img src="<?= e($a['image_url']) ?>" alt="" class="row-card-img">
+                        <?php else: ?>
+                            <div class="row-card-img row-card-img-placeholder"></div>
+                        <?php endif; ?>
+                        <div class="row-card-title"><?= e($a['title']) ?></div>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        </section>
         <?php endif; ?>
     <?php endif; ?>
 </main>
@@ -70,8 +119,7 @@ $articles = getAllArticles();
         if (window.scrollY > 50) {
             header.classList.add('shrink');
         } else {
-            
-header.classList.remove('shrink');
+            header.classList.remove('shrink');
         }
     });
 </script>
