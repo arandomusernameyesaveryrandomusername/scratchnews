@@ -26,3 +26,4 @@ jobs:
             **/.github/**
             **/schema.sql
             **/brevo_debug.log
+            **/assets/uploads/**
