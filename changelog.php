@@ -20,31 +20,31 @@ session_start();
 </header>
 <main>
     <h2>Changelog</h2>
-    <p>[Jul14] v0.12 - Added Dislike, Share, new icons for social features, and moved social features at the top
+    <p>[Jul14] v0.12 - Added Dislike, Share, new icons for social features, and moved social features at the top</p>
 <br>
-    [Jul12] v0.11 - Moderation features: report comments, ban users, delete users and ban IPs.
+    <p>[Jul12] v0.11 - Moderation features: report comments, ban users, delete users and ban IPs.</p>
 <br>  
-    v0.1 - Biggest update YET! Reply, reply to replies, website redesign (articles in different boxes), smooth size change, SEARCH BAR, unified menu for admins...
+    <p>v0.1 - Biggest update YET! Reply, reply to replies, website redesign (articles in different boxes), smooth size change, SEARCH BAR, unified menu for admins...</p>
 <br>
-    v0.09 - Added Feedback page, moving ID articles for admins
+    <p>v0.09 - Added Feedback page, moving ID articles for admins</p>
 <br>
-    [Jul10] v0.08 - Delete Account at bottom of page, non-admin users can submit articles and get results via email, fixed /article/id linking before id is defined
+    <p>[Jul10] v0.08 - Delete Account at bottom of page, non-admin users can submit articles and get results via email, fixed /article/id linking before id is defined</p>
 <br>
-    [Jul9] v0.07 - Email Verification
+    <p>[Jul9] v0.07 - Email Verification</p>
 <br>
-    [Jul8] v0.06 - Users, Delete Account at /delete-account
+    <p>[Jul8] v0.06 - Users, Delete Account at /delete-account</p>
 <br>
-    [Jul7/8?] v0.05 - Link Text, fixed Admin tab showing to non-admin users
+    <p>[Jul7/8?] v0.05 - Link Text, fixed Admin tab showing to non-admin users</p>
 <br>
-    [Jul7] v0.04 - Introduced account creation beyond admin, likes and comments. You will see a test comment below showing the new feature
+    <p>[Jul7] v0.04 - Introduced account creation beyond admin, likes and comments. You will see a test comment below showing the new feature</p>
 <br>
-    [Jul6] v0.03 - Formatting! Bold, Italic, Strikethrough, Headers, Colors, Color text and highlight color text!
+    <p>[Jul6] v0.03 - Formatting! Bold, Italic, Strikethrough, Headers, Colors, Color text and highlight color text!</p>
 <br>
-    v0.02 - Branding. Logo and top page color.
+    <p>v0.02 - Branding. Logo and top page color.</p>
 <br>
-    v0.01 - View articles and edit/create articles. Only the dev can create articles.
+    <p>v0.01 - View articles and edit/create articles. Only the dev can create articles.</p>
 <br>
-    [Jul5, 2026] v0.00 - Initial website, launched at scratchnews.freedev.app
+    <p>[Jul5, 2026] v0.00 - Initial website, launched at scratchnews.freedev.app</p>
 </main>
 <?php include __DIR__ . '/includes/footer.php'; ?>
 </body>
