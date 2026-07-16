@@ -6,6 +6,7 @@ $success = false;
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrf();
     $message = trim($_POST['message'] ?? '');
     if ($message === '') {
         $error = 'Please enter some feedback before submitting.';
@@ -41,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php else: ?>
         <?php if ($error): ?><div class="alert error"><?= e($error) ?></div><?php endif; ?>
         <form method="post">
+            <?= csrfField() ?>
             <label for="message">Your feedback</label>
             <textarea name="message" id="message" required></textarea>
             <button class="btn" type="submit">Submit</button>

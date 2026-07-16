@@ -10,6 +10,7 @@ session_start();
 $isBanned = !empty($_SESSION['reader_id']) && isUserBanned($_SESSION['reader_id']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $article && !empty($_SESSION['reader_id'])) {
+    requireCsrf();
     if (($_POST['action'] ?? '') === 'like' && !$isBanned) {
         toggleLike($article['id'], $_SESSION['reader_id']);
         header('Location: /article/' . $article['id']);
