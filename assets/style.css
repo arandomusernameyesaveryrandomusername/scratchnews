@@ -442,3 +442,43 @@ body.dark .row-card:hover .row-card-title { color: var(--brand-bright); }
 }
 a:visited { color: inherit; }
 .text-action:visited, .reply-toggle:visited, .share-option:visited { color: #cc8829; }
+header a:visited { color: #fff; }
+.admin-nav-menu a:visited, .user-nav-menu a:visited { color: #222; }
+.user-nav { position: relative; display: inline-block; }
+.user-nav-toggle {
+    background: none;
+    border: 1px solid #fff;
+    color: #fff;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+}
+.user-nav-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    margin-top: 0.5rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    min-width: 160px;
+    overflow: hidden;
+    z-index: 10;
+}
+.user-nav-menu.open { display: flex; flex-direction: column; }
+.user-nav-menu a {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0.6rem 1rem;
+    color: #222;
+    text-decoration: none;
+}
+.user-nav-menu a:hover { background: #f0f0f0; }
+body.dark .user-nav-menu { background: #1e2125; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+body.dark .user-nav-menu a { color: #e8e8e8; }
+body.dark .user-nav-menu a:hover { background: #26292e; }

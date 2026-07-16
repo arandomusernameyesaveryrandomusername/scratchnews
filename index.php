@@ -27,14 +27,19 @@ $popular = getPopularArticles(4);
 </form>
 <nav>
     <?php if (!empty($_SESSION['reader_username'])): ?>
-        <span>Hi, <?= e($_SESSION['reader_username']) ?>!</span>
-        <?php if (empty($_SESSION['is_admin'])): ?>
-        <a href="/submit.php">Submit Article</a>
-        <?php endif; ?>
-        <?php if (!empty($_SESSION['is_admin'])): ?>
-        <a href="/admin/">Admin</a>
-        <?php endif; ?>
-        <a href="/logout">Log Out</a>
+        <div class="user-nav">
+            <button class="user-nav-toggle" onclick="document.getElementById('userMenu').classList.toggle('open')"><?= e($_SESSION['reader_username']) ?> &#9662;</button>
+            <div id="userMenu" class="user-nav-menu">
+                <a href="/@<?= e($_SESSION['reader_username']) ?>">Profile</a>
+                <?php if (empty($_SESSION['is_admin'])): ?>
+                <a href="/submit.php">Submit Article</a>
+                <?php endif; ?>
+                <?php if (!empty($_SESSION['is_admin'])): ?>
+                <a href="/admin/">Admin</a>
+                <?php endif; ?>
+                <a href="/logout">Log Out</a>
+            </div>
+        </div>
     <?php else: ?>
         <a href="/login">Log In</a>
         <a href="/register">Sign Up</a>
@@ -112,6 +117,12 @@ $popular = getPopularArticles(4);
     <?php endif; ?>
 </main>
 <?php include __DIR__ . '/includes/footer.php'; ?>
+<script>
+document.addEventListener('click', function(e) {
+    var menu = document.getElementById('userMenu');
+    if (menu && !e.target.closest('.user-nav')) menu.classList.remove('open');
+});
+</script>
 <script>
     window.addEventListener('scroll', function() {
         var header = document.getElementById('siteHeader');
