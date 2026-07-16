@@ -440,3 +440,5 @@ body.dark .row-card:hover .row-card-title { color: var(--brand-bright); }
     .hero-featured-img { height: 160px; }
     .hero-side-img { height: 70px; }
 }
+a:visited { color: inherit; }
+.text-action:visited, .reply-toggle:visited, .share-option:visited { color: #cc8829; }
