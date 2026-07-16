@@ -53,7 +53,7 @@
     </main>
     <script>
         let storageItem = localStorage.getItem('theme');
-        let themeButton = document.querySelector('.theme');
+        class themeButton = document.querySelector('.theme');
 
         if (storageItem === null) {
             localStorage.setItem('theme', 'light');
@@ -74,6 +74,5 @@
             }
         });
     </script>
-    <script src="/includes/footer.js"></script>
 </body>
 </html>
