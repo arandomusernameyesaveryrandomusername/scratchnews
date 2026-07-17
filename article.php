@@ -99,6 +99,7 @@ if (!$article) {
             </div>
             <div class="engage-bar">
                 <form method="post">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="like">
                     <button class="icon-btn <?= $liked ? 'active' : '' ?>" type="submit" <?= (empty($_SESSION['reader_id']) || $isBanned) ? 'disabled' : '' ?> title="<?= $liked ? 'Unlike' : 'Like' ?>">
                         <img src="/assets/icons/<?= $liked ? 'like' : 'unlike' ?>.svg" alt="Like" class="icon-svg">
@@ -106,6 +107,7 @@ if (!$article) {
                     </button>
                 </form>
                 <form method="post">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="dislike">
                     <button class="icon-btn <?= $disliked ? 'active' : '' ?>" type="submit" <?= (empty($_SESSION['reader_id']) || $isBanned) ? 'disabled' : '' ?> title="<?= $disliked ? 'Remove dislike' : 'Dislike' ?>">
                         <img src="/assets/icons/<?= $disliked ? 'dislike' : 'undislike' ?>.svg" alt="Dislike" class="icon-svg">
@@ -131,6 +133,7 @@ if (!$article) {
     <h3>Comments (<?= count($comments) ?>)</h3>
     <?php if (!empty($_SESSION['reader_id']) && !$isBanned): ?>
         <form method="post">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="comment">
             <textarea name="content" placeholder="Add a comment..." required></textarea>
             <button class="btn btn-comment" type="submit">
