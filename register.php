@@ -6,17 +6,30 @@ if (!empty($_SESSION['reader_id'])) { header('Location: /'); exit; }
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrf();
+
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
     $username = trim($_POST['username'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
+    $honeypot = trim($_POST['website'] ?? '');
 
-    if ($username === '' || $email === '' || $password === '') {
+    if ($honeypot !== '') {
+        // Silently pretend it worked; bots that fill every field get nothing to learn from
+        header('Location: /?justregistered=1');
+        exit;
+    } elseif (tooManySignupAttempts($ip)) {
+        $error = 'Too many signup attempts from your network. Please try again later.';
+    } elseif ($username === '' || $email === '' || $password === '') {
         $error = 'All fields are required.';
     } elseif (!preg_match('/^[A-Za-z0-9_]{3,20}$/', $username)) {
         $error = 'Username must be 3-20 characters and can only contain letters, numbers, and underscores.';
     } elseif (strlen($password) < 6) {
         $error = 'Password must be at least 6 characters.';
+    } elseif (isDisposableEmail($email)) {
+        $error = 'Please use a permanent email address, not a temporary/disposable one.';
     } else {
+        logSignupAttempt($ip);
         $result = createUser($username, $email, $password);
         if ($result === 'duplicate') {
             $error = 'That username or email is already taken.';
@@ -52,6 +65,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <h2>Create a ScratchNews Account</h2>
     <?php if ($error): ?><div class="alert error"><?= e($error) ?></div><?php endif; ?>
     <form method="post">
+        <?= csrfField() ?>
+        <div style="position:absolute;left:-9999px;" aria-hidden="true">
+            <label for="website">Leave this field blank</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+        </div>
         <label for="username">Username</label>
         <input type="text" id="username" name="username" value="<?= e($_POST['username'] ?? '') ?>" required>
         <label for="email">Email</label>
