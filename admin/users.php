@@ -5,6 +5,7 @@ require_once __DIR__ . '/auth.php';
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrf();
     $userId = (int)($_POST['user_id'] ?? 0);
     $action = $_POST['action'] ?? '';
 
@@ -50,21 +51,29 @@ $users = getAllUsers();
                 <td><?= $u['is_banned'] ? '<span style="color:#a33; font-weight:600;">Banned</span>' : 'Active' ?></td>
                 <td class="actions" style="white-space:nowrap;">
                     <?php if (!$u['is_admin']): ?>
+                        <a href="#" onclick="if(confirm('Log in as @<?= e($u['username']) ?>?')) document.getElementById('imp<?= (int)$u['id'] ?>').submit(); return false;">Log In As</a>
+                        <form id="imp<?= (int)$u['id'] ?>" method="post" action="/admin/impersonate.php" style="display:none;">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
+                        </form>
                         <?php if ($u['is_banned']): ?>
                         <a href="#" onclick="document.getElementById('unban<?= (int)$u['id'] ?>').submit(); return false;">Unban</a>
                         <form id="unban<?= (int)$u['id'] ?>" method="post" style="display:none;">
+                            <?= csrfField() ?>
                             <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
                             <input type="hidden" name="action" value="unban">
                         </form>
                         <?php else: ?>
                         <a href="#" onclick="if(confirm('Ban this user?')) document.getElementById('ban<?= (int)$u['id'] ?>').submit(); return false;">Ban</a>
                         <form id="ban<?= (int)$u['id'] ?>" method="post" style="display:none;">
+                            <?= csrfField() ?>
                             <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
                             <input type="hidden" name="action" value="ban">
                         </form>
                         <?php endif; ?>
                         <a href="#" onclick="if(confirm('Delete this user?')) document.getElementById('del<?= (int)$u['id'] ?>').submit(); return false;">Delete</a>
                         <form id="del<?= (int)$u['id'] ?>" method="post" style="display:none;">
+                            <?= csrfField() ?>
                             <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
                             <input type="hidden" name="action" value="delete">
                         </form>
