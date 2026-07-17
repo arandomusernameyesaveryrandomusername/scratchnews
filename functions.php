@@ -73,20 +73,45 @@ function e(string $str): string {
 
 function logVisit(string $page): void {
     $db = getDB();
-    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-    $ua = substr($_SERVER['HTTP_USER_AGENT'] ?? 'unknown', 0, 255);
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
     $stmt = $db->prepare("INSERT INTO visits (ip_address, page, user_agent) VALUES (?, ?, ?)");
     $stmt->bind_param('sss', $ip, $page, $ua);
     $stmt->execute();
     $stmt->close();
+    $db->query("DELETE FROM visits WHERE id NOT IN (SELECT id FROM (SELECT id FROM visits ORDER BY id DESC LIMIT 200) AS keep)");
 }
 
-function getRecentVisits(int $limit = 200): array {
+function getRecentVisits(int $limit = 200, ?string $includeIp = null, ?string $excludeIp = null): array {
     $db = getDB();
-    $limit = max(1, min($limit, 1000));
-    $result = $db->query("SELECT * FROM visits ORDER BY visited_at DESC LIMIT {$limit}");
-    return $result->fetch_all(MYSQLI_ASSOC);
+    $sql = "SELECT * FROM visits WHERE 1=1";
+    $params = [];
+    $types = '';
+
+    if ($includeIp !== null && $includeIp !== '') {
+        $sql .= " AND ip_address = ?";
+        $params[] = $includeIp;
+        $types .= 's';
+    }
+    if ($excludeIp !== null && $excludeIp !== '') {
+        $sql .= " AND ip_address != ?";
+        $params[] = $excludeIp;
+        $types .= 's';
+    }
+
+    $sql .= " ORDER BY id DESC LIMIT ?";
+    $params[] = $limit;
+    $types .= 'i';
+
+    $stmt = $db->prepare($sql);
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $rows = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $rows;
 }
+
 // ---- Reader accounts ----
 function createUser(string $username, string $email, string $password) {
     $db = getDB();

@@ -1,6 +1,10 @@
 <?php
 require_once __DIR__ . '/auth.php';
-$visits = getRecentVisits(200);
+
+$includeIp = trim($_GET['include_ip'] ?? '');
+$excludeIp = trim($_GET['exclude_ip'] ?? '');
+
+$visits = getRecentVisits(200, $includeIp ?: null, $excludeIp ?: null);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -15,7 +19,21 @@ $visits = getRecentVisits(200);
 <?php require_once __DIR__ . '/nav.php'; ?>
 <main>
     <h2>Visitor Log</h2>
-    <p>Showing the most recent 200 visits.</p>
+    <p>Showing the most recent 200 visits (auto-trimmed on each new visit).</p>
+    <form method="get" style="display:flex; gap:1rem; align-items:flex-end; flex-wrap:wrap; margin-bottom:1.2rem;">
+        <div>
+            <label for="include_ip">Show only this IP</label>
+            <input type="text" id="include_ip" name="include_ip" value="<?= e($includeIp) ?>" placeholder="e.g. 89.28.123.202">
+        </div>
+        <div>
+            <label for="exclude_ip">Hide this IP</label>
+            <input type="text" id="exclude_ip" name="exclude_ip" value="<?= e($excludeIp) ?>" placeholder="e.g. your own IP">
+        </div>
+        <button class="btn" type="submit" style="margin-top:0;">Filter</button>
+        <?php if ($includeIp || $excludeIp): ?>
+        <a href="/admin/visits.php" class="btn secondary" style="margin-top:0;">Clear</a>
+        <?php endif; ?>
+    </form>
     <table>
         <tr><th>Time</th><th>IP Address</th><th>Page</th><th>User Agent</th></tr>
         <?php foreach ($visits as $v): ?>
