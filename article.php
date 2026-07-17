@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/functions.php';
+sendNoCacheHeaders();
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 logVisit('/article/' . $id);
