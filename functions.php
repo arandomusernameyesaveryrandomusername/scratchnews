@@ -802,3 +802,45 @@ function sendNoCacheHeaders(): void {
     header('Pragma: no-cache');
     header('Expires: 0');
 }
+
+function impersonateUser(int $adminId, int $targetUserId): bool {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
+    $stmt->bind_param('i', $targetUserId);
+    $stmt->execute();
+    $target = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if (!$target) return false;
+
+    $stmt = $db->prepare("INSERT INTO impersonation_log (admin_id, target_user_id, started_at) VALUES (?, ?, NOW())");
+    $stmt->bind_param('ii', $adminId, $targetUserId);
+    $stmt->execute();
+    $stmt->close();
+
+    $_SESSION['impersonator_admin_id'] = $adminId;
+    $_SESSION['impersonator_admin_username'] = $_SESSION['reader_username'];
+    $_SESSION['reader_id'] = $target['id'];
+    $_SESSION['reader_username'] = $target['username'];
+    $_SESSION['is_admin'] = (bool)$target['is_admin'];
+    $_SESSION['dark_mode'] = (bool)$target['dark_mode'];
+    return true;
+}
+
+function stopImpersonation(): bool {
+    if (empty($_SESSION['impersonator_admin_id'])) return false;
+    $db = getDB();
+    $adminId = $_SESSION['impersonator_admin_id'];
+    $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
+    $stmt->bind_param('i', $adminId);
+    $stmt->execute();
+    $admin = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if (!$admin) return false;
+
+    $_SESSION['reader_id'] = $admin['id'];
+    $_SESSION['reader_username'] = $admin['username'];
+    $_SESSION['is_admin'] = (bool)$admin['is_admin'];
+    $_SESSION['dark_mode'] = (bool)$admin['dark_mode'];
+    unset($_SESSION['impersonator_admin_id'], $_SESSION['impersonator_admin_username']);
+    return true;
+}
