@@ -868,27 +868,3 @@ function logSignupAttempt(string $ip): void {
     $stmt->execute();
     $stmt->close();
 }
-
-function isDisposableEmail(string $email): bool {
-    $blocked = ['gicont.com', 'ezimb.com', 'mailinator.com', 'tempmail.com', '10minutemail.com', 'guerrillamail.com', 'yopmail.com', 'trashmail.com', 'discard.email', 'getnada.com'];
-    $domain = strtolower(substr(strrchr($email, '@'), 1));
-    return in_array($domain, $blocked, true);
-}
-
-function tooManySignupAttempts(string $ip, int $maxAttempts = 5, int $windowMinutes = 10): bool {
-    $db = getDB();
-    $stmt = $db->prepare("SELECT COUNT(*) AS c FROM signup_attempts WHERE ip = ? AND created_at > (NOW() - INTERVAL ? MINUTE)");
-    $stmt->bind_param('si', $ip, $windowMinutes);
-    $stmt->execute();
-    $count = $stmt->get_result()->fetch_assoc()['c'];
-    $stmt->close();
-    return $count >= $maxAttempts;
-}
-
-function logSignupAttempt(string $ip): void {
-    $db = getDB();
-    $stmt = $db->prepare("INSERT INTO signup_attempts (ip, created_at) VALUES (?, NOW())");
-    $stmt->bind_param('s', $ip);
-    $stmt->execute();
-    $stmt->close();
-}
