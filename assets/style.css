@@ -490,3 +490,10 @@ body.dark .user-nav-menu a:hover { background: #26292e; }
     font-weight: 600;
 }
 .impersonation-banner .text-action { color: #fff; text-decoration: underline; }
+.impersonation-form {
+    display: inline !important;
+    background: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    max-width: none !important;
+}
