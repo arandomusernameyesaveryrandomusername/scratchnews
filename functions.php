@@ -183,6 +183,7 @@ function renderCommentThread(array $comment, bool $canReply, int $depth = 0, boo
         $formId = 'reply-form-' . (int)$comment['id'];
         $html .= '<button type="button" class="reply-toggle" title="Reply" onclick="document.getElementById(\'' . $formId . '\').classList.toggle(\'open\')"><img src="/assets/icons/reply.svg" class="icon-svg-sm" alt=""> Reply</button>';
         $html .= '<form method="post" class="reply-form" id="' . $formId . '">';
+        $html .= csrfField();
         $html .= '<input type="hidden" name="action" value="comment">';
         $html .= '<input type="hidden" name="parent_id" value="' . (int)$comment['id'] . '">';
         $html .= '<textarea name="content" placeholder="Write a reply..." required></textarea>';
@@ -192,6 +193,7 @@ function renderCommentThread(array $comment, bool $canReply, int $depth = 0, boo
 
     if ($canReport) {
         $html .= ' <form method="post" class="report-form" onsubmit="return confirm(\'Report this comment for review?\');">';
+        $html .= csrfField();
         $html .= '<input type="hidden" name="action" value="report">';
         $html .= '<input type="hidden" name="comment_id" value="' . (int)$comment['id'] . '">';
         $html .= '<button type="submit" class="reply-toggle" title="Report"><img src="/assets/icons/report.svg" class="icon-svg-sm" alt=""> Report</button>';
