@@ -46,6 +46,15 @@ $popular = getPopularArticles(4);
     <?php endif; ?>
     </nav>
 </header>
+<?php if (!empty($_SESSION['impersonator_admin_username'])): ?>
+<div class="impersonation-banner">
+    Viewing as <strong><?= e($_SESSION['reader_username']) ?></strong> (impersonating)
+    <form method="post" action="/stop-impersonating.php" style="display:inline;">
+        <?= csrfField() ?>
+        <button type="submit" class="text-action">Return to Admin</button>
+    </form>
+</div>
+<?php endif; ?>
 <main class="home-main">
     <?php if (empty($articles)): ?>
         <p>No articles yet. Log in to the <a href="/admin/">login panel</a> to publish the first one.</p>

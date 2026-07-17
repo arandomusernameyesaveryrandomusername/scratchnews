@@ -13,6 +13,7 @@
             <a href="/admin/move.php">Move Article</a>
             <a href="/admin/reports.php">Reports</a>
             <a href="/admin/users.php">Users</a>
+            <a href="/admin/impersonation-log.php">Impersonation Log</a>
         </div>
     </nav>
 </header>

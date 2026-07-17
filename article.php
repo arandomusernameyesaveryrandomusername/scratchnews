@@ -82,6 +82,15 @@ if (!$article) {
         <a href="/register">Sign Up</a>
     <?php endif; ?>
     </nav></header>
+<?php if (!empty($_SESSION['impersonator_admin_username'])): ?>
+<div class="impersonation-banner">
+    Viewing as <strong><?= e($_SESSION['reader_username']) ?></strong> (impersonating)
+    <form method="post" action="/stop-impersonating.php" style="display:inline;">
+        <?= csrfField() ?>
+        <button type="submit" class="text-action">Return to Admin</button>
+    </form>
+</div>
+<?php endif; ?>
 <main>
     <a class="back-link" href="/">&larr; Back to all articles</a>
     <?php if ($article): ?>

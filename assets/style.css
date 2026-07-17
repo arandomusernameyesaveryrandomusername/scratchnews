@@ -482,3 +482,11 @@ header a:visited { color: #fff; }
 body.dark .user-nav-menu { background: #1e2125; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
 body.dark .user-nav-menu a { color: #e8e8e8; }
 body.dark .user-nav-menu a:hover { background: #26292e; }
+.impersonation-banner {
+    background: #d9392a;
+    color: #fff;
+    text-align: center;
+    padding: 0.6rem 1rem;
+    font-weight: 600;
+}
+.impersonation-banner .text-action { color: #fff; text-decoration: underline; }
