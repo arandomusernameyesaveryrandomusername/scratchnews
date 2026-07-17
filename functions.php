@@ -658,6 +658,16 @@ function anonymizeUser($userId) {
     $stmt->bind_param("sssi", $anonUsername, $anonEmail, $unusableHash, $userId);
     $stmt->execute();
     $stmt->close();
+
+    $stmt = $db->prepare("DELETE FROM likes WHERE user_id = ?");
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $stmt->close();
+
+    $stmt = $db->prepare("DELETE FROM dislikes WHERE user_id = ?");
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $stmt->close();
 }
 
 // Find the lowest unused article ID (fills gaps left by moved/deleted articles)
