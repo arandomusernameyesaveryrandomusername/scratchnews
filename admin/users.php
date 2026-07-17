@@ -24,6 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $users = getAllUsers();
+$users = array_values(array_filter($users, fn($u) => strpos($u['username'], 'deleted_user_') !== 0));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -37,9 +38,9 @@ $users = getAllUsers();
 <body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
 <?php require_once __DIR__ . '/nav.php'; ?>
 <main>
-    <h2>Users (<?= count($users) ?>)</h2>
+    <h2 style="text-align:center;">Users (<?= count($users) ?>)</h2>
     <?php if ($message): ?><div class="alert success"><?= e($message) ?></div><?php endif; ?>
-    <table>
+    <table style="margin: 0 auto;">
         <tr><th>Username</th><th>Email</th><th>Admin</th><th>Verified</th><th>Joined</th><th>Status</th><th>Actions</th></tr>
         <?php foreach ($users as $u): ?>
             <tr>

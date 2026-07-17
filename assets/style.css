@@ -108,7 +108,7 @@ form textarea { min-height: 200px; resize: vertical; }
 table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; }
 table th, table td { text-align: left; padding: 0.8rem; border-bottom: 1px solid #eee; }
 table th { background: #fafafa; }
-.actions a { margin-right: 0.8rem; font-weight: 600; text-decoration: none; }
+.actions a { margin-right: 0.8rem; font-weight: 600; text-decoration: none; color: var(--accent-blue); }
 .alert { padding: 0.8rem 1.2rem; border-radius: 6px; margin-bottom: 1rem; }
 .alert.error { background: #ffe1e1; color: #a30000; }
 .alert.success { background: #e1ffe4; color: #0a7d1f; }
