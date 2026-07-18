@@ -585,7 +585,7 @@ function getAllFeedback() {
 function searchArticles(string $query): array {
     $db = getDB();
     $like = '%' . $query . '%';
-    $stmt = $db->prepare("SELECT * FROM articles WHERE title LIKE ? OR summary LIKE ? OR content LIKE ? ORDER BY created_at DESC");
+    $stmt = $db->prepare("SELECT * FROM articles WHERE status = 'published' AND (title LIKE ? OR summary LIKE ? OR content LIKE ?) ORDER BY created_at DESC");
     $stmt->bind_param('sss', $like, $like, $like);
     $stmt->execute();
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -765,6 +765,7 @@ function getPopularArticles(int $limit = 12): array {
         "SELECT a.*, COUNT(l.article_id) AS like_count
          FROM articles a
          LEFT JOIN likes l ON l.article_id = a.id
+         WHERE a.status = 'published'
          GROUP BY a.id
          ORDER BY like_count DESC, a.created_at DESC
          LIMIT ?"
