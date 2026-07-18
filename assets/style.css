@@ -449,12 +449,11 @@ header a:visited { color: #fff; }
     background: none;
     border: 1px solid #fff;
     color: #fff;
-    padding: 0.3rem 0.6rem;
+    padding: 0.4rem 0.8rem;
     border-radius: 6px;
     cursor: pointer;
     font-family: inherit;
     font-weight: 600;
-    font-size: 0.85rem;
 }
 .user-nav-menu {
     display: none;
