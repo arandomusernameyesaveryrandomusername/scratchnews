@@ -40,7 +40,7 @@ $users = array_values(array_filter($users, fn($u) => strpos($u['username'], 'del
 <main>
     <h2 style="text-align:center;">Users (<?= count($users) ?>)</h2>
     <?php if ($message): ?><div class="alert success"><?= e($message) ?></div><?php endif; ?>
-    <table style="margin: 0 auto;">
+    <table style="max-width: 700px; margin: 0 auto;">
         <tr><th>Username</th><th>Email</th><th>Admin</th><th>Verified</th><th>Joined</th><th>Status</th><th>Actions</th></tr>
         <?php foreach ($users as $u): ?>
             <tr>
