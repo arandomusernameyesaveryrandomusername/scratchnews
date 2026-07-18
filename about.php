@@ -21,7 +21,7 @@ session_start();
 <main>
     <h2>About</h2>
     <div style="text-align: center;">
-        <img src="your-image.jpg" alt="Centered Image">
+        <img src="scratchnews.webp" alt="Centered Image">
     </div>
     <p>ScratchNews is a news platform about Scratch-related news, made to prevent misinformation and disinformation among the Scratch community.
         It transmits information in the form of articles, has many social features and created by Scratchers, for Scratchers.</br>
