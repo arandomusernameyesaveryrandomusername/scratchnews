@@ -109,6 +109,7 @@ table { width: 100%; border-collapse: collapse; background: #fff; border-radius:
 table th, table td { text-align: left; padding: 0.8rem; border-bottom: 1px solid #eee; }
 table th { background: #fafafa; }
 .actions a { margin-right: 0.8rem; font-weight: 600; text-decoration: none; color: var(--accent-blue); }
+.actions a:visited { color: var(--accent-blue); }
 .alert { padding: 0.8rem 1.2rem; border-radius: 6px; margin-bottom: 1rem; }
 .alert.error { background: #ffe1e1; color: #a30000; }
 .alert.success { background: #e1ffe4; color: #0a7d1f; }
@@ -433,7 +434,6 @@ body.dark .row-title { color: #f0f0f0; }
 body.dark .hero-featured:hover h2,
 body.dark .hero-side-card:hover .hero-side-title,
 body.dark .row-card:hover .row-card-title { color: var(--brand-bright); }
-
 @media (max-width: 700px) {
     .hero { flex-direction: column; }
     .hero-side { flex-direction: row; }
