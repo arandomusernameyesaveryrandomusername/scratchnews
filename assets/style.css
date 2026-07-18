@@ -6,6 +6,7 @@ body {
     color: #1c1c1c;
     line-height: 1.6;
 }
+body.no-scroll { overflow: hidden; }
 header {
     background: #d99d4a; /* Scratch orange */
     padding: 1.2rem 1.5rem;
@@ -16,7 +17,6 @@ header {
     position: sticky;
     top: 0;
     z-index: 100;
-    position: relative;
     transition: padding 0.4s ease;
 }
 header.shrink { padding: 1.2rem 1.5rem; }

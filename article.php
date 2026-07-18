@@ -184,18 +184,29 @@ document.addEventListener('click', function(e) {
         if (!img) return;
         lbImg.src = img.src;
         lbImg.classList.remove('zoomed');
+        lbImg.style.transformOrigin = 'center center';
         overlay.classList.add('open');
+        document.body.classList.add('no-scroll');
     });
 
     lbImg.addEventListener('click', function(e) {
         e.stopPropagation();
-        lbImg.classList.toggle('zoomed');
+        if (!lbImg.classList.contains('zoomed')) {
+            var rect = lbImg.getBoundingClientRect();
+            var xPct = ((e.clientX - rect.left) / rect.width) * 100;
+            var yPct = ((e.clientY - rect.top) / rect.height) * 100;
+            lbImg.style.transformOrigin = xPct + '% ' + yPct + '%';
+            lbImg.classList.add('zoomed');
+        } else {
+            lbImg.classList.remove('zoomed');
+        }
     });
 
     function closeLightbox() {
         overlay.classList.remove('open');
         lbImg.src = '';
         lbImg.classList.remove('zoomed');
+        document.body.classList.remove('no-scroll');
     }
     closeBtn.addEventListener('click', closeLightbox);
     overlay.addEventListener('click', function(e) {
