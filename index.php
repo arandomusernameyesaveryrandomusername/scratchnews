@@ -132,15 +132,5 @@ document.addEventListener('click', function(e) {
     if (menu && !e.target.closest('.user-nav')) menu.classList.remove('open');
 });
 </script>
-<script>
-    window.addEventListener('scroll', function() {
-        var header = document.getElementById('siteHeader');
-        if (window.scrollY > 50) {
-            header.classList.add('shrink');
-        } else {
-            header.classList.remove('shrink');
-        }
-    });
-</script>
 </body>
 </html>

@@ -55,11 +55,5 @@ $results = $query !== '' ? searchArticles($query) : [];
     <?php endif; ?>
 </main>
 <?php include __DIR__ . '/includes/footer.php'; ?>
-<script>
-    window.addEventListener('scroll', function() {
-        var header = document.getElementById('siteHeader');
-        if (window.scrollY > 50) { header.classList.add('shrink'); } else { header.classList.remove('shrink'); }
-    });
-</script>
 </body>
 </html>

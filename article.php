@@ -222,16 +222,6 @@ document.addEventListener('click', function(e) {
 })();
 </script>
 <script>
-    window.addEventListener('scroll', function() {
-        var header = document.getElementById('siteHeader');
-        if (window.scrollY > 50) {
-            header.classList.add('shrink');
-        } else {
-            header.classList.remove('shrink');
-        }
-    });
-</script>
-<script>
 (function() {
     var shareBtn = document.getElementById('shareBtn');
     var shareMenu = document.getElementById('shareMenu');
