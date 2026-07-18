@@ -37,7 +37,7 @@ $users = array_values(array_filter($users, fn($u) => strpos($u['username'], 'del
 </head>
 <body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
 <?php require_once __DIR__ . '/nav.php'; ?>
-<main>
+<main style="max-width: 1050px;">
     <h2 style="text-align:center;">Users (<?= count($users) ?>)</h2>
     <?php if ($message): ?><div class="alert success"><?= e($message) ?></div><?php endif; ?>
     <div style="display:flex; justify-content:center; overflow-x:auto;">
