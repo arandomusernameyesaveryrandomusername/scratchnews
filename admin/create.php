@@ -8,15 +8,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $content = trim($_POST['content'] ?? '');
     $author = trim($_POST['author'] ?? 'ScratchNews Staff');
 
-    if ($title === '' || $summary === '' || $content === '') {
-        $error = 'Title, summary, and content are all required.';
+    $status = ($_POST['status'] ?? 'published') === 'draft' ? 'draft' : 'published';
+
+    if ($title === '') {
+        $error = 'A title is required.';
+    } elseif ($status === 'published' && ($summary === '' || $content === '')) {
+        $error = 'Summary and content are required to publish. Save as draft if not ready.';
     } else {
         try {
             $imageUrl = null;
             if (!empty($_FILES['cover_image']['tmp_name'])) {
                 $imageUrl = saveUploadedImage($_FILES['cover_image']);
             }
-            $id = createArticle($title, $summary, $content, $author ?: 'ScratchNews Staff', $imageUrl);
+            $id = createArticle($title, $summary, $content, $author ?: 'ScratchNews Staff', $imageUrl, $status);
             header('Location: /login/?created=' . $id);
             exit;
         } catch (RuntimeException $e) {
@@ -46,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <input type="text" id="title" name="title" value="<?= e($_POST['title'] ?? '') ?>" required>
 
         <label for="summary">Summary</label>
-        <input type="text" id="summary" name="summary" value="<?= e($_POST['summary'] ?? '') ?>" required>
+        <input type="text" id="summary" name="summary" value="<?= e($_POST['summary'] ?? '') ?>">
 
         <label for="author">Author</label>
         <input type="text" id="author" name="author" value="<?= e($_POST['author'] ?? 'ScratchNews Staff') ?>">
@@ -79,7 +83,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div id="editor-container"><?= $_POST['content'] ?? '' ?></div>
 <textarea id="content" name="content" style="display:none;"></textarea>
 
-        <button class="btn" type="submit">Publish Article</button>
+        <button class="btn" type="submit" name="status" value="published">Publish Article</button>
+        <button class="btn secondary" type="submit" name="status" value="draft">Save as Draft</button>
         <a href="/login/" class="btn secondary">Cancel</a>
     </form>
 </main>

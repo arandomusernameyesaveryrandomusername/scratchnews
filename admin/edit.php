@@ -16,8 +16,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $content = trim($_POST['content'] ?? '');
     $author = trim($_POST['author'] ?? 'ScratchNews Staff');
 
-    if ($title === '' || $summary === '' || $content === '') {
-        $error = 'Title, summary, and content are all required.';
+    $status = ($_POST['status'] ?? 'published') === 'draft' ? 'draft' : 'published';
+
+    if ($title === '') {
+        $error = 'A title is required.';
+    } elseif ($status === 'published' && ($summary === '' || $content === '')) {
+        $error = 'Summary and content are required to publish. Save as draft if not ready.';
     } else {
         try {
             $imageUrl = $article['image_url'] ?? null;
@@ -32,14 +36,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $imageUrl = $newUrl;
                 }
             }
-            updateArticle($id, $title, $summary, $content, $author ?: 'ScratchNews Staff', $imageUrl);
+            updateArticle($id, $title, $summary, $content, $author ?: 'ScratchNews Staff', $imageUrl, $status);
             header('Location: /admin/?updated=' . $id);
             exit;
         } catch (RuntimeException $e) {
             $error = $e->getMessage();
         }
     }
-    $article = ['id' => $id, 'title' => $title, 'summary' => $summary, 'content' => $content, 'author' => $author, 'image_url' => $imageUrl ?? null];
+    $article = ['id' => $id, 'title' => $title, 'summary' => $summary, 'content' => $content, 'author' => $author, 'image_url' => $imageUrl ?? null, 'status' => $status];
 }
 ?>
 <!DOCTYPE html>
@@ -62,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <input type="text" id="title" name="title" value="<?= e($article['title']) ?>" required>
 
         <label for="summary">Summary (shown on homepage)</label>
-        <input type="text" id="summary" name="summary" value="<?= e($article['summary']) ?>" required>
+        <input type="text" id="summary" name="summary" value="<?= e($article['summary']) ?>">
 
         <label for="author">Author</label>
         <input type="text" id="author" name="author" value="<?= e($article['author']) ?>">
@@ -101,7 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div id="editor-container"><?= $article['content'] ?></div>
 <textarea id="content" name="content" style="display:none;"></textarea>
 
-        <button class="btn" type="submit">Save Changes</button>
+        <button class="btn" type="submit" name="status" value="published">Publish</button>
+        <button class="btn secondary" type="submit" name="status" value="draft">Save as Draft</button>
         <a href="/admin/" class="btn secondary">Cancel</a>
     </form>
 </main>

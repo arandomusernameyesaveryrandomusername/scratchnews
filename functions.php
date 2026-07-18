@@ -1,10 +1,12 @@
 <?php
 require_once __DIR__ . '/config.php';
 
-// Get all articles, newest first
-function getAllArticles(): array {
+function getAllArticles(bool $includeDrafts = false): array {
     $db = getDB();
-    $result = $db->query("SELECT * FROM articles ORDER BY created_at DESC");
+    $sql = "SELECT * FROM articles";
+    if (!$includeDrafts) $sql .= " WHERE status = 'published'";
+    $sql .= " ORDER BY created_at DESC";
+    $result = $db->query($sql);
     return $result->fetch_all(MYSQLI_ASSOC);
 }
 
@@ -29,24 +31,23 @@ function sanitizeArticleHtml(string $html): string {
     return $html;
 }
 
-// Create a new article, returns the new ID
-function createArticle(string $title, string $summary, string $content, string $author, ?string $imageUrl = null): int {
+function createArticle(string $title, string $summary, string $content, string $author, ?string $imageUrl = null, string $status = 'published'): int {
     $db = getDB();
     $content = sanitizeArticleHtml($content);
     $id = getNextArticleId();
-    $stmt = $db->prepare("INSERT INTO articles (id, title, summary, content, author, image_url) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param('isssss', $id, $title, $summary, $content, $author, $imageUrl);
+    $stmt = $db->prepare("INSERT INTO articles (id, title, summary, content, author, image_url, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param('issssss', $id, $title, $summary, $content, $author, $imageUrl, $status);
     $stmt->execute();
     $stmt->close();
     return $id;
 }
 
 // Update an existing article
-function updateArticle(int $id, string $title, string $summary, string $content, string $author, ?string $imageUrl = null): bool {
+function updateArticle(int $id, string $title, string $summary, string $content, string $author, ?string $imageUrl = null, string $status = 'published'): bool {
     $db = getDB();
     $content = sanitizeArticleHtml($content);
-    $stmt = $db->prepare("UPDATE articles SET title = ?, summary = ?, content = ?, author = ?, image_url = ? WHERE id = ?");
-    $stmt->bind_param('sssssi', $title, $summary, $content, $author, $imageUrl, $id);
+    $stmt = $db->prepare("UPDATE articles SET title = ?, summary = ?, content = ?, author = ?, image_url = ?, status = ? WHERE id = ?");
+    $stmt->bind_param('ssssssi', $title, $summary, $content, $author, $imageUrl, $status, $id);
     $ok = $stmt->execute();
     $stmt->close();
     return $ok;
