@@ -162,12 +162,49 @@ if (!$article) {
         <div class="alert error">Article #<?= (int)$id ?> was not found. It may have been removed.</div>
     <?php endif; ?>
 </main>
+<div class="lightbox-overlay" id="lightboxOverlay">
+    <button type="button" class="lightbox-close" id="lightboxClose">&times;</button>
+    <img src="" alt="" id="lightboxImg">
+</div>
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <script>
 document.addEventListener('click', function(e) {
     var menu = document.getElementById('userMenu');
     if (menu && !e.target.closest('.user-nav')) menu.classList.remove('open');
 });
+</script>
+<script>
+(function() {
+    var overlay = document.getElementById('lightboxOverlay');
+    var lbImg = document.getElementById('lightboxImg');
+    var closeBtn = document.getElementById('lightboxClose');
+
+    document.addEventListener('click', function(e) {
+        var img = e.target.closest('.content img, .article-cover-image');
+        if (!img) return;
+        lbImg.src = img.src;
+        lbImg.classList.remove('zoomed');
+        overlay.classList.add('open');
+    });
+
+    lbImg.addEventListener('click', function(e) {
+        e.stopPropagation();
+        lbImg.classList.toggle('zoomed');
+    });
+
+    function closeLightbox() {
+        overlay.classList.remove('open');
+        lbImg.src = '';
+        lbImg.classList.remove('zoomed');
+    }
+    closeBtn.addEventListener('click', closeLightbox);
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) closeLightbox();
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeLightbox();
+    });
+})();
 </script>
 <script>
     window.addEventListener('scroll', function() {
