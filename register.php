@@ -24,6 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'All fields are required.';
     } elseif (!preg_match('/^[A-Za-z0-9_]{3,20}$/', $username)) {
         $error = 'Username must be 3-20 characters and can only contain letters, numbers, and underscores.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = 'Please enter a valid email address.';
     } elseif (strlen($password) < 6) {
         $error = 'Password must be at least 6 characters.';
     } elseif (isDisposableEmail($email)) {
@@ -73,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="username">Username</label>
         <input type="text" id="username" name="username" value="<?= e($_POST['username'] ?? '') ?>" required>
         <label for="email">Email</label>
-        <input type="text" id="email" name="email" value="<?= e($_POST['email'] ?? '') ?>" required>
+        <input type="email" id="email" name="email" value="<?= e($_POST['email'] ?? '') ?>" required>
         <label for="password">Password</label>
         <input type="password" id="password" name="password" required>
         <button class="btn" type="submit">Sign Up</button>
