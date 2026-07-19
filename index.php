@@ -71,7 +71,7 @@ $popular = getPopularArticles(4);
                 <?php endif; ?>
                 <div class="hero-featured-body">
                     <h2><?= e($featured['title']) ?></h2>
-                    <div class="meta">By <?= e($featured['author']) ?> &middot; <?= date('F j, Y', strtotime($featured['created_at'])) ?></div>
+                    <div class="meta">By <?= e($featured['author']) ?> &middot; <?= formatSiteDate($featured['created_at']) ?></div>
                 </div>
             </a>
             <?php if (!empty($side)): ?>
