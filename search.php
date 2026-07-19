@@ -48,7 +48,7 @@ $results = $query !== '' ? searchArticles($query) : [];
                 <div class="article-card">
                     <h2><a href="/article/<?= (int)$a['id'] ?>"><?= e($a['title']) ?></a></h2>
                     <div class="meta">By <?= e($a['author']) ?> &middot; <?= date('F j, Y', strtotime($a['created_at'])) ?></div>
-                    <div class="summary"><?= e($a['summary']) ?></div>
+                    <?php if (!empty($a['summary'])): ?><div class="summary"><?= e($a['summary']) ?></div><?php endif; ?>
                 </div>
             <?php endforeach; ?>
         </div>
