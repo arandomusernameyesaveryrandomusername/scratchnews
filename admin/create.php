@@ -12,8 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($title === '') {
         $error = 'A title is required.';
-    } elseif ($status === 'published' && ($summary === '' || $content === '')) {
-        $error = 'Summary and content are required to publish. Save as draft if not ready.';
+    } elseif ($status === 'published' && $content === '') {
+        $error = 'Content is required to publish. Save as draft if not ready.';
     } else {
         try {
             $imageUrl = null;
