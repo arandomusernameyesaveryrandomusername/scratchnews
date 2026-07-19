@@ -41,7 +41,7 @@ $results = $query !== '' ? searchArticles($query) : [];
             <a href="/login">Log In</a>
             <a href="/register">Sign Up</a>
         <?php endif; ?>
-</nav>
+    </nav>
 </header>
 <main class="home-main">
     <h2>Search results<?= $query !== '' ? ' for "' . e($query) . '"' : '' ?></h2>
@@ -67,32 +67,3 @@ $results = $query !== '' ? searchArticles($query) : [];
                     <?php endif; ?>
                     <div class="search-result-body">
                         <div>
-                            <div class="search-result-title"><?= e($a['title']) ?></div>
-                            <div class="meta">By <?= e($a['author']) ?> &middot; <?= date('F j, Y', strtotime($a['created_at'])) ?></div>
-                            <?php if ($desc !== ''): ?><div class="search-result-desc"><?= e($desc) ?></div><?php endif; ?>
-                        </div>
-                        <div class="search-result-stats">
-                            <span><img src="/assets/icons/unlike.svg" class="icon-svg-sm" alt=""><?= $likeCount ?></span>
-                            <span><img src="/assets/icons/undislike.svg" class="icon-svg-sm" alt=""><?= $dislikeCount ?></span>
-                            <span><img src="/assets/icons/comment.svg" class="icon-svg-sm" alt=""><?= $commentCount ?></span>
-                        </div>
-                    </div>
-                </a>
-            <?php endforeach; ?>
-                                                                                                                                                                       </div>
-                </a>
-            <?php endforeach; ?>
-</div>
-            <?php endforeach; ?>
-        </div>
-    <?php endif; ?>
-</main>
-<?php include __DIR__ . '/includes/footer.php'; ?>
-<script>
-document.addEventListener('click', function(e) {
-    var menu = document.getElementById('userMenu');
-    if (menu && !e.target.closest('.user-nav')) menu.classList.remove('open');
-});
-</script>
-</body>
-</html>
