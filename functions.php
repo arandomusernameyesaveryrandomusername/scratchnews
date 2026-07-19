@@ -917,3 +917,13 @@ function logSignupAttempt(string $ip): void {
     $stmt->execute();
     $stmt->close();
 }
+
+function formatSiteDate(string $datetime, string $format = 'F j, Y'): string {
+    try {
+        $dt = new DateTime($datetime, new DateTimeZone('UTC'));
+    } catch (Exception $e) {
+        return $datetime;
+    }
+    $dt->setTimezone(new DateTimeZone('Europe/Chisinau'));
+    return $dt->format($format);
+}
