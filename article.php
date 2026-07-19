@@ -136,7 +136,7 @@ if (!$article) {
                     </button>
                     <div class="share-menu" id="shareMenu">
                         <button type="button" class="share-option" data-share="copy">Copy Link</button>
-                        <button type="button" class="share-option" data-share="discord">Share to Discord</button>
+                        <button type="button" class="share-option" data-share="discord">Share to Scratch/Discord</button>
                         <button type="button" class="share-option" data-share="more" id="shareMoreBtn" style="display:none;">More...</button>
                     </div>
                 </div>
@@ -249,7 +249,7 @@ document.addEventListener('click', function(e) {
                 navigator.share({ title: pageTitle, url: pageUrl }).catch(function() {});
                 return;
             }
-            var text = type === 'discord' ? ('Check out "' + pageTitle + '" on ScratchNews: ' + pageUrl) : pageUrl;
+            var text = type === 'discord' ? ('("' + pageTitle + '") on ScratchNews: ' + pageUrl) : pageUrl;
             navigator.clipboard.writeText(text).then(function() {
                 var original = btn.textContent;
                 btn.textContent = 'Copied!';
