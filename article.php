@@ -126,7 +126,10 @@ if (!$article) {
                         <img src="/assets/icons/<?= $disliked ? 'dislike' : 'undislike' ?>.svg" alt="Dislike" class="icon-svg">
                         <span class="icon-count"><?= $dislikeCount ?></span>
                     </button>
-                </form>
+    </form><a href="#comments" class="icon-btn" title="Jump to comments" style="text-decoration:none;">
+                    <img src="/assets/icons/comment.svg" alt="Comments" class="icon-svg">
+                    <span class="icon-count"><?= count($comments) ?></span>
+                </a>
                 <div class="share-wrap">
                     <button type="button" class="icon-btn" id="shareBtn" title="Share">
                         <img src="/assets/icons/share.svg" alt="Share" class="icon-svg">
@@ -142,7 +145,7 @@ if (!$article) {
                 <p class="meta">Your account is restricted from liking and commenting.</p>
             <?php endif; ?>
             <div class="content"><?= $article['content'] ?></div>
-            <div class="comments-section">
+            <div class="comments-section" id="comments">
     <h3>Comments (<?= count($comments) ?>)</h3>
     <?php if (!empty($_SESSION['reader_id']) && !$isBanned): ?>
         <form method="post">
