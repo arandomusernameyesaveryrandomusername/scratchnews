@@ -127,17 +127,6 @@ $popular = getPopularArticles(4);
 </main>
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <script>
-document.querySelectorAll('time.local-date, time.local-datetime').forEach(function(el) {
-    var d = new Date(el.getAttribute('datetime'));
-    if (isNaN(d.getTime())) return;
-    if (el.classList.contains('local-datetime')) {
-        el.textContent = d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-    } else {
-        el.textContent = d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-    }
-});
-</script>
-<script>
 document.addEventListener('click', function(e) {
     var menu = document.getElementById('userMenu');
     if (menu && !e.target.closest('.user-nav')) menu.classList.remove('open');
