@@ -88,5 +88,11 @@ $results = $query !== '' ? searchArticles($query) : [];
     <?php endif; ?>
 </main>
 <?php include __DIR__ . '/includes/footer.php'; ?>
+<script>
+document.addEventListener('click', function(e) {
+    var menu = document.getElementById('userMenu');
+    if (menu && !e.target.closest('.user-nav')) menu.classList.remove('open');
+});
+</script>
 </body>
 </html>
