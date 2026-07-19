@@ -24,17 +24,24 @@ $results = $query !== '' ? searchArticles($query) : [];
     </form>
     <nav>
         <?php if (!empty($_SESSION['reader_username'])): ?>
-            <span>Hi, <?= e($_SESSION['reader_username']) ?>!</span>
-            <a href="/submit.php">Submit Article</a>
-            <?php if (!empty($_SESSION['is_admin'])): ?>
-            <a href="/admin/">Admin</a>
-            <?php endif; ?>
-            <a href="/logout">Log Out</a>
+            <div class="user-nav">
+                <button class="user-nav-toggle" onclick="document.getElementById('userMenu').classList.toggle('open')"><?= e($_SESSION['reader_username']) ?> &#9662;</button>
+                <div id="userMenu" class="user-nav-menu">
+                    <a href="/@<?= e($_SESSION['reader_username']) ?>">Profile</a>
+                    <?php if (empty($_SESSION['is_admin'])): ?>
+                    <a href="/submit.php">Submit Article</a>
+                    <?php endif; ?>
+                    <?php if (!empty($_SESSION['is_admin'])): ?>
+                    <a href="/admin/">Admin</a>
+                    <?php endif; ?>
+                    <a href="/logout">Log Out</a>
+                </div>
+            </div>
         <?php else: ?>
             <a href="/login">Log In</a>
             <a href="/register">Sign Up</a>
         <?php endif; ?>
-    </nav>
+</nav>
 </header>
 <main class="home-main">
     <h2>Search results<?= $query !== '' ? ' for "' . e($query) . '"' : '' ?></h2>
@@ -43,9 +50,7 @@ $results = $query !== '' ? searchArticles($query) : [];
     <?php elseif (empty($results)): ?>
         <p>No articles matched your search.</p>
     <?php else: ?>
-        <div class="article-grid">
-            <?php foreach ($results as $a): ?>
-                <div class="search-results-list">
+        <div class="search-results-list">
             <?php foreach ($results as $i => $a): ?>
                 <?php
                     $likeCount = getLikeCount($a['id']);
@@ -72,6 +77,9 @@ $results = $query !== '' ? searchArticles($query) : [];
                             <span><img src="/assets/icons/comment.svg" class="icon-svg-sm" alt=""><?= $commentCount ?></span>
                         </div>
                     </div>
+                </a>
+            <?php endforeach; ?>
+                                                                                                                                                                       </div>
                 </a>
             <?php endforeach; ?>
 </div>
