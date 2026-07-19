@@ -26,7 +26,7 @@ $articles = getAllArticles(true);
                     <td>#<?= (int)$a['id'] ?></td>
                     <td><?= e($a['title']) ?></td>
                     <td><?= e($a['author']) ?></td>
-                    <td><?= formatSiteDate($a['created_at'], 'M j, Y') ?></td>
+                    <td><?= utcTimeTag($a['created_at']) ?></td>
                     <td><?= ($a['status'] ?? 'published') === 'draft' ? '<span style="color:#a67c00;font-weight:600;">Draft</span>' : 'Published' ?></td>
                     <td class="actions">
                         <?php if (($a['status'] ?? 'published') !== 'draft'): ?>
@@ -41,5 +41,16 @@ $articles = getAllArticles(true);
         </table>
     <?php endif; ?>
 </main>
+<script>
+document.querySelectorAll('time.local-date, time.local-datetime').forEach(function(el) {
+    var d = new Date(el.getAttribute('datetime'));
+    if (isNaN(d.getTime())) return;
+    if (el.classList.contains('local-datetime')) {
+        el.textContent = d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    } else {
+        el.textContent = d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+});
+</script>
 </body>
 </html>

@@ -202,7 +202,7 @@ function renderCommentThread(array $comment, bool $canReply, int $depth = 0, boo
     $indent = min($depth * 24, 96); // cap indentation so deep threads don't run off-screen
     $html = '<div class="comment" style="margin-left: ' . $indent . 'px;">';
     $html .= '<strong><a href="/@' . e($comment['username']) . '">' . e($comment['username']) . '</a></strong>';
-    $html .= ' <span class="meta">' . formatSiteDate($comment['created_at'], 'M j, Y g:i A') . '</span>';
+    $html .= ' <span class="meta">' . utcTimeTag($comment['created_at'], 'datetime') . '</span>';
     $html .= '<p>' . e($comment['content']) . '</p>';
 
     if ($canReply) {
@@ -918,12 +918,13 @@ function logSignupAttempt(string $ip): void {
     $stmt->close();
 }
 
-function formatSiteDate(string $datetime, string $format = 'F j, Y'): string {
+function utcTimeTag(string $datetimeUtc, string $style = 'date'): string {
     try {
-        $dt = new DateTime($datetime, new DateTimeZone('UTC'));
+        $dt = new DateTime($datetimeUtc, new DateTimeZone('UTC'));
     } catch (Exception $e) {
-        return $datetime;
+        return e($datetimeUtc);
     }
-    $dt->setTimezone(new DateTimeZone('Europe/Chisinau'));
-    return $dt->format($format);
+    $iso = $dt->format('c');
+    $class = $style === 'datetime' ? 'local-datetime' : 'local-date';
+    return '<time class="' . $class . '" datetime="' . $iso . '">' . e($datetimeUtc) . '</time>';
 }

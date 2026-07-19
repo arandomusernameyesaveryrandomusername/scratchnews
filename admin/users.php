@@ -49,7 +49,7 @@ $users = array_values(array_filter($users, fn($u) => strpos($u['username'], 'del
                 <td><?= e($u['email']) ?></td>
                 <td><?= $u['is_admin'] ? 'Yes' : '—' ?></td>
                 <td><?= $u['email_verified'] ? 'Yes' : 'No' ?></td>
-                <td><?= formatSiteDate($u['created_at'], 'M j, Y') ?></td>
+                <td><?= utcTimeTag($u['created_at']) ?></td>
                 <td><?= $u['is_banned'] ? '<span style="color:#a33; font-weight:600;">Banned</span>' : 'Active' ?></td>
                 <td class="actions" style="white-space:nowrap;">
                     <?php if (!$u['is_admin']): ?>
@@ -88,5 +88,16 @@ $users = array_values(array_filter($users, fn($u) => strpos($u['username'], 'del
     </table>
     </div>
 </main>
+<script>
+document.querySelectorAll('time.local-date, time.local-datetime').forEach(function(el) {
+    var d = new Date(el.getAttribute('datetime'));
+    if (isNaN(d.getTime())) return;
+    if (el.classList.contains('local-datetime')) {
+        el.textContent = d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    } else {
+        el.textContent = d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+});
+</script>
 </body>
 </html>

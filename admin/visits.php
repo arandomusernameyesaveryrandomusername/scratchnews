@@ -38,7 +38,7 @@ $visits = getRecentVisits(200, $includeIp ?: null, $excludeIp ?: null);
         <tr><th>Time</th><th>IP Address</th><th>Page</th><th>User Agent</th></tr>
         <?php foreach ($visits as $v): ?>
         <tr>
-            <td><?= date('M j, Y g:i A', strtotime($v['visited_at'])) ?></td>
+            <td><?= utcTimeTag($v['visited_at'], 'datetime') ?></td>
             <td><?= e($v['ip_address']) ?></td>
             <td><?= e($v['page']) ?></td>
             <td style="max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><?= e($v['user_agent']) ?></td>

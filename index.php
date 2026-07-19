@@ -71,7 +71,7 @@ $popular = getPopularArticles(4);
                 <?php endif; ?>
                 <div class="hero-featured-body">
                     <h2><?= e($featured['title']) ?></h2>
-                    <div class="meta">By <?= e($featured['author']) ?> &middot; <?= formatSiteDate($featured['created_at']) ?></div>
+                    <div class="meta">By <?= e($featured['author']) ?> &middot; <?= utcTimeTag($featured['created_at']) ?></div>
                 </div>
             </a>
             <?php if (!empty($side)): ?>
@@ -126,6 +126,17 @@ $popular = getPopularArticles(4);
     <?php endif; ?>
 </main>
 <?php include __DIR__ . '/includes/footer.php'; ?>
+<script>
+document.querySelectorAll('time.local-date, time.local-datetime').forEach(function(el) {
+    var d = new Date(el.getAttribute('datetime'));
+    if (isNaN(d.getTime())) return;
+    if (el.classList.contains('local-datetime')) {
+        el.textContent = d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    } else {
+        el.textContent = d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+});
+</script>
 <script>
 document.addEventListener('click', function(e) {
     var menu = document.getElementById('userMenu');
