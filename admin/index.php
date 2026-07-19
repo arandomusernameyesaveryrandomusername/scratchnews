@@ -26,7 +26,7 @@ $articles = getAllArticles(true);
                     <td>#<?= (int)$a['id'] ?></td>
                     <td><?= e($a['title']) ?></td>
                     <td><?= e($a['author']) ?></td>
-                    <td><?= date('M j, Y', strtotime($a['created_at'])) ?></td>
+                    <td><?= formatSiteDate($a['created_at'], 'M j, Y') ?></td>
                     <td><?= ($a['status'] ?? 'published') === 'draft' ? '<span style="color:#a67c00;font-weight:600;">Draft</span>' : 'Published' ?></td>
                     <td class="actions">
                         <?php if (($a['status'] ?? 'published') !== 'draft'): ?>
