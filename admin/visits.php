@@ -46,5 +46,16 @@ $visits = getRecentVisits(200, $includeIp ?: null, $excludeIp ?: null);
         <?php endforeach; ?>
     </table>
 </main>
+<script>
+document.querySelectorAll('time.local-date, time.local-datetime').forEach(function(el) {
+    var d = new Date(el.getAttribute('datetime'));
+    if (isNaN(d.getTime())) return;
+    if (el.classList.contains('local-datetime')) {
+        el.textContent = d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    } else {
+        el.textContent = d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+});
+</script>
 </body>
 </html>
