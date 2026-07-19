@@ -202,7 +202,7 @@ function renderCommentThread(array $comment, bool $canReply, int $depth = 0, boo
     $indent = min($depth * 24, 96); // cap indentation so deep threads don't run off-screen
     $html = '<div class="comment" style="margin-left: ' . $indent . 'px;">';
     $html .= '<strong><a href="/@' . e($comment['username']) . '">' . e($comment['username']) . '</a></strong>';
-    $html .= ' <span class="meta">' . date('M j, Y g:i A', strtotime($comment['created_at'])) . '</span>';
+    $html .= ' <span class="meta">' . formatSiteDate($comment['created_at'], 'M j, Y g:i A') . '</span>';
     $html .= '<p>' . e($comment['content']) . '</p>';
 
     if ($canReply) {
