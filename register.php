@@ -30,6 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Password must be at least 6 characters.';
     } elseif (isDisposableEmail($email)) {
         $error = 'Please use a permanent email address, not a temporary/disposable one.';
+    } elseif (!checkdnsrr(substr(strrchr($email, '@'), 1), 'MX')) {
+        $error = 'That email address domain doesn\'t appear to accept mail. Please check it and try again.';
     } else {
         logSignupAttempt($ip);
         $result = createUser($username, $email, $password);
