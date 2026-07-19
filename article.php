@@ -105,9 +105,9 @@ if (!$article) {
             <?php endif; ?>
             <div class="meta">
                 By <?= e($article['author']) ?> ·
-                Published <?= date('F j, Y', strtotime($article['created_at'])) ?>
+                Published <?= formatSiteDate($article['created_at']) ?>
                 <?php if ($article['updated_at'] !== $article['created_at']): ?>
-                    · Updated <?= date('F j, Y', strtotime($article['updated_at'])) ?>
+                    · Updated <?= formatSiteDate($article['updated_at']) ?>
                 <?php endif; ?>
             </div>
             <div class="engage-bar">
