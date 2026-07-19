@@ -70,7 +70,7 @@ $results = $query !== '' ? searchArticles($query) : [];
                     <div class="search-result-body">
                         <div>
                             <div class="search-result-title"><?= e($a['title']) ?></div>
-                            <div class="meta">By <?= e($a['author']) ?> &middot; <?= date('F j, Y', strtotime($a['created_at'])) ?></div>
+                            <div class="meta">By <?= e($a['author']) ?> &middot; <?= formatSiteDate($a['created_at']) ?></div>
                             <?php if ($desc !== ''): ?><div class="search-result-desc"><?= e($desc) ?></div><?php endif; ?>
                         </div>
                         <div class="search-result-stats">
