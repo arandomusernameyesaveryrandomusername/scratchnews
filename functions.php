@@ -235,6 +235,16 @@ function renderCommentThread(array $comment, bool $canReply, int $depth = 0, boo
 }
 
 // ---- Likes ----
+function getCommentCount(int $articleId): int {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT COUNT(*) AS cnt FROM comments WHERE article_id = ?");
+    $stmt->bind_param('i', $articleId);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return (int)$row['cnt'];
+}
+
 function getLikeCount(int $articleId): int {
     $db = getDB();
     $stmt = $db->prepare("SELECT COUNT(*) AS cnt FROM likes WHERE article_id = ?");
