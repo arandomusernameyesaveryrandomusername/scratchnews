@@ -10,7 +10,7 @@
             <a href="/admin/visits.php">Visitor Log</a>
             <a href="/admin/submissions.php">Submissions</a>
             <a href="/admin/feedback.php">Feedback</a>
-            <a href="/admin/move.php">Move Article</a>
+            <a href="/admin/move.php">Move Content</a>
             <a href="/admin/reports.php">Reports</a>
             <a href="/admin/users.php">Users</a>
             <a href="/admin/impersonation-log.php">Impersonation Log</a>
