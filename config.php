@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('UTC');
 define('DB_HOST', 'sql206.infinityfree.com');      
 define('DB_NAME', 'if0_41416197_scratchnews'); 
 define('DB_USER', 'if0_41416197');         
@@ -18,6 +19,7 @@ function getDB(): mysqli {
         try {
             $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
             $conn->set_charset('utf8mb4');
+            $conn->query("SET time_zone = '+00:00'");
         } catch (mysqli_sql_exception $e) {
             http_response_code(500);
             die('Database connection failed. Double-check the credentials in config.php.');
