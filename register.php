@@ -33,11 +33,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!checkdnsrr(substr(strrchr($email, '@'), 1), 'MX')) {
         $error = 'That email address domain doesn\'t appear to accept mail. Please check it and try again.';
     } else {
-        logSignupAttempt($ip);
         $result = createUser($username, $email, $password);
         if ($result === 'duplicate') {
             $error = 'That username or email is already taken.';
+            logSignupAttempt($ip, false);
         } else {
+            logSignupAttempt($ip, true);
             $token = issueVerificationToken($result);
             sendVerificationEmail($email, $username, $token);
 

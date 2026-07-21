@@ -81,6 +81,12 @@ function logVisit(string $page): void {
     $stmt->execute();
     $stmt->close();
     $db->query("DELETE FROM visits WHERE id NOT IN (SELECT id FROM (SELECT id FROM visits ORDER BY id DESC LIMIT 200) AS keep)");
+
+    $stmt = $db->prepare("INSERT IGNORE INTO daily_unique_visitors (visit_date, ip_address) VALUES (CURDATE(), ?)");
+    $stmt->bind_param('s', $ip);
+    $stmt->execute();
+    $stmt->close();
+    $db->query("DELETE FROM daily_unique_visitors WHERE visit_date < DATE_SUB(CURDATE(), INTERVAL 90 DAY)");
 }
 
 function getRecentVisits(int $limit = 200, ?string $includeIp = null, ?string $excludeIp = null): array {
@@ -910,10 +916,11 @@ function tooManySignupAttempts(string $ip, int $maxAttempts = 5, int $windowMinu
     return $count >= $maxAttempts;
 }
 
-function logSignupAttempt(string $ip): void {
+function logSignupAttempt(string $ip, bool $successful = false): void {
     $db = getDB();
-    $stmt = $db->prepare("INSERT INTO signup_attempts (ip, created_at) VALUES (?, NOW())");
-    $stmt->bind_param('s', $ip);
+    $successInt = $successful ? 1 : 0;
+    $stmt = $db->prepare("INSERT INTO signup_attempts (ip, created_at, successful) VALUES (?, NOW(), ?)");
+    $stmt->bind_param('si', $ip, $successInt);
     $stmt->execute();
     $stmt->close();
 }
