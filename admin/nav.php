@@ -13,6 +13,7 @@
             <a href="/admin/reports.php">Reports</a>
             <a href="/admin/move.php">Move Content</a>
             <a href="/admin/impersonation-log.php">Impersonation Log</a>
+            <a href="/admin/stats.php">Stats</a>
             <a href="/logout">Log Out</a>
         </div>
     </nav>
