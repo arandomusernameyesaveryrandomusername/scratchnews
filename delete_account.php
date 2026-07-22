@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <title>Delete Account - <?= e(SITE_NAME) ?></title>
 <link rel="stylesheet" href="/assets/style.css?v=8">
 </head>
-<body>
+<body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
 <?php include __DIR__ . '/includes/empty-header.php'; ?>
 <main>
     <h2>Delete Your Account</h2>
