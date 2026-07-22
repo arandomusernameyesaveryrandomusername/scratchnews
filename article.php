@@ -59,6 +59,19 @@ if (!$article) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <title><?= $article ? e($article['title']) . ' - ' . e(SITE_NAME) : 'Article not found' ?></title>
+<?php if ($article): ?>
+<meta name="description" content="<?= e(mb_strimwidth($article['summary'], 0, 160, '...')) ?>">
+<script type="application/ld+json">
+<?= json_encode([
+    "@context" => "https://schema.org",
+    "@type" => "NewsArticle",
+    "headline" => $article['title'],
+    "datePublished" => date('c', strtotime($article['created_at'])),
+    "dateModified" => date('c', strtotime($article['updated_at'])),
+    "author" => ["@type" => "Person", "name" => $article['author']],
+]) ?>
+</script>
+<?php endif; ?>
 <link rel="stylesheet" href="/assets/style.css?v=3">
 </head>
 <body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">

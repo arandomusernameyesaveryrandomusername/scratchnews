@@ -12,6 +12,7 @@ $popular = getPopularArticles(4);
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <title><?= e(SITE_NAME) ?></title>
+<meta name="description" content="ScratchNews is a community-run news site covering updates, features, and stories from the Scratch programming community.">
 <link rel="stylesheet" href="/assets/style.css?v=10">
 </head>
 <body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
