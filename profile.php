@@ -41,7 +41,7 @@ $comments = $user ? getCommentsByUser($user['id']) : [];
     <?php if (!empty($_SESSION['reader_id']) && $_SESSION['reader_id'] == $user['id']): ?>
     <div style="display:flex; gap:0.5rem; align-items:center; margin:0.5rem 0;">
         <a href="/delete-account" class="btn secondary" style="padding:0.3rem 0.7rem; font-size:0.8rem;">Delete my account</a>
-        <form method="post" style="margin:0;">
+        <form method="post" class="profile-actions-form">
             <?= csrfField() ?>
             <input type="hidden" name="dark_mode" value="<?= !empty($_SESSION['dark_mode']) ? '0' : '1' ?>">
             <button type="submit" class="btn secondary" style="padding:0.3rem 0.7rem; font-size:0.8rem;">

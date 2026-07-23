@@ -568,3 +568,12 @@ html { scroll-behavior: smooth; }
     .search-result { flex-direction: column; }
     .search-result-thumb { width: 100%; height: 160px; }
 }
+#toggleToolbarPos { background:none; border:none; cursor:pointer; color:#444; font-size:1rem; line-height:1; padding:3px 6px; }
+body.dark #toggleToolbarPos { color:#ccc; }
+body.dark .ql-toolbar.ql-snow { background:#1e2125; border-color:#3a3d42; }
+body.dark .ql-container.ql-snow { background:#1e2125; border-color:#3a3d42; color:#e8e8e8; }
+body.dark .ql-snow .ql-stroke { stroke:#ccc; }
+body.dark .ql-snow .ql-fill, body.dark .ql-snow .ql-stroke.ql-fill { fill:#ccc; }
+body.dark .ql-snow .ql-picker { color:#ccc; }
+body.dark .ql-snow .ql-picker-options { background:#26292e; border-color:#3a3d42; }
+.profile-actions-form { display:inline-block; background:none; padding:0; box-shadow:none; max-width:none; margin:0; }

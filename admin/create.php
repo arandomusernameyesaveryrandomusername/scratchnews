@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </select>    
     <button class="ql-link" title="Insert link">🔗</button>
     <button class="ql-image" title="Insert image">🖼️</button>
-    <button type="button" id="toggleToolbarPos" title="Move formatting bar to bottom" style="float:right;">⇕</button>
+    <span style="float:right;"><button type="button" id="toggleToolbarPos" title="Move formatting bar to bottom">⇕</button></span>
 </div>
 <div id="editor-container"><?= $_POST['content'] ?? '' ?></div>
 </div>
