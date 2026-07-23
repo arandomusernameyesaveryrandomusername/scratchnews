@@ -31,7 +31,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <title>Delete Account - <?= e(SITE_NAME) ?></title>
 <link rel="stylesheet" href="/assets/style.css?v=8">
 </head>
-<body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
+<body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
+<script>if(document.body.hasAttribute('data-theme-auto')&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.body.classList.add('dark');}</script>
 <?php include __DIR__ . '/includes/empty-header.php'; ?>
 <main>
     <h2>Delete Your Account</h2>

@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $_SESSION['reader_id'] = $user['id'];
     $_SESSION['reader_username'] = $user['username'];
     $_SESSION['is_admin'] = !empty($user['is_admin']);
-    $_SESSION['dark_mode'] = !empty($user['dark_mode']);
+    $_SESSION['dark_mode'] = $user['dark_mode'];
     header('Location: ' . ($_SESSION['is_admin'] ? '/admin/' : '/'));
     exit;
 } else {

@@ -16,7 +16,8 @@ $results = $query !== '' ? searchArticles($query) : [];
 <title>Search - <?= e(SITE_NAME) ?></title>
 <link rel="stylesheet" href="/assets/style.css">
 </head>
-<body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
+<body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
+<script>if(document.body.hasAttribute('data-theme-auto')&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.body.classList.add('dark');}</script>
 <?php include __DIR__ . '/includes/header.php'; ?>
 <main class="home-main">
     <h2>Search results<?= $query !== '' ? ' for "' . e($query) . '"' : '' ?></h2>

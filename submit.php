@@ -44,7 +44,8 @@ if ($isVerified && $_SERVER['REQUEST_METHOD'] === 'POST') {
 <link rel="stylesheet" href="/assets/style.css?v=9">
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 </head>
-<body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
+<body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
+<script>if(document.body.hasAttribute('data-theme-auto')&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.body.classList.add('dark');}</script>
 <?php include __DIR__ . '/includes/empty-header.php'; ?>
 <main>
     <h2>Submit an Article</h2>

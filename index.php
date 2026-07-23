@@ -15,7 +15,8 @@ $popular = getPopularArticles(4);
 <meta name="description" content="ScratchNews is a community-run news site covering updates, features, and stories from the Scratch programming community.">
 <link rel="stylesheet" href="/assets/style.css?v=10">
 </head>
-<body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
+<body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
+<script>if(document.body.hasAttribute('data-theme-auto')&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.body.classList.add('dark');}</script>
 <?php include __DIR__ . '/includes/header.php'; ?>
 <?php if (!empty($_SESSION['impersonator_admin_username'])): ?>
 <div class="impersonation-banner">
