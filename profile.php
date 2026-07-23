@@ -6,6 +6,7 @@ $username = $_GET['username'] ?? '';
 $user = $username !== '' ? getUserByUsername($username) : null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SESSION['reader_id']) && $user && $_SESSION['reader_id'] == $user['id']) {
+    requireCsrf();
     $enabled = !empty($_POST['dark_mode']);
     setDarkModePreference($user['id'], $enabled);
     $_SESSION['dark_mode'] = $enabled;
@@ -37,17 +38,18 @@ $comments = $user ? getCommentsByUser($user['id']) : [];
 <?php else: ?>
     <h2>@<?= e($user['username']) ?></h2>
     <p class="meta">Member since <?= date('M j, Y', strtotime($user['created_at'])) ?></p>
-
     <?php if (!empty($_SESSION['reader_id']) && $_SESSION['reader_id'] == $user['id']): ?>
-    <p><a href="/delete-account">Delete my account</a></p>
-    <form method="post" style="display:inline;">
-        <input type="hidden" name="dark_mode" value="<?= !empty($_SESSION['dark_mode']) ? '0' : '1' ?>">
-        <button type="submit" class="text-action" style="background:none;border:none;padding:0;">
-            <?= !empty($_SESSION['dark_mode']) ? 'Switch to light mode' : 'Switch to dark mode' ?>
-        </button>
-    </form>
+    <div style="display:flex; gap:0.5rem; align-items:center; margin:0.5rem 0;">
+        <a href="/delete-account" class="btn secondary" style="padding:0.3rem 0.7rem; font-size:0.8rem;">Delete my account</a>
+        <form method="post" style="margin:0;">
+            <?= csrfField() ?>
+            <input type="hidden" name="dark_mode" value="<?= !empty($_SESSION['dark_mode']) ? '0' : '1' ?>">
+            <button type="submit" class="btn secondary" style="padding:0.3rem 0.7rem; font-size:0.8rem;">
+                <?= !empty($_SESSION['dark_mode']) ? 'Switch to light mode' : 'Switch to dark mode' ?>
+            </button>
+        </form>
+    </div>
 <?php endif; ?>
-
     <h3>Comments (<?= count($comments) ?>)</h3>
     <?php foreach ($comments as $c): ?>
         <div class="comment">
