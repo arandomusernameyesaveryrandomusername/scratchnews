@@ -19,6 +19,7 @@ if (!$user) {
 }
 
 $comments = $user ? getCommentsByUser($user['id']) : [];
+$articleCount = $user ? getApprovedArticleCountByUser($user['id']) : 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -51,6 +52,7 @@ $comments = $user ? getCommentsByUser($user['id']) : [];
         </form>
     </div>
 <?php endif; ?>
+    <p style="text-align:center;"><a href="#comments" class="link-underline"><?= $articleCount ?> articles published</a></p>
     <h3>Comments (<?= count($comments) ?>)</h3>
     <?php foreach ($comments as $c): ?>
         <div class="comment">

@@ -355,6 +355,16 @@ function getCommentsByUser(int $userId): array {
     return $rows;
 }
 
+function getApprovedArticleCountByUser(int $userId): int {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT COUNT(*) AS cnt FROM submissions WHERE user_id = ? AND status = 'approved'");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $count = $stmt->get_result()->fetch_assoc()['cnt'];
+    $stmt->close();
+    return (int)$count;
+}
+
 function deleteUserAccount(int $userId): bool {
     $db = getDB();
     $db->begin_transaction();
