@@ -536,8 +536,8 @@ function approveSubmission($id) {
     }
 
     $articleId = getNextArticleId();
-    $stmt = $db->prepare("INSERT INTO articles (id, title, summary, content, author) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("issss", $articleId, $submission['title'], $submission['summary'], $submission['content'], $submission['username']);
+    $stmt = $db->prepare("INSERT INTO articles (id, title, summary, content, author, user_id) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("issssi", $articleId, $submission['title'], $submission['summary'], $submission['content'], $submission['username'], $submission['user_id']);
     $stmt->execute();
     $stmt->close();
 

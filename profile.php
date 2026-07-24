@@ -20,6 +20,8 @@ if (!$user) {
 
 $comments = $user ? getCommentsByUser($user['id']) : [];
 $articleCount = $user ? getArticleCountByUser($user['id']) : 0;
+$view = $_GET['view'] ?? 'comments';
+$userArticles = ($user && $view === 'articles') ? getArticlesByUser($user['id']) : [];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -54,17 +56,65 @@ $articleCount = $user ? getArticleCountByUser($user['id']) : 0;
 <?php endif; ?>
     <div class="profile-stats-row">
         <h3><a href="/@<?= urlencode($user['username']) ?>?view=articles" class="stat-link"><?= (int)$articleCount ?> Articles</a></h3>
-        <h3>Comments (<?= count($comments) ?>)</h3>
+        <h3><a href="/@<?= urlencode($user['username']) ?>" class="stat-link">Comments (<?= count($comments) ?>)</a></h3>
     </div>
-    <?php foreach ($comments as $c): ?>
-        <div class="comment">
-            <a href="/article/<?= (int)$c['article_id'] ?>"><strong><?= e($c['article_title']) ?></strong></a>
-            <span class="meta"><?= date('M j, Y g:i A', strtotime($c['created_at'])) ?></span>
-            <p><?= e($c['content']) ?></p>
-        </div>
-    <?php endforeach; ?>
+    <?php if ($view === 'articles'): ?>
+        <?php if (empty($userArticles)): ?>
+            <p>No articles published yet.</p>
+        <?php else: ?>
+            <div class="search-results-list">
+                <?php foreach ($userArticles as $i => $a): ?>
+                    <?php
+                        $likeCount = getLikeCount($a['id']);
+                        $dislikeCount = getDislikeCount($a['id']);
+                        $commentCount = getCommentCount($a['id']);
+                        $desc = $a['summary'] ?? '';
+                        if (mb_strlen($desc) > 140) $desc = mb_substr($desc, 0, 140) . '...';
+                    ?>
+                    <a href="/article/<?= (int)$a['id'] ?>" class="search-result <?= $i === 0 ? 'search-result-first' : '' ?>">
+                        <?php if (!empty($a['image_url'])): ?>
+                            <img src="<?= e($a['image_url']) ?>" alt="" class="search-result-thumb">
+                        <?php else: ?>
+                            <div class="search-result-thumb search-result-thumb-placeholder"></div>
+                        <?php endif; ?>
+                        <div class="search-result-body">
+                            <div>
+                                <div class="search-result-title"><?= e($a['title']) ?></div>
+                                <div class="meta">By <?= e($a['author']) ?> &middot; <?= utcTimeTag($a['created_at']) ?></div>
+                                <?php if ($desc !== ''): ?><div class="search-result-desc"><?= e($desc) ?></div><?php endif; ?>
+                            </div>
+                            <div class="search-result-stats">
+                                <span><img src="/assets/icons/unlike.svg" class="icon-svg-sm" alt=""><?= $likeCount ?></span>
+                                <span><img src="/assets/icons/undislike.svg" class="icon-svg-sm" alt=""><?= $dislikeCount ?></span>
+                                <span><img src="/assets/icons/comment.svg" class="icon-svg-sm" alt=""><?= $commentCount ?></span>
+                            </div>
+                        </div>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    <?php else: ?>
+        <?php foreach ($comments as $c): ?>
+            <div class="comment">
+                <a href="/article/<?= (int)$c['article_id'] ?>"><strong><?= e($c['article_title']) ?></strong></a>
+                <span class="meta"><?= date('M j, Y g:i A', strtotime($c['created_at'])) ?></span>
+                <p><?= e($c['content']) ?></p>
+            </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
 <?php endif; ?>
 </main>
 <?php include __DIR__ . '/includes/footer.php'; ?>
+<script>
+document.querySelectorAll('time.local-date, time.local-datetime').forEach(function(el) {
+    var d = new Date(el.getAttribute('datetime'));
+    if (isNaN(d.getTime())) return;
+    if (el.classList.contains('local-datetime')) {
+        el.textContent = d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    } else {
+        el.textContent = d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+});
+</script>
 </body>
 </html>
