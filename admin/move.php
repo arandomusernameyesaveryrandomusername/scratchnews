@@ -6,18 +6,6 @@ $db = getDB();
 $error = '';
 $success = '';
 
-function generateAvailableUserId(mysqli $db): int {
-    do {
-        $candidate = random_int(900000000, 999999999);
-        $stmt = $db->prepare("SELECT id FROM users WHERE id = ?");
-        $stmt->bind_param("i", $candidate);
-        $stmt->execute();
-        $taken = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-    } while ($taken);
-    return $candidate;
-}
-
 function moveUserId(mysqli $db, int $oldId, int $newId): void {
     $db->begin_transaction();
     try {
@@ -140,20 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     } elseif ($type === 'cleanup_anonymized') {
-        $rows = $db->query("SELECT id FROM users WHERE username LIKE 'deleted_user_%'")->fetch_all(MYSQLI_ASSOC);
-        $moved = 0;
-        foreach ($rows as $row) {
-            $oldId = (int)$row['id'];
-            $newId = generateAvailableUserId($db);
-            try {
-                moveUserId($db, $oldId, $newId);
-                $moved++;
-            } catch (Throwable $e) {
-                $error = "Stopped after moving $moved accounts: " . $e->getMessage();
-                break;
-            }
-        }
-        if (!$error) $success = "Renumbered $moved anonymized account(s) to random IDs.";
+        $error = 'This tool has been retired — anonymized accounts keep their original ID. anonymizeUser() already scrubs username/email/password, which is sufficient.';
     }
 }
 
@@ -197,14 +172,6 @@ $allUsers = $db->query("SELECT id, username FROM users ORDER BY id ASC")->fetch_
         <label for="user_new_id">New ID</label>
         <input type="number" id="user_new_id" name="new_id" required>
         <button class="btn" type="submit">Move</button>
-    </form>
-
-    <form method="post" style="margin-top:1rem;">
-        <?= csrfField() ?>
-        <input type="hidden" name="type" value="cleanup_anonymized">
-        <button class="btn" type="submit" onclick="return confirm('Renumber all deleted_user_* accounts to random 9-digit IDs?');">
-            Renumber All Anonymized Accounts
-        </button>
     </form>
 
     <h3 style="margin-top:2rem;">Current Articles</h3>
