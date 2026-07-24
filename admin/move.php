@@ -129,10 +129,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($type === 'cleanup_anonymized') {
         $error = 'This tool has been retired — anonymized accounts keep their original ID. anonymizeUser() already scrubs username/email/password, which is sufficient.';
-    }
-}
+    } elseif ($type === 'assign_article_user') {
+        $articleId = (int)($_POST['article_id'] ?? 0);
+        $assignUserId = (int)($_POST['assign_user_id'] ?? 0);
 
-$articles = getAllArticles();
+        if ($articleId <= 0 || $assignUserId <= 0) {
+            $error = 'Both IDs must be positive numbers.';
+        } else {
+            $stmt = $db->prepare("SELECT id FROM articles WHERE id = ?");
+            $stmt->bind_param("i", $articleId);
+            $stmt->execute();
+            $articleExists = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+
+            $stmt = $db->prepare("SELECT id FROM users WHERE id = ?");
+            $stmt->bind_param("i", $assignUserId);
+            $stmt->execute();
+            $userExists = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+
+            if (!$articleExists) {
+                $error = "Article #$articleId doesn't exist.";
+            } elseif (!$userExists) {
+                $error = "User #$assignUserId doesn't exist.";
+            } else {
+                $stmt = $db->prepare("UPDATE articles SET user_id = ? WHERE id = ?");
+                $stmt->bind_param("ii", $assignUserId, $articleId);
+                $stmt->execute();
+                $stmt->close();
+                $success = "Assigned article #$articleId to user #$assignUserId.";
+            }
+        }
+    }
 $allUsers = $db->query("SELECT id, username FROM users ORDER BY id ASC")->fetch_all(MYSQLI_ASSOC);
 ?>
 <!DOCTYPE html>
@@ -172,6 +200,17 @@ $allUsers = $db->query("SELECT id, username FROM users ORDER BY id ASC")->fetch_
         <label for="user_new_id">New ID</label>
         <input type="number" id="user_new_id" name="new_id" required>
         <button class="btn" type="submit">Move</button>
+    </form>
+
+    <h3 style="margin-top:2rem;">Assign Article to User</h3>
+    <form method="post">
+        <?= csrfField() ?>
+        <input type="hidden" name="type" value="assign_article_user">
+        <label for="assign_article_id">Article ID</label>
+        <input type="number" id="assign_article_id" name="article_id" required>
+        <label for="assign_user_id">User ID</label>
+        <input type="number" id="assign_user_id" name="assign_user_id" required>
+        <button class="btn" type="submit">Assign</button>
     </form>
 
     <h3 style="margin-top:2rem;">Current Articles</h3>

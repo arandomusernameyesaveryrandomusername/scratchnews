@@ -365,6 +365,26 @@ function getApprovedArticleCountByUser(int $userId): int {
     return (int)$count;
 }
 
+function getArticleCountByUser(int $userId): int {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT COUNT(*) AS cnt FROM articles WHERE user_id = ?");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $count = $stmt->get_result()->fetch_assoc()['cnt'];
+    $stmt->close();
+    return (int)$count;
+}
+
+function getArticlesByUser(int $userId): array {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT * FROM articles WHERE user_id = ? ORDER BY created_at DESC");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $rows;
+}
+
 function deleteUserAccount(int $userId): bool {
     $db = getDB();
     $db->begin_transaction();
