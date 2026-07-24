@@ -579,12 +579,16 @@ body.dark .ql-snow .ql-picker-options { background:#26292e; border-color:#3a3d42
 .profile-actions-form { display:inline-block; background:none; padding:0; box-shadow:none; max-width:none; margin:0; }
 a.btn:visited { color: #fff; }
 body.dark .profile-actions-form { background: none; box-shadow: none; }
+
 .hero-featured h2, .hero-side-title {
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
 }
-.hero-side-title { min-height: 5rem; line-height: 1.35; }
+.hero-side-title { min-height: 2.7rem; line-height: 1.35; }
 .row-card-title { min-height: 2.6rem; line-height: 1.3; }
-.link-underline { text-decoration: underline; }
+.profile-stats-row { display: flex; justify-content: center; gap: 2.5rem; margin: 1rem 0; }
+.profile-stats-row h3 { margin: 0; }
+.stat-link { color: inherit; text-decoration: none; }
+.stat-link:hover { text-decoration: underline; }

@@ -19,7 +19,7 @@ if (!$user) {
 }
 
 $comments = $user ? getCommentsByUser($user['id']) : [];
-$articleCount = $user ? getApprovedArticleCountByUser($user['id']) : 0;
+$articleCount = $user ? getArticleCountByUser($user['id']) : 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -28,7 +28,7 @@ $articleCount = $user ? getApprovedArticleCountByUser($user['id']) : 0;
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <title><?= $user ? e($user['username']) : 'User Not Found' ?> - <?= e(SITE_NAME) ?></title>
-<link rel="stylesheet" href="/assets/style.css?v=8">
+<link rel="stylesheet" href="/assets/style.css?v=9">
 </head>
 <body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
 <script>if(document.body.hasAttribute('data-theme-auto')&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.body.classList.add('dark');}</script>
@@ -52,8 +52,10 @@ $articleCount = $user ? getApprovedArticleCountByUser($user['id']) : 0;
         </form>
     </div>
 <?php endif; ?>
-    <p style="text-align:center;"><a href="#comments" class="link-underline"><?= $articleCount ?> articles published</a></p>
-    <h3>Comments (<?= count($comments) ?>)</h3>
+    <div class="profile-stats-row">
+        <h3><a href="/@<?= urlencode($user['username']) ?>?view=articles" class="stat-link"><?= (int)$articleCount ?> Articles</a></h3>
+        <h3>Comments (<?= count($comments) ?>)</h3>
+    </div>
     <?php foreach ($comments as $c): ?>
         <div class="comment">
             <a href="/article/<?= (int)$c['article_id'] ?>"><strong><?= e($c['article_title']) ?></strong></a>
