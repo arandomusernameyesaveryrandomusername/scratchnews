@@ -160,10 +160,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $success = "Assigned article #$articleId to user #$assignUserId.";
             }
         }
-    }
-}
+    } elseif ($type === 'assign_article_categories') {
+        $articleId = (int)($_POST['cat_article_id'] ?? 0);
+        $categoryIds = $_POST['categories'] ?? [];
 
-$articles = getAllArticles();
+        if ($articleId <= 0) {
+            $error = 'Article ID must be a positive number.';
+        } else {
+            $stmt = $db->prepare("SELECT id FROM articles WHERE id = ?");
+            $stmt->bind_param("i", $articleId);
+            $stmt->execute();
+            $articleExists = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+
+            if (!$articleExists) {
+                $error = "Article #$articleId doesn't exist.";
+            } else {
+                setArticleCategories($articleId, $categoryIds);
+                $success = "Updated categories for article #$articleId.";
+            }
+        }
+    }
 $allUsers = $db->query("SELECT id, username FROM users ORDER BY id ASC")->fetch_all(MYSQLI_ASSOC);
 ?>
 <!DOCTYPE html>
@@ -214,6 +231,23 @@ $allUsers = $db->query("SELECT id, username FROM users ORDER BY id ASC")->fetch_
         <label for="assign_user_id">User ID</label>
         <input type="number" id="assign_user_id" name="assign_user_id" required>
         <button class="btn" type="submit">Assign</button>
+    </form>
+
+    <h3 style="margin-top:2rem;">Assign Categories to Article</h3>
+    <form method="post">
+        <?= csrfField() ?>
+        <input type="hidden" name="type" value="assign_article_categories">
+        <label for="cat_article_id">Article ID</label>
+        <input type="number" id="cat_article_id" name="cat_article_id" required>
+        <div class="category-checkboxes">
+            <?php foreach (getAllCategories() as $cat): ?>
+                <label class="category-checkbox">
+                    <input type="checkbox" name="categories[]" value="<?= (int)$cat['id'] ?>" class="category-cb">
+                    <?= e($cat['name']) ?>
+                </label>
+            <?php endforeach; ?>
+        </div>
+        <button class="btn" type="submit">Assign (up to 3)</button>
     </form>
 
     <h3 style="margin-top:2rem;">Current Articles</h3>

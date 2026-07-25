@@ -1200,3 +1200,41 @@ function notifySubscribersOfNewArticle(int $articleId, string $articleTitle): vo
         sendNewArticleNotification($sub['email'], $sub['unsubscribe_token'], $articleTitle, $articleId);
     }
 }
+
+function getExploreArticles(string $categorySlug, string $sort): array {
+    $db = getDB();
+    $joins = '';
+    $where = "a.status = 'published'";
+    $params = [];
+    $types = '';
+
+    if ($categorySlug !== 'all') {
+        $joins = "JOIN article_categories ac ON ac.article_id = a.id JOIN categories c ON c.id = ac.category_id";
+        $where .= " AND c.slug = ?";
+        $params[] = $categorySlug;
+        $types .= 's';
+    }
+
+    $likeExpr = "(SELECT COUNT(*) FROM likes l WHERE l.article_id = a.id)";
+    $dislikeExpr = "(SELECT COUNT(*) FROM dislikes d WHERE d.article_id = a.id)";
+    $commentExpr = "(SELECT COUNT(*) FROM comments cm WHERE cm.article_id = a.id)";
+    $trendExpr = "(a.views + $likeExpr*3 + $commentExpr*4) / POWER(TIMESTAMPDIFF(HOUR, a.created_at, NOW()) + 2, 1.5)";
+
+    switch ($sort) {
+        case 'recent': $orderBy = "a.created_at DESC"; break;
+        case 'popular': $orderBy = "a.views DESC"; break;
+        case 'most_liked': $orderBy = "$likeExpr DESC"; break;
+        case 'most_disliked': $orderBy = "$dislikeExpr DESC"; break;
+        case 'author': $orderBy = "a.author ASC"; break;
+        case 'oldest': $orderBy = "a.created_at ASC"; break;
+        default: $orderBy = "$trendExpr DESC"; break; // 'metrics'
+    }
+
+    $sql = "SELECT a.* FROM articles a $joins WHERE $where ORDER BY $orderBy";
+    $stmt = $db->prepare($sql);
+    if ($params) $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $rows;
+}
