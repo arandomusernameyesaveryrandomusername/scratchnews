@@ -54,7 +54,7 @@ function exploreLink(string $cat, string $sort): string {
     <?php else: ?>
         <?php
             $big = $articles[0] ?? null;
-            $medium = array_slice($articles, 1, 2);
+            $medium = array_slice($articles, 1, 1);
             $rest = array_slice($articles, 3);
         ?>
         <?php if ($big): ?>
