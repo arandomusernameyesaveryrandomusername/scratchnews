@@ -9,6 +9,7 @@
     </button>
 </form>
 <nav>
+    <a href="/explore">Explore</a>
     <?php if (!empty($_SESSION['reader_username'])): ?>
         <div class="user-nav">
             <button class="user-nav-toggle" onclick="document.getElementById('userMenu').classList.toggle('open')"><?= e($_SESSION['reader_username']) ?> &#9662;</button>

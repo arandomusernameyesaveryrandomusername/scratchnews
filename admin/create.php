@@ -21,6 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $imageUrl = saveUploadedImage($_FILES['cover_image']);
             }
             $id = createArticle($title, $summary, $content, $author ?: 'ScratchNews Staff', $imageUrl, $status);
+            $categoryIds = $_POST['categories'] ?? [];
+            if (!empty($categoryIds)) {
+                setArticleCategories($id, $categoryIds);
+            }
+            if ($status === 'published') {
+                notifySubscribersOfNewArticle($id, $title);
+            }
             header('Location: /login/?created=' . $id);
             exit;
         } catch (RuntimeException $e) {
@@ -57,6 +64,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <label for="cover_image">Cover Image (optional)</label>
         <input type="file" id="cover_image" name="cover_image" accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml">
+
+        <label>Categories (pick up to 3)</label>
+        <div class="category-checkboxes">
+            <?php foreach (getAllCategories() as $cat): ?>
+                <label class="category-checkbox">
+                    <input type="checkbox" name="categories[]" value="<?= (int)$cat['id'] ?>" class="category-cb">
+                    <?= e($cat['name']) ?>
+                </label>
+            <?php endforeach; ?>
+        </div>
 
         <label for="content">Full Article Content</label>
 <div id="editorWrap">
@@ -133,6 +150,12 @@ document.getElementById('toggleToolbarPos').addEventListener('click', function()
 });
 document.querySelector('form').addEventListener('submit', function() {
     document.querySelector('#content').value = quill.root.innerHTML;
+});
+document.querySelectorAll('.category-cb').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+        var checked = document.querySelectorAll('.category-cb:checked');
+        if (checked.length > 3) this.checked = false;
+    });
 });
 </script>
 </body>

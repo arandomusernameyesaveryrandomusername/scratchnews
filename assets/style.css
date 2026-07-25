@@ -598,3 +598,28 @@ body.dark .profile-actions-form { background: none; box-shadow: none; }
 .category-checkbox { display: flex; align-items: center; gap: 0.3rem; font-size: 0.9rem; font-weight: normal; }
 .article-categories { display: flex; gap: 0.5rem; margin: 0.5rem 0; }
 .category-badge { background: #ff8c1a; color: #fff; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+
+.explore-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0 1.5rem; }
+.explore-tab { padding: 0.4rem 0.9rem; border-radius: 20px; background: #fff; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 0.9rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.explore-tab.active { background: var(--brand); color: #fff; }
+body.dark .explore-tab { background: #1e2125; color: #f0f0f0; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+body.dark .explore-tab.active { background: var(--brand-bright); color: #fff; }
+
+.explore-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; }
+.explore-card { display: block; text-decoration: none; color: inherit; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+body.dark .explore-card { background: #1e2125; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+.explore-card-img { width: 100%; object-fit: cover; display: block; }
+.explore-card-img-placeholder { background: linear-gradient(135deg, var(--brand-bright), var(--brand)); }
+.explore-card-big .explore-card-img, .explore-card-big .explore-card-img-placeholder { aspect-ratio: 16/9; }
+.explore-card-title { padding: 0.7rem 0.9rem; font-weight: 700; font-size: 1.1rem; color: var(--ink); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+body.dark .explore-card-title { color: #f0f0f0; }
+.explore-medium-col { display: flex; flex-direction: column; gap: 1rem; }
+.explore-card-medium .explore-card-img, .explore-card-medium .explore-card-img-placeholder { height: 120px; object-fit: cover; }
+.explore-card-medium .explore-card-title { font-size: 0.9rem; padding: 0.5rem 0.7rem; }
+.explore-small-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem; }
+.explore-card-small .explore-card-img, .explore-card-small .explore-card-img-placeholder { height: 90px; object-fit: cover; }
+.explore-card-small .explore-card-title { font-size: 0.85rem; padding: 0.4rem 0.6rem; }
+@media (max-width: 700px) {
+    .explore-grid { grid-template-columns: 1fr; }
+    .explore-small-row { grid-template-columns: repeat(2, 1fr); }
+}
