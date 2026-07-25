@@ -138,6 +138,18 @@ quill.getModule('toolbar').addHandler('image', function() {
     };
     input.click();
 });
+document.getElementById('toggleToolbarPos').addEventListener('click', function() {
+    var wrap = document.getElementById('editorWrap');
+    var toolbar = document.getElementById('toolbar');
+    var editor = document.getElementById('editor-container');
+    if (toolbar.nextElementSibling === editor) {
+        wrap.appendChild(toolbar);
+        this.title = 'Move formatting bar to top';
+    } else {
+        wrap.insertBefore(toolbar, editor);
+        this.title = 'Move formatting bar to bottom';
+    }
+});
 document.querySelector('form').addEventListener('submit', function() {
     document.querySelector('#content').value = quill.root.innerHTML;
 });
