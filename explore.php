@@ -52,8 +52,40 @@ function exploreLink(string $cat, string $sort): string {
     <?php if (empty($articles)): ?>
         <p>No articles here yet.</p>
     <?php else: ?>
-        <div class="search-results-list">
-            <?php foreach ($articles as $a):
+        <?php
+            $big = $articles[0] ?? null;
+            $medium = array_slice($articles, 1, 2);
+            $rest = array_slice($articles, 3);
+        ?>
+        <?php if ($big): ?>
+        <div class="explore-grid">
+            <a href="/article/<?= (int)$big['id'] ?>" class="explore-card explore-card-big">
+                <?php if (!empty($big['image_url'])): ?>
+                    <img src="<?= e($big['image_url']) ?>" alt="" class="explore-card-img">
+                <?php else: ?>
+                    <div class="explore-card-img explore-card-img-placeholder"></div>
+                <?php endif; ?>
+                <div class="explore-card-title"><?= e($big['title']) ?></div>
+            </a>
+            <?php if (!empty($medium)): ?>
+            <div class="explore-medium-col">
+                <?php foreach ($medium as $a): ?>
+                <a href="/article/<?= (int)$a['id'] ?>" class="explore-card explore-card-medium">
+                    <?php if (!empty($a['image_url'])): ?>
+                        <img src="<?= e($a['image_url']) ?>" alt="" class="explore-card-img">
+                    <?php else: ?>
+                        <div class="explore-card-img explore-card-img-placeholder"></div>
+                    <?php endif; ?>
+                    <div class="explore-card-title"><?= e($a['title']) ?></div>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+        <div class="search-results-list" style="margin-top:1.5rem;">
+            <?php foreach ($rest as $a):
                 $likeCount = getLikeCount($a['id']);
                 $dislikeCount = getDislikeCount($a['id']);
                 $commentCount = getCommentCount($a['id']);
