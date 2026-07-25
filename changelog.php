@@ -16,6 +16,7 @@ session_start();
 <?php include __DIR__ . '/includes/empty-header.php'; ?>
 <main>
     <h2>Changelog</h2>
+    <p>[Jul25] v0.13.4 - Added articles showing in profile pages</p>
     <p>[Jul22] v0.13.3 - SEO</p>
     <p>v0.13.2 - Admin 'log in as' feature to protect against bots. But more importantly, first ever non-admin article and 5 users.</p>
     <p>v0.13.1 - CSRF, no purple links when accessing links</p>
