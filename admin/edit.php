@@ -81,6 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <input type="file" id="cover_image" name="cover_image" accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml">
 
         <label for="content">Full Article Content</label>
+<div id="editorWrap">
 <div id="toolbar">
     <button class="ql-bold" title="Bold (Ctrl+B)"><b>B</b></button>
     <button class="ql-italic" title="Italic (Ctrl+I)"><i>I</i></button>
@@ -104,6 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <span style="float:right;"><button type="button" id="toggleToolbarPos" title="Move formatting bar to bottom">⇕</button></span>
 </div>
 <div id="editor-container"><?= $article['content'] ?></div>
+</div>
 <textarea id="content" name="content" style="display:none;"></textarea>
         <button class="btn" type="submit" name="status" value="published">Publish</button>
         <button class="btn secondary" type="submit" name="status" value="draft">Save as Draft</button>
