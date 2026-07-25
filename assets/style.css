@@ -623,7 +623,7 @@ body.dark .explore-filter-menu a { color: #f0f0f0; }
 .header-quick-link { color: #fff; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
 .header-quick-link:hover { text-decoration: underline; }
 
-.explore-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; height: 340px; }
+.explore-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; height: 340px; overflow: hidden; }
 .explore-card { display: block; text-decoration: none; color: inherit; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
 body.dark .explore-card { background: #1e2125; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
 .explore-card-img { width: 100%; object-fit: cover; display: block; }
