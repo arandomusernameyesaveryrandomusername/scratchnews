@@ -24,15 +24,22 @@ if ($isVerified && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = trim($_POST['title'] ?? '');
     $summary = trim($_POST['summary'] ?? '');
     $content = $_POST['content'] ?? '';
+    $categoryIds = $_POST['categories'] ?? [];
 
     if ($title === '' || $summary === '' || $content === '') {
         $error = 'All fields are required.';
     } else {
         $cleanContent = sanitizeArticleHtml($content);
-        createSubmission($_SESSION['reader_id'], $title, $summary, $cleanContent);
+        $imageUrl = null;
+        if (!empty($_FILES['cover_image']['tmp_name'])) {
+            $imageUrl = saveUploadedImage($_FILES['cover_image']);
+        }
+        createSubmission($_SESSION['reader_id'], $title, $summary, $cleanContent, $imageUrl, $categoryIds);
         $success = true;
     }
 }
+
+$allCategories = getAllCategories();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -41,7 +48,7 @@ if ($isVerified && $_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <title>Submit an Article - <?= e(SITE_NAME) ?></title>
-<link rel="stylesheet" href="/assets/style.css?v=9">
+<link rel="stylesheet" href="/assets/style.css?v=10">
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 </head>
 <body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
@@ -62,12 +69,25 @@ if ($isVerified && $_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     <?php else: ?>
         <?php if ($error): ?><div class="alert error"><?= e($error) ?></div><?php endif; ?>
-        <form method="post" id="submitForm">
+        <form method="post" id="submitForm" enctype="multipart/form-data">
             <label for="title">Title</label>
             <input type="text" id="title" name="title" value="<?= e($_POST['title'] ?? '') ?>" required>
 
             <label for="summary">Summary</label>
             <input type="text" id="summary" name="summary" value="<?= e($_POST['summary'] ?? '') ?>" required>
+
+            <label for="cover_image">Cover Image (optional)</label>
+            <input type="file" id="cover_image" name="cover_image" accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml">
+
+            <label>Categories (pick up to 3)</label>
+            <div class="category-checkboxes">
+                <?php foreach ($allCategories as $cat): ?>
+                    <label class="category-checkbox">
+                        <input type="checkbox" name="categories[]" value="<?= (int)$cat['id'] ?>" class="category-cb">
+                        <?= e($cat['name']) ?>
+                    </label>
+                <?php endforeach; ?>
+            </div>
 
             <label for="editor">Content</label>
             <div id="editor" style="background:#fff; min-height:200px;"></div>
@@ -100,6 +120,13 @@ if ($isVerified && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     document.getElementById('submitForm').addEventListener('submit', function(e) {
         document.getElementById('content').value = quill.root.innerHTML;
+    });
+
+    document.querySelectorAll('.category-cb').forEach(function(cb) {
+        cb.addEventListener('change', function() {
+            var checked = document.querySelectorAll('.category-cb:checked');
+            if (checked.length > 3) this.checked = false;
+        });
     });
 </script>
 <?php endif; ?>

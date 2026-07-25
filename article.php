@@ -12,6 +12,10 @@ if ($article && ($article['status'] ?? 'published') === 'draft' && empty($_SESSI
     $article = null;
 }
 
+if ($article) {
+    incrementArticleView($article['id']);
+}
+
 $isBanned = !empty($_SESSION['reader_id']) && isUserBanned($_SESSION['reader_id']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $article && !empty($_SESSION['reader_id'])) {
@@ -101,6 +105,11 @@ if (!$article) {
                     · Updated <?= utcTimeTag($article['updated_at']) ?>
                 <?php endif; ?>
             </div>
+            <?php $articleCats = getArticleCategories($article['id']); if (!empty($articleCats)): ?>
+            <div class="article-categories">
+                <?php foreach ($articleCats as $cat): ?><span class="category-badge"><?= e($cat['name']) ?></span><?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <div class="engage-bar">
                 <form method="post">
                     <?= csrfField() ?>
