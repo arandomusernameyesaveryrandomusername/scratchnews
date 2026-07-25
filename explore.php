@@ -20,7 +20,7 @@ function exploreLink(string $cat, string $sort): string {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <title>Explore - <?= e(SITE_NAME) ?></title>
-<link rel="stylesheet" href="/assets/style.css?v=12">
+<link rel="stylesheet" href="/assets/style.css?v=13">
 </head>
 <body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
 <script>if(document.body.hasAttribute('data-theme-auto')&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.body.classList.add('dark');}</script>
@@ -33,8 +33,8 @@ function exploreLink(string $cat, string $sort): string {
             <a href="<?= exploreLink($cat['slug'], $sort) ?>" class="explore-tab <?= $activeSlug === $cat['slug'] ? 'active' : '' ?>"><?= e($cat['name']) ?></a>
         <?php endforeach; ?>
         <div class="explore-filter-wrap">
-            <button type="button" class="explore-filter-btn" onclick="document.getElementById('filterMenu').classList.toggle('open')">
-                <svg viewBox="0 0 24 24" class="icon-svg-sm" xmlns="http://www.w3.org/2000/svg"><path d="M3 4h18l-7 8v6l-4 2v-8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            <button type="button" class="explore-filter-btn explore-tab" onclick="document.getElementById('filterMenu').classList.toggle('open')">
+                <svg viewBox="0 0 24 24" width="14" height="14" xmlns="http://www.w3.org/2000/svg"><path d="M3 4h18l-7 8v6l-4 2v-8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
                 Filter
             </button>
             <div id="filterMenu" class="explore-filter-menu">
@@ -52,42 +52,8 @@ function exploreLink(string $cat, string $sort): string {
     <?php if (empty($articles)): ?>
         <p>No articles here yet.</p>
     <?php else: ?>
-        <?php
-            $big = $articles[0] ?? null;
-            $medium = array_slice($articles, 1, 2);
-            $rest = array_slice($articles, 3);
-        ?>
-        <div class="explore-grid">
-            <?php if ($big): ?>
-            <a href="/article/<?= (int)$big['id'] ?>" class="explore-card explore-card-big">
-                <?php if (!empty($big['image_url'])): ?>
-                    <img src="<?= e($big['image_url']) ?>" alt="" class="explore-card-img">
-                <?php else: ?>
-                    <div class="explore-card-img explore-card-img-placeholder"></div>
-                <?php endif; ?>
-                <div class="explore-card-title"><?= e($big['title']) ?></div>
-            </a>
-            <?php endif; ?>
-
-            <?php if (!empty($medium)): ?>
-            <div class="explore-medium-col">
-                <?php foreach ($medium as $a): ?>
-                <a href="/article/<?= (int)$a['id'] ?>" class="explore-card explore-card-medium">
-                    <?php if (!empty($a['image_url'])): ?>
-                        <img src="<?= e($a['image_url']) ?>" alt="" class="explore-card-img">
-                    <?php else: ?>
-                        <div class="explore-card-img explore-card-img-placeholder"></div>
-                    <?php endif; ?>
-                    <div class="explore-card-title"><?= e($a['title']) ?></div>
-                </a>
-                <?php endforeach; ?>
-            </div>
-            <?php endif; ?>
-        </div>
-
-        <?php if (!empty($rest)): ?>
-        <div class="search-results-list" style="margin-top:1.5rem;">
-            <?php foreach ($rest as $i => $a):
+        <div class="search-results-list">
+            <?php foreach ($articles as $a):
                 $likeCount = getLikeCount($a['id']);
                 $dislikeCount = getDislikeCount($a['id']);
                 $commentCount = getCommentCount($a['id']);
@@ -115,7 +81,6 @@ function exploreLink(string $cat, string $sort): string {
                 </a>
             <?php endforeach; ?>
         </div>
-        <?php endif; ?>
     <?php endif; ?>
 </main>
 <?php include __DIR__ . '/includes/footer.php'; ?>

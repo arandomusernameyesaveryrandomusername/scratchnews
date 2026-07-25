@@ -181,6 +181,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+}
+
+$articles = getAllArticles();
 $allUsers = $db->query("SELECT id, username FROM users ORDER BY id ASC")->fetch_all(MYSQLI_ASSOC);
 ?>
 <!DOCTYPE html>

@@ -13,7 +13,7 @@ RewriteRule ^delete-account/?$ delete_account.php [L,QSA]
 RewriteRule ^users/([A-Za-z0-9_]+)/?$ profile.php?username=$1 [L,QSA]
 RewriteRule ^@([A-Za-z0-9_]+)/?$ profile.php?username=$1 [L,QSA]
 RewriteRule ^search$ search.php [L]
-UPDATE categories SET name = 'Series', slug = 'series' WHERE slug = 'history';
+RewriteRule ^explore/?$ explore.php [L,QSA]
 <FilesMatch "\.(css|js|php)$">
     Header set Cache-Control "no-cache, must-revalidate"
 </FilesMatch>
