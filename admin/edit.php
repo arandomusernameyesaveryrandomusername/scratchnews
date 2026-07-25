@@ -101,10 +101,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </select>
     <button class="ql-link" title="Insert link">🔗</button>
     <button class="ql-image" title="Insert image">🖼️</button>
+    <span style="float:right;"><button type="button" id="toggleToolbarPos" title="Move formatting bar to bottom">⇕</button></span>
 </div>
 <div id="editor-container"><?= $article['content'] ?></div>
 <textarea id="content" name="content" style="display:none;"></textarea>
-
         <button class="btn" type="submit" name="status" value="published">Publish</button>
         <button class="btn secondary" type="submit" name="status" value="draft">Save as Draft</button>
         <a href="/admin/" class="btn secondary">Cancel</a>
