@@ -965,3 +965,238 @@ function utcTimeTag(string $datetimeUtc, string $style = 'date'): string {
     $class = $style === 'datetime' ? 'local-datetime' : 'local-date';
     return '<time class="' . $class . '" datetime="' . $iso . '">' . e($datetimeUtc) . '</time>';
 }
+
+// ── Categories ──────────────────────────────────────────
+
+function getAllCategories(): array {
+    $db = getDB();
+    return $db->query("SELECT * FROM categories ORDER BY name ASC")->fetch_all(MYSQLI_ASSOC);
+}
+
+function getCategoryBySlug(string $slug): ?array {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT * FROM categories WHERE slug = ?");
+    $stmt->bind_param('s', $slug);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $row ?: null;
+}
+
+function getArticleCategoryIds(int $articleId): array {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT category_id FROM article_categories WHERE article_id = ?");
+    $stmt->bind_param('i', $articleId);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return array_map('intval', array_column($rows, 'category_id'));
+}
+
+function getArticleCategories(int $articleId): array {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT c.* FROM categories c
+        JOIN article_categories ac ON ac.category_id = c.id
+        WHERE ac.article_id = ?");
+    $stmt->bind_param('i', $articleId);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $rows;
+}
+
+// Enforces max 3 categories per article regardless of what's passed in
+function setArticleCategories(int $articleId, array $categoryIds): void {
+    $categoryIds = array_slice(array_unique(array_map('intval', $categoryIds)), 0, 3);
+    $db = getDB();
+    $stmt = $db->prepare("DELETE FROM article_categories WHERE article_id = ?");
+    $stmt->bind_param('i', $articleId);
+    $stmt->execute();
+    $stmt->close();
+    if (empty($categoryIds)) return;
+    $stmt = $db->prepare("INSERT INTO article_categories (article_id, category_id) VALUES (?, ?)");
+    foreach ($categoryIds as $catId) {
+        $stmt->bind_param('ii', $articleId, $catId);
+        $stmt->execute();
+    }
+    $stmt->close();
+}
+
+function getArticlesByCategorySlug(string $slug): array {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT a.* FROM articles a
+        JOIN article_categories ac ON ac.article_id = a.id
+        JOIN categories c ON c.id = ac.category_id
+        WHERE c.slug = ? AND a.status = 'published'
+        ORDER BY a.created_at DESC");
+    $stmt->bind_param('s', $slug);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $rows;
+}
+
+// ── Views & Trending ────────────────────────────────────
+
+function incrementArticleView(int $articleId): void {
+    $db = getDB();
+    $stmt = $db->prepare("UPDATE articles SET views = views + 1 WHERE id = ?");
+    $stmt->bind_param('i', $articleId);
+    $stmt->execute();
+    $stmt->close();
+}
+
+// Score = (views + likes*3 + comments*4) / (age_in_hours + 2)^1.5
+// Recency decay means a hot new article can outrank an old high-total one.
+function getTrendingArticles(int $limit = 10): array {
+    $db = getDB();
+    $sql = "SELECT a.*,
+        (a.views
+            + (SELECT COUNT(*) FROM likes l WHERE l.article_id = a.id) * 3
+            + (SELECT COUNT(*) FROM comments c WHERE c.article_id = a.id) * 4
+        ) / POWER(TIMESTAMPDIFF(HOUR, a.created_at, NOW()) + 2, 1.5) AS trend_score
+        FROM articles a
+        WHERE a.status = 'published'
+        ORDER BY trend_score DESC
+        LIMIT ?";
+    $stmt = $db->prepare($sql);
+    $stmt->bind_param('i', $limit);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $rows;
+}
+
+// ── Subscribers ─────────────────────────────────────────
+
+function getSubscriberIdByEmail(string $email): ?int {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT id FROM subscribers WHERE email = ?");
+    $stmt->bind_param('s', $email);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $row ? (int)$row['id'] : null;
+}
+
+// Returns the confirm token to email out. Re-subscribing resets preferences to whatever was just picked.
+function createSubscriber(string $email, array $categoryIds): string {
+    $db = getDB();
+    $confirmToken = bin2hex(random_bytes(24));
+    $unsubToken = bin2hex(random_bytes(24));
+
+    $stmt = $db->prepare("INSERT INTO subscribers (email, confirm_token, unsubscribe_token) VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE confirm_token = VALUES(confirm_token)");
+    $stmt->bind_param('sss', $email, $confirmToken, $unsubToken);
+    $stmt->execute();
+    $stmt->close();
+
+    $subscriberId = getSubscriberIdByEmail($email);
+
+    $stmt = $db->prepare("DELETE FROM subscriber_categories WHERE subscriber_id = ?");
+    $stmt->bind_param('i', $subscriberId);
+    $stmt->execute();
+    $stmt->close();
+
+    if (!empty($categoryIds)) {
+        $stmt = $db->prepare("INSERT INTO subscriber_categories (subscriber_id, category_id) VALUES (?, ?)");
+        foreach (array_map('intval', $categoryIds) as $catId) {
+            $stmt->bind_param('ii', $subscriberId, $catId);
+            $stmt->execute();
+        }
+        $stmt->close();
+    }
+
+    return $confirmToken;
+}
+
+function confirmSubscriber(string $token): bool {
+    $db = getDB();
+    $stmt = $db->prepare("UPDATE subscribers SET confirmed = 1, confirm_token = NULL, confirmed_at = NOW() WHERE confirm_token = ?");
+    $stmt->bind_param('s', $token);
+    $stmt->execute();
+    $ok = $stmt->affected_rows > 0;
+    $stmt->close();
+    return $ok;
+}
+
+function unsubscribeByToken(string $token): bool {
+    $db = getDB();
+    $stmt = $db->prepare("DELETE FROM subscribers WHERE unsubscribe_token = ?");
+    $stmt->bind_param('s', $token);
+    $stmt->execute();
+    $ok = $stmt->affected_rows > 0;
+    $stmt->close();
+    return $ok;
+}
+
+function getSubscribersForCategories(array $categoryIds): array {
+    if (empty($categoryIds)) return [];
+    $db = getDB();
+    $placeholders = implode(',', array_fill(0, count($categoryIds), '?'));
+    $types = str_repeat('i', count($categoryIds));
+    $stmt = $db->prepare("SELECT DISTINCT s.* FROM subscribers s
+        JOIN subscriber_categories sc ON sc.subscriber_id = s.id
+        WHERE s.confirmed = 1 AND sc.category_id IN ($placeholders)");
+    $stmt->bind_param($types, ...array_map('intval', $categoryIds));
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $rows;
+}
+
+// ── Subscriber emails (shares the Brevo pattern from sendVerificationEmail) ──
+
+function sendBrevoEmail(string $payload): bool {
+    $ch = curl_init("https://api.brevo.com/v3/smtp/email");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        "accept: application/json",
+        "api-key: " . BREVO_API_KEY,
+        "content-type: application/json"
+    ]);
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    return $httpCode >= 200 && $httpCode < 300;
+}
+
+function sendSubscriptionConfirmEmail(string $toEmail, string $token): bool {
+    $confirmLink = "https://scratchnews.freedev.app/confirm-subscription.php?token=" . urlencode($token);
+    $payload = json_encode([
+        "sender" => ["name" => "ScratchNews", "email" => BREVO_SENDER_EMAIL],
+        "to" => [["email" => $toEmail]],
+        "subject" => "Confirm your ScratchNews subscription",
+        "htmlContent" => "<p>Thanks for subscribing to ScratchNews!</p>"
+            . "<p>Click below to confirm your email and start getting Scratch news in your inbox:</p>"
+            . "<p><a href=\"" . htmlspecialchars($confirmLink) . "\">" . htmlspecialchars($confirmLink) . "</a></p>"
+            . "<p>If you didn't request this, you can ignore this email.</p>"
+    ]);
+    return sendBrevoEmail($payload);
+}
+
+function sendNewArticleNotification(string $toEmail, string $unsubToken, string $articleTitle, int $articleId): bool {
+    $articleLink = "https://scratchnews.freedev.app/article/" . $articleId;
+    $unsubLink = "https://scratchnews.freedev.app/unsubscribe.php?token=" . urlencode($unsubToken);
+    $payload = json_encode([
+        "sender" => ["name" => "ScratchNews", "email" => BREVO_SENDER_EMAIL],
+        "to" => [["email" => $toEmail]],
+        "subject" => "New article on ScratchNews: " . $articleTitle,
+        "htmlContent" => "<p>A new article just went up that matches your interests:</p>"
+            . "<p><a href=\"" . htmlspecialchars($articleLink) . "\"><strong>" . htmlspecialchars($articleTitle) . "</strong></a></p>"
+            . "<p style=\"margin-top:2rem;font-size:0.85em;color:#888;\"><a href=\"" . htmlspecialchars($unsubLink) . "\">Unsubscribe</a> from these emails.</p>"
+    ]);
+    return sendBrevoEmail($payload);
+}
+
+// Call this right after setArticleCategories(), only when status is 'published'
+function notifySubscribersOfNewArticle(int $articleId, string $articleTitle): void {
+    $categoryIds = getArticleCategoryIds($articleId);
+    if (empty($categoryIds)) return;
+    $subscribers = getSubscribersForCategories($categoryIds);
+    foreach ($subscribers as $sub) {
+        sendNewArticleNotification($sub['email'], $sub['unsubscribe_token'], $articleTitle, $articleId);
+    }
+}
