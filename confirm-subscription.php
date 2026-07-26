@@ -18,7 +18,7 @@ $success = $token !== '' && confirmSubscriber($token);
 <?php include __DIR__ . '/includes/header.php'; ?>
 <main style="text-align:center; padding:3rem 1rem;">
     <?php if ($success): ?>
-        <h2>You're subscribed! 🎉</h2>
+        <h2>You're subscribed!</h2>
         <p>You'll now get ScratchNews articles matching your interests straight to your inbox.</p>
     <?php else: ?>
         <h2>Hmm, that link didn't work</h2>

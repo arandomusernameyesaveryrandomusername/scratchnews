@@ -40,6 +40,13 @@ function moveUserId(mysqli $db, int $oldId, int $newId): void {
         $db->query("SET FOREIGN_KEY_CHECKS=1");
         throw $e;
     }
+
+    // Self-heal: always reset AUTO_INCREMENT to just above the current max id.
+    // This makes it structurally impossible for a stray high id to permanently
+    // drag the counter up, regardless of what caused it.
+    $result = $db->query("SELECT MAX(id) AS max_id FROM users");
+    $maxId = (int)($result->fetch_assoc()['max_id'] ?? 0);
+    $db->query("ALTER TABLE users AUTO_INCREMENT = " . ($maxId + 1));
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

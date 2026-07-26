@@ -1,7 +1,6 @@
 <div class="subscribe-widget">
     <div class="subscribe-text">
         <strong>Subscribe to ScratchNews!</strong>
-        <p>Get the most recent Scratch news and entertainment straight to your inbox.</p>
     </div>
     <form method="post" action="/subscribe.php" class="subscribe-form">
         <?= csrfField() ?>
@@ -14,8 +13,8 @@
             <?php endforeach; ?>
         </div>
         <div class="subscribe-input-row">
-            <input type="email" name="email" placeholder="your email here" required>
-            <button type="submit" class="btn">Subscribe!!</button>
+            <input type="email" name="email" placeholder="Your Email Here" required>
+            <button type="submit" class="btn">Subscribe!</button>
         </div>
     </form>
 </div>

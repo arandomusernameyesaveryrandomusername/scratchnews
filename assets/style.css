@@ -657,7 +657,7 @@ body.dark .explore-filter-form label { color: #f0f0f0; }
 .subscribe-text strong { font-size: 1.1rem; display: block; }
 .subscribe-text p { margin: 0.2rem 0 0; font-size: 0.9rem; }
 .subscribe-form { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end; }
-.subscribe-categories { display: flex; flex-wrap: wrap; gap: 0.6rem; font-size: 0.8rem; color: #3a2a00; }
+.subscribe-categories { display: flex; flex-wrap: wrap; gap: 0.6rem; font-size: 0.8rem; color: currentColor; }
 .subscribe-cat-check { display: flex; align-items: center; gap: 0.25rem; }
 .subscribe-input-row { display: flex; gap: 0.5rem; }
 .subscribe-input-row input[type="email"] { padding: 0.5rem 0.8rem; border-radius: 20px; border: none; min-width: 220px; }
