@@ -619,7 +619,8 @@ body.dark .explore-filter-menu a { color: #f0f0f0; }
     .explore-tabs { justify-content: flex-start; }
 }
 
-.header-quick-links { display: flex; gap: 1.2rem; align-items: center; margin-left: 1rem; }
+.header-left { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.header-quick-links { display: flex; gap: 1.2rem; align-items: center; }
 .header-quick-link { color: #fff; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
 .header-quick-link:hover { text-decoration: underline; }
 
@@ -647,3 +648,6 @@ body.dark .explore-card-title { color: #f0f0f0; }
 .explore-filter-form label { font-size: 0.8rem; font-weight: 600; color: var(--ink); margin-top: 0.3rem; }
 body.dark .explore-filter-form label { color: #f0f0f0; }
 .explore-filter-form select, .explore-filter-form input { padding: 0.4rem 0.5rem; border-radius: 6px; border: 1px solid #ccc; font-size: 0.9rem; }
+
+.reset-filter-link { text-align: center; font-size: 0.85rem; color: #888; text-decoration: none; margin-top: 0.3rem; }
+.reset-filter-link:hover { text-decoration: underline; }

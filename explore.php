@@ -64,6 +64,7 @@ function exploreTabLink(string $cat, string $sort, string $author, string $from,
                     <label for="filterTo">To date</label>
                     <input type="date" name="to" id="filterTo" value="<?= e($dateTo) ?>">
                     <button type="submit" class="btn" style="margin-top:0.5rem;">Apply</button>
+                    <a href="/explore?category=<?= e($activeSlug) ?>" class="reset-filter-link">Reset Filter</a>
                 </form>
             </div>
         </div>
