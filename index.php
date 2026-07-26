@@ -97,6 +97,7 @@ $popular = getPopularArticles(4);
         <?php endif; ?>
     <?php endif; ?>
 </main>
+<?php include __DIR__ . '/includes/subscribe-widget.php'; ?>
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <script>
 document.addEventListener('click', function(e) {
