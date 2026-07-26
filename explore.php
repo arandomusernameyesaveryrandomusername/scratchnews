@@ -6,11 +6,19 @@ logVisit('/explore');
 $categories = getAllCategories();
 $activeSlug = $_GET['category'] ?? 'all';
 $sort = $_GET['sort'] ?? 'metrics';
+$authorFilter = trim($_GET['author'] ?? '');
+$dateFrom = trim($_GET['from'] ?? '');
+$dateTo = trim($_GET['to'] ?? '');
 
-$articles = getExploreArticles($activeSlug, $sort);
+$articles = getExploreArticles($activeSlug, $sort, $authorFilter, $dateFrom, $dateTo);
 
-function exploreLink(string $cat, string $sort): string {
-    return '/explore?category=' . urlencode($cat) . ($sort !== 'metrics' ? '&sort=' . urlencode($sort) : '');
+function exploreTabLink(string $cat, string $sort, string $author, string $from, string $to): string {
+    $params = ['category' => $cat];
+    if ($sort !== 'metrics') $params['sort'] = $sort;
+    if ($author !== '') $params['author'] = $author;
+    if ($from !== '') $params['from'] = $from;
+    if ($to !== '') $params['to'] = $to;
+    return '/explore?' . http_build_query($params);
 }
 ?>
 <!DOCTYPE html>
@@ -20,7 +28,7 @@ function exploreLink(string $cat, string $sort): string {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <title>Explore - <?= e(SITE_NAME) ?></title>
-<link rel="stylesheet" href="/assets/style.css?v=13">
+<link rel="stylesheet" href="/assets/style.css?v=14">
 </head>
 <body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
 <script>if(document.body.hasAttribute('data-theme-auto')&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.body.classList.add('dark');}</script>
@@ -28,9 +36,9 @@ function exploreLink(string $cat, string $sort): string {
 <main class="home-main">
     <h2 class="explore-title">Explore</h2>
     <div class="explore-tabs">
-        <a href="<?= exploreLink('all', $sort) ?>" class="explore-tab <?= $activeSlug === 'all' ? 'active' : '' ?>">All</a>
+        <a href="<?= exploreTabLink('all', $sort, $authorFilter, $dateFrom, $dateTo) ?>" class="explore-tab <?= $activeSlug === 'all' ? 'active' : '' ?>">All</a>
         <?php foreach ($categories as $cat): ?>
-            <a href="<?= exploreLink($cat['slug'], $sort) ?>" class="explore-tab <?= $activeSlug === $cat['slug'] ? 'active' : '' ?>"><?= e($cat['name']) ?></a>
+            <a href="<?= exploreTabLink($cat['slug'], $sort, $authorFilter, $dateFrom, $dateTo) ?>" class="explore-tab <?= $activeSlug === $cat['slug'] ? 'active' : '' ?>"><?= e($cat['name']) ?></a>
         <?php endforeach; ?>
         <div class="explore-filter-wrap">
             <button type="button" class="explore-filter-btn explore-tab" onclick="document.getElementById('filterMenu').classList.toggle('open')">
@@ -38,19 +46,31 @@ function exploreLink(string $cat, string $sort): string {
                 Filter
             </button>
             <div id="filterMenu" class="explore-filter-menu">
-                <a href="<?= exploreLink($activeSlug, 'metrics') ?>" class="<?= $sort === 'metrics' ? 'active' : '' ?>">Metrics (default)</a>
-                <a href="<?= exploreLink($activeSlug, 'recent') ?>" class="<?= $sort === 'recent' ? 'active' : '' ?>">Recent</a>
-                <a href="<?= exploreLink($activeSlug, 'popular') ?>" class="<?= $sort === 'popular' ? 'active' : '' ?>">Popular</a>
-                <a href="<?= exploreLink($activeSlug, 'most_liked') ?>" class="<?= $sort === 'most_liked' ? 'active' : '' ?>">Most Liked</a>
-                <a href="<?= exploreLink($activeSlug, 'most_disliked') ?>" class="<?= $sort === 'most_disliked' ? 'active' : '' ?>">Most Disliked</a>
-                <a href="<?= exploreLink($activeSlug, 'author') ?>" class="<?= $sort === 'author' ? 'active' : '' ?>">Sort by Author</a>
-                <a href="<?= exploreLink($activeSlug, 'oldest') ?>" class="<?= $sort === 'oldest' ? 'active' : '' ?>">Age/Date</a>
+                <form method="get" class="explore-filter-form">
+                    <input type="hidden" name="category" value="<?= e($activeSlug) ?>">
+                    <label for="filterSort">Sort by</label>
+                    <select name="sort" id="filterSort">
+                        <option value="metrics" <?= $sort === 'metrics' ? 'selected' : '' ?>>Metrics (default)</option>
+                        <option value="recent" <?= $sort === 'recent' ? 'selected' : '' ?>>Recent</option>
+                        <option value="popular" <?= $sort === 'popular' ? 'selected' : '' ?>>Popular (views)</option>
+                        <option value="most_liked" <?= $sort === 'most_liked' ? 'selected' : '' ?>>Most Liked</option>
+                        <option value="most_disliked" <?= $sort === 'most_disliked' ? 'selected' : '' ?>>Most Disliked</option>
+                        <option value="oldest" <?= $sort === 'oldest' ? 'selected' : '' ?>>Oldest First</option>
+                    </select>
+                    <label for="filterAuthor">Author contains</label>
+                    <input type="text" name="author" id="filterAuthor" value="<?= e($authorFilter) ?>" placeholder="e.g. TODB">
+                    <label for="filterFrom">From date</label>
+                    <input type="date" name="from" id="filterFrom" value="<?= e($dateFrom) ?>">
+                    <label for="filterTo">To date</label>
+                    <input type="date" name="to" id="filterTo" value="<?= e($dateTo) ?>">
+                    <button type="submit" class="btn" style="margin-top:0.5rem;">Apply</button>
+                </form>
             </div>
         </div>
     </div>
 
     <?php if (empty($articles)): ?>
-        <p>No articles here yet.</p>
+        <p>No articles match these filters.</p>
     <?php else: ?>
         <?php
             $big = $articles[0] ?? null;

@@ -642,3 +642,8 @@ body.dark .explore-card-title { color: #f0f0f0; }
     .explore-card-big .explore-card-img, .explore-card-big .explore-card-img-placeholder { height: 200px; }
     .explore-medium-col { flex-direction: row; height: 140px; }
 }
+
+.explore-filter-form { padding: 0.9rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.explore-filter-form label { font-size: 0.8rem; font-weight: 600; color: var(--ink); margin-top: 0.3rem; }
+body.dark .explore-filter-form label { color: #f0f0f0; }
+.explore-filter-form select, .explore-filter-form input { padding: 0.4rem 0.5rem; border-radius: 6px; border: 1px solid #ccc; font-size: 0.9rem; }

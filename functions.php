@@ -1201,7 +1201,7 @@ function notifySubscribersOfNewArticle(int $articleId, string $articleTitle): vo
     }
 }
 
-function getExploreArticles(string $categorySlug, string $sort): array {
+function getExploreArticles(string $categorySlug, string $sort, string $authorFilter = '', string $dateFrom = '', string $dateTo = ''): array {
     $db = getDB();
     $joins = '';
     $where = "a.status = 'published'";
@@ -1215,6 +1215,24 @@ function getExploreArticles(string $categorySlug, string $sort): array {
         $types .= 's';
     }
 
+    if ($authorFilter !== '') {
+        $where .= " AND a.author LIKE ?";
+        $params[] = '%' . $authorFilter . '%';
+        $types .= 's';
+    }
+
+    if ($dateFrom !== '') {
+        $where .= " AND a.created_at >= ?";
+        $params[] = $dateFrom . ' 00:00:00';
+        $types .= 's';
+    }
+
+    if ($dateTo !== '') {
+        $where .= " AND a.created_at <= ?";
+        $params[] = $dateTo . ' 23:59:59';
+        $types .= 's';
+    }
+
     $likeExpr = "(SELECT COUNT(*) FROM likes l WHERE l.article_id = a.id)";
     $dislikeExpr = "(SELECT COUNT(*) FROM dislikes d WHERE d.article_id = a.id)";
     $commentExpr = "(SELECT COUNT(*) FROM comments cm WHERE cm.article_id = a.id)";
@@ -1222,10 +1240,9 @@ function getExploreArticles(string $categorySlug, string $sort): array {
 
     switch ($sort) {
         case 'recent': $orderBy = "a.created_at DESC"; break;
-        case 'popular': $orderBy = "a.views DESC"; break;
-        case 'most_liked': $orderBy = "$likeExpr DESC"; break;
-        case 'most_disliked': $orderBy = "$dislikeExpr DESC"; break;
-        case 'author': $orderBy = "a.author ASC"; break;
+        case 'popular': $orderBy = "a.views DESC, a.created_at DESC"; break;
+        case 'most_liked': $orderBy = "$likeExpr DESC, a.created_at DESC"; break;
+        case 'most_disliked': $orderBy = "$dislikeExpr DESC, a.created_at DESC"; break;
         case 'oldest': $orderBy = "a.created_at ASC"; break;
         default: $orderBy = "$trendExpr DESC"; break; // 'metrics'
     }
