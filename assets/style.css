@@ -216,7 +216,7 @@ html {
 .search-form button {
     background: none;
     border: none;
-    padding-right: 3px;
+    padding-left: 3px;
     display: flex;
     align-items: center;
     cursor: pointer;
