@@ -631,6 +631,7 @@ body.dark .explore-card { background: #1e2125; box-shadow: 0 1px 4px rgba(0,0,0,
 .explore-card-big { display: flex; flex-direction: column; height: 340px; }
 .explore-card-big .explore-card-img, .explore-card-big .explore-card-img-placeholder { height: 280px; object-fit: cover; }
 .explore-card-title { height: 60px; padding: 0 0.9rem; font-weight: 700; font-size: 1.1rem; color: var(--ink); overflow: hidden; display: flex; align-items: center; }
+body.dark .explore-card-title { color: #f0f0f0; }
 
 .explore-medium-col { display: flex; flex-direction: column; gap: 1rem; height: 340px; }
 .explore-card-medium { height: 162px; display: flex; flex-direction: column; overflow: hidden; }
@@ -640,4 +641,4 @@ body.dark .explore-card { background: #1e2125; box-shadow: 0 1px 4px rgba(0,0,0,
     .explore-grid { grid-template-columns: 1fr; height: auto; }
     .explore-card-big .explore-card-img, .explore-card-big .explore-card-img-placeholder { height: 200px; }
     .explore-medium-col { flex-direction: row; height: 140px; }
-}a
+}
