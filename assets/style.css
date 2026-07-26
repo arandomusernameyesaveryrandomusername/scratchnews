@@ -214,7 +214,6 @@ html {
 }
 .search-form input[type="text"]::placeholder { color: rgba(255,255,255,0.75); }
 .search-form button {
-    position: absolute;
     right: 6px;
     top: 50%;
     transform: translateY(-50%);
