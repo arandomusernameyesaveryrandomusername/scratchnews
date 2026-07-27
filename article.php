@@ -6,7 +6,7 @@ $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 logVisit('/article/' . $id);
 
 $article = $id > 0 ? getArticleById($id) : null;
-session_start();
+startSession();
 
 if ($article && ($article['status'] ?? 'published') === 'draft' && empty($_SESSION['is_admin'])) {
     $article = null;

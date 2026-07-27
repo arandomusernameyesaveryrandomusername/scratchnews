@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/functions.php';
-session_start();
+startSession();
 
 if (empty($_SESSION['reader_id'])) {
     header('Location: /login');

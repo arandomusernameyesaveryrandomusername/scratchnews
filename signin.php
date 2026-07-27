@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/functions.php';
-session_start();
+startSession();
 
 if (!empty($_SESSION['reader_id'])) {
     header('Location: ' . (!empty($_SESSION['is_admin']) ? '/admin/' : '/'));
@@ -18,6 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $_SESSION['reader_username'] = $user['username'];
     $_SESSION['is_admin'] = !empty($user['is_admin']);
     $_SESSION['dark_mode'] = $user['dark_mode'];
+    $token = setRememberToken($user['id']);
+    setcookie('remember_me', $user['id'] . ':' . $token, time() + 60 * 60 * 24 * 30, '/; SameSite=Lax', '', true, true);
     header('Location: ' . ($_SESSION['is_admin'] ? '/admin/' : '/'));
     exit;
 } else {

@@ -2,7 +2,7 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 require_once __DIR__ . '/functions.php';
-session_start();
+startSession();
 
 $query = trim($_GET['q'] ?? '');
 $results = $query !== '' ? searchArticles($query) : [];

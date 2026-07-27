@@ -146,6 +146,60 @@ function getUserByUsername(string $username): ?array {
     return $user ?: null;
 }
 
+// ---- Remember Me ----
+function setRememberToken(int $userId): string {
+    $db = getDB();
+    $token = bin2hex(random_bytes(32));
+    $hash = hash('sha256', $token);
+    $expires = date('Y-m-d H:i:s', time() + 60 * 60 * 24 * 30);
+    $stmt = $db->prepare("UPDATE users SET remember_token = ?, remember_token_expires = ? WHERE id = ?");
+    $stmt->bind_param('ssi', $hash, $expires, $userId);
+    $stmt->execute();
+    $stmt->close();
+    return $token;
+}
+
+function clearRememberToken(int $userId): void {
+    $db = getDB();
+    $stmt = $db->prepare("UPDATE users SET remember_token = NULL, remember_token_expires = NULL WHERE id = ?");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $stmt->close();
+}
+
+function getUserByValidRememberToken(int $userId, string $token): ?array {
+    $db = getDB();
+    $hash = hash('sha256', $token);
+    $stmt = $db->prepare("SELECT * FROM users WHERE id = ? AND remember_token = ? AND remember_token_expires > NOW()");
+    $stmt->bind_param('is', $userId, $hash);
+    $stmt->execute();
+    $user = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $user ?: null;
+}
+
+function startSession(): void {
+    session_start();
+
+    if (empty($_SESSION['reader_id']) && !empty($_COOKIE['remember_me'])) {
+        [$uid, $token] = array_pad(explode(':', $_COOKIE['remember_me'], 2), 2, '');
+        $uid = (int)$uid;
+        if ($uid > 0 && $token !== '') {
+            $user = getUserByValidRememberToken($uid, $token);
+            if ($user) {
+                $_SESSION['reader_id'] = $user['id'];
+                $_SESSION['reader_username'] = $user['username'];
+                $_SESSION['is_admin'] = !empty($user['is_admin']);
+                $_SESSION['dark_mode'] = $user['dark_mode'];
+                $newToken = setRememberToken($user['id']);
+                setcookie('remember_me', $user['id'] . ':' . $newToken, time() + 60 * 60 * 24 * 30, '/; SameSite=Lax', '', true, true);
+            } else {
+                setcookie('remember_me', '', time() - 3600, '/');
+            }
+        }
+    }
+}
+
 function setDarkModePreference(int $userId, bool $enabled): void {
     $db = getDB();
     $val = $enabled ? 1 : 0;

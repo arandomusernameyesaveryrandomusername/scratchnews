@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/functions.php';
-session_start();
+startSession();
 
 $username = $_GET['username'] ?? '';
 $user = $username !== '' ? getUserByUsername($username) : null;

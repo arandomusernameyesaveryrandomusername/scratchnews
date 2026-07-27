@@ -26,14 +26,11 @@ if ($token === '') {
 <link rel="stylesheet" href="assets/style.css?v=9">
 </head>
 <body>
-
-<!-- paste the inline SVG logo header here, same as other pages -->
-
+<?php include __DIR__ . '/includes/empty-header.php'; ?>
 <main style="max-width: 600px; margin: 60px auto; text-align: center;">
     <h1><?php echo $success ? "Email Verified" : "Verification Failed"; ?></h1>
     <p><?php echo htmlspecialchars($message); ?></p>
     <p><a href="/">Return to ScratchNews</a></p>
 </main>
-
 </body>
 </html>

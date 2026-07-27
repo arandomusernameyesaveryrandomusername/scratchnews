@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/functions.php';
-session_start();
+startSession();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     requireCsrf();
