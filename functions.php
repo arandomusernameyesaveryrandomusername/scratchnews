@@ -1328,3 +1328,41 @@ function getExploreArticles(string $categorySlug, string $sort, string $authorFi
     $stmt->close();
     return $rows;
 }
+
+// ---- Read-only API access control ----
+function isIpAllowedForApi(string $ip): bool {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT id FROM api_allowed_ips WHERE ip_address = ?");
+    $stmt->bind_param('s', $ip);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return (bool)$row;
+}
+
+function requireApiAccess(): void {
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+    if ($ip === '' || !isIpAllowedForApi($ip)) {
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'IP not authorized for API access']);
+        exit;
+    }
+}
+
+function formatArticleForApi(array $article): array {
+    return [
+        'id' => (int)$article['id'],
+        'title' => $article['title'],
+        'summary' => $article['summary'],
+        'content' => $article['content'],
+        'image_url' => $article['image_url'],
+        'author' => $article['author'],
+        'created_at' => $article['created_at'],
+        'updated_at' => $article['updated_at'],
+        'views' => (int)$article['views'],
+        'categories' => array_map(function ($c) {
+            return ['id' => (int)$c['id'], 'name' => $c['name'], 'slug' => $c['slug']];
+        }, getArticleCategories((int)$article['id'])),
+    ];
+}
