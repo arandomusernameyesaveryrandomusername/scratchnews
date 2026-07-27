@@ -41,10 +41,11 @@ function moveUserId(mysqli $db, int $oldId, int $newId): void {
         throw $e;
     }
 
-    // Self-heal: always reset AUTO_INCREMENT to just above the current max id.
-    // This makes it structurally impossible for a stray high id to permanently
-    // drag the counter up, regardless of what caused it.
-    $result = $db->query("SELECT MAX(id) AS max_id FROM users");
+    // Self-heal: reset AUTO_INCREMENT to just above the highest NON-anonymized
+    // id. Anonymized accounts deliberately sit in a huge 9-digit range, so a
+    // blanket MAX(id) would drag the counter up into that range and hand the
+    // next real signup a huge id — which is exactly the bug this caused before.
+    $result = $db->query("SELECT MAX(id) AS max_id FROM users WHERE id < 1000000");
     $maxId = (int)($result->fetch_assoc()['max_id'] ?? 0);
     $db->query("ALTER TABLE users AUTO_INCREMENT = " . ($maxId + 1));
 }
