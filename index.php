@@ -27,6 +27,13 @@ $popular = getPopularArticles(4);
     </form>
 </div>
 <?php endif; ?>
+<?php if (!empty($_SESSION['reader_id'])):
+    $currentUser = getUserById($_SESSION['reader_id']);
+    if ($currentUser && empty($currentUser['email_verified'])): ?>
+<div class="verify-banner">
+    You aren't email verified! Check your inbox to get access to likes, dislikes, and comments.
+</div>
+<?php endif; endif; ?>
 <main class="home-main">
     <?php if (empty($articles)): ?>
         <p>No articles yet. Log in to the <a href="/admin/">login panel</a> to publish the first one.</p>

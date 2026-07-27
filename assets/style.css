@@ -493,6 +493,13 @@ body.dark .user-nav-menu a:hover { background: #26292e; }
     box-shadow: none !important;
     max-width: none !important;
 }
+.verify-banner {
+    background: #f2c94c;
+    color: #3a2e00;
+    text-align: center;
+    padding: 0.6rem 1rem;
+    font-weight: 600;
+}
 .content img { max-width: 100%; height: auto; border-radius: 8px; cursor: zoom-in; display: block; margin: 1rem auto; }
 .article-cover-image { cursor: zoom-in; }
 .lightbox-overlay {
