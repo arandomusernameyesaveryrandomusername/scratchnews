@@ -1330,14 +1330,36 @@ function getExploreArticles(string $categorySlug, string $sort, string $authorFi
 }
 
 // ---- Read-only API access control ----
+
+// Returns true if $ip falls inside $entry, which may be a plain IP
+// ("203.0.113.42") or a CIDR range ("74.220.51.0/24").
+function ipMatchesEntry(string $ip, string $entry): bool {
+    if (strpos($entry, '/') === false) {
+        return $ip === $entry;
+    }
+
+    [$subnet, $bits] = explode('/', $entry, 2);
+    $bits = (int)$bits;
+
+    $ipLong = ip2long($ip);
+    $subnetLong = ip2long($subnet);
+    if ($ipLong === false || $subnetLong === false || $bits < 0 || $bits > 32) {
+        return false;
+    }
+
+    $mask = $bits === 0 ? 0 : (-1 << (32 - $bits));
+    return ($ipLong & $mask) === ($subnetLong & $mask);
+}
+
 function isIpAllowedForApi(string $ip): bool {
     $db = getDB();
-    $stmt = $db->prepare("SELECT id FROM api_allowed_ips WHERE ip_address = ?");
-    $stmt->bind_param('s', $ip);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-    return (bool)$row;
+    $result = $db->query("SELECT ip_address FROM api_allowed_ips");
+    while ($row = $result->fetch_assoc()) {
+        if (ipMatchesEntry($ip, $row['ip_address'])) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function requireApiAccess(): void {

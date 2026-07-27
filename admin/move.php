@@ -192,8 +192,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ip = trim($_POST['ip_address'] ?? '');
         $label = trim($_POST['ip_label'] ?? '');
 
-        if ($ip === '' || !filter_var($ip, FILTER_VALIDATE_IP)) {
-            $error = "\"$ip\" isn't a valid IP address.";
+        $isValid = false;
+        if (strpos($ip, '/') !== false) {
+            [$subnet, $bits] = array_pad(explode('/', $ip, 2), 2, null);
+            $isValid = filter_var($subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false
+                && ctype_digit((string)$bits) && (int)$bits >= 0 && (int)$bits <= 32;
+        } else {
+            $isValid = filter_var($ip, FILTER_VALIDATE_IP) !== false;
+        }
+
+        if (!$isValid) {
+            $error = "\"$ip\" isn't a valid IP address or CIDR range (e.g. 74.220.51.0/24).";
         } else {
             $stmt = $db->prepare("INSERT INTO api_allowed_ips (ip_address, label) VALUES (?, ?) ON DUPLICATE KEY UPDATE label = VALUES(label)");
             $stmt->bind_param("ss", $ip, $label);
