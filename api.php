@@ -16,7 +16,7 @@ startSession();
 <?php include __DIR__ . '/includes/empty-header.php'; ?>
 <main>
     <h2>Welcome to the ScratchNews API!</h2>
-    <p>A small, read-only API for building things on top of ScratchNews — Discord bots, dashboards, whatever you want.
+    <p>A small, read-only API for building things on top of ScratchNews: Discord bots, dashboards, whatever you want.
         Access is IP-based and closed by default. If you want in, reach out on <a href="https://discord.gg/Z6GBswx5Q">Discord</a> with the IP address you'll be calling from.</p>
 
     <h3 style="margin-top:2rem;">GET /api/articles.php</h3>
