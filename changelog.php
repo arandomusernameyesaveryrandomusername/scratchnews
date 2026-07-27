@@ -16,6 +16,7 @@ startSession();
 <?php include __DIR__ . '/includes/empty-header.php'; ?>
 <main>
     <h2>Changelog</h2>
+    <p>[Jul27] v0.14.1 - Added Read-only API</p>
     <p>[Jul26] v0.14 - Like v0.14 Preview but with bug fixes, removed search icon cuz it made bugs on mobile</p>
     <p>[Jul26] v0.14 Preview - To congratulate hitting 15 users... HUGE update! Explore page, filter in Explore page, categories, and email subscription!<br>Submit Article and Explore buttons added!<br>We know that there still are some bugs (like search icon in wrong position for mobile, explore text looking weird). We promise to fix them today!! Stay tuned and check ScratchNews every now and then to see new updates.</p>
     <p>[Jul25] v0.13.4 - Added articles showing in profile pages</p>
