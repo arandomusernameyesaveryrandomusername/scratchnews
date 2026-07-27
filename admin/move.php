@@ -188,11 +188,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $success = "Updated categories for article #$articleId.";
             }
         }
+    } elseif ($type === 'add_api_ip') {
+        $ip = trim($_POST['ip_address'] ?? '');
+        $label = trim($_POST['ip_label'] ?? '');
+
+        if ($ip === '' || !filter_var($ip, FILTER_VALIDATE_IP)) {
+            $error = "\"$ip\" isn't a valid IP address.";
+        } else {
+            $stmt = $db->prepare("INSERT INTO api_allowed_ips (ip_address, label) VALUES (?, ?) ON DUPLICATE KEY UPDATE label = VALUES(label)");
+            $stmt->bind_param("ss", $ip, $label);
+            $stmt->execute();
+            $stmt->close();
+            $success = "Added $ip to the API allowlist.";
+        }
+    } elseif ($type === 'remove_api_ip') {
+        $ipId = (int)($_POST['ip_id'] ?? 0);
+        if ($ipId > 0) {
+            $stmt = $db->prepare("DELETE FROM api_allowed_ips WHERE id = ?");
+            $stmt->bind_param("i", $ipId);
+            $stmt->execute();
+            $stmt->close();
+            $success = "Removed IP from the API allowlist.";
+        }
     }
 }
 
 $articles = getAllArticles();
 $allUsers = $db->query("SELECT id, username FROM users ORDER BY id ASC")->fetch_all(MYSQLI_ASSOC);
+$apiIps = $db->query("SELECT * FROM api_allowed_ips ORDER BY created_at DESC")->fetch_all(MYSQLI_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -260,6 +283,35 @@ $allUsers = $db->query("SELECT id, username FROM users ORDER BY id ASC")->fetch_
         </div>
         <button class="btn" type="submit">Assign (up to 3)</button>
     </form>
+
+    <h3 style="margin-top:2rem;">API Allowed IPs</h3>
+    <form method="post">
+        <?= csrfField() ?>
+        <input type="hidden" name="type" value="add_api_ip">
+        <label for="ip_address">IP Address</label>
+        <input type="text" id="ip_address" name="ip_address" placeholder="e.g. 203.0.113.42" required>
+        <label for="ip_label">Label (optional)</label>
+        <input type="text" id="ip_label" name="ip_label" placeholder="e.g. Discord bot server">
+        <button class="btn" type="submit">Add</button>
+    </form>
+    <table>
+        <tr><th>IP</th><th>Label</th><th>Added</th><th></th></tr>
+        <?php foreach ($apiIps as $ipRow): ?>
+            <tr>
+                <td><?= e($ipRow['ip_address']) ?></td>
+                <td><?= e($ipRow['label'] ?? '') ?></td>
+                <td><?= e($ipRow['created_at']) ?></td>
+                <td>
+                    <form method="post" style="display:inline;">
+                        <?= csrfField() ?>
+                        <input type="hidden" name="type" value="remove_api_ip">
+                        <input type="hidden" name="ip_id" value="<?= (int)$ipRow['id'] ?>">
+                        <button class="btn" type="submit">Remove</button>
+                    </form>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+    </table>
 
     <h3 style="margin-top:2rem;">Current Articles</h3>
     <table>
