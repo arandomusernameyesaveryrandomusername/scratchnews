@@ -1254,6 +1254,26 @@ function notifySubscribersOfNewArticle(int $articleId, string $articleTitle): vo
     }
 }
 
+function getSubscriberIdByConfirmToken(string $token): ?int {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT id FROM subscribers WHERE confirm_token = ?");
+    $stmt->bind_param('s', $token);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $row ? (int)$row['id'] : null;
+}
+
+function getSubscriberCategoryCount(int $subscriberId): int {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT COUNT(*) AS c FROM subscriber_categories WHERE subscriber_id = ?");
+    $stmt->bind_param('i', $subscriberId);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return (int)($row['c'] ?? 0);
+}
+
 function getExploreArticles(string $categorySlug, string $sort, string $authorFilter = '', string $dateFrom = '', string $dateTo = ''): array {
     $db = getDB();
     $joins = '';

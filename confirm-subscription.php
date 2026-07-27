@@ -2,7 +2,9 @@
 require_once __DIR__ . '/functions.php';
 startSession();
 $token = $_GET['token'] ?? '';
+$subscriberId = $token !== '' ? getSubscriberIdByConfirmToken($token) : null;
 $success = $token !== '' && confirmSubscriber($token);
+$subscribedToNothing = $success && $subscriberId !== null && getSubscriberCategoryCount($subscriberId) === 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -17,7 +19,10 @@ $success = $token !== '' && confirmSubscriber($token);
 <script>if(document.body.hasAttribute('data-theme-auto')&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.body.classList.add('dark');}</script>
 <?php include __DIR__ . '/includes/header.php'; ?>
 <main style="text-align:center; padding:3rem 1rem;">
-    <?php if ($success): ?>
+    <?php if ($subscribedToNothing): ?>
+        <h2>You're subscribed... to nothing.</h2>
+        <p>You picked zero categories, which means you have successfully subscribed to absolutely no emails, ever. Now this is a true ScratchNews subscriber right here.</p>
+    <?php elseif ($success): ?>
         <h2>You're subscribed!</h2>
         <p>You'll now get ScratchNews articles matching your interests straight to your inbox.</p>
     <?php else: ?>
