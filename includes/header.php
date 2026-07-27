@@ -6,6 +6,7 @@
         <div class="header-quick-links">
             <a href="/submit.php" class="header-quick-link">Submit Article</a>
             <a href="/explore" class="header-quick-link">Explore</a>
+            <a href="/api.php" class="header-quick-link">API</a>
         </div>
     </div>
 <form method="get" action="/search" class="search-form">
