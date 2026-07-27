@@ -1223,9 +1223,8 @@ function sendSubscriptionConfirmEmail(string $toEmail, string $token): bool {
         "sender" => ["name" => "ScratchNews", "email" => BREVO_SENDER_EMAIL],
         "to" => [["email" => $toEmail]],
         "subject" => "Confirm your ScratchNews subscription",
-        "htmlContent" => "<p>Thanks for subscribing to ScratchNews!</p>"
-            . "<p>Click below to confirm your email and start getting Scratch news in your inbox:</p>"
-            . "<p><a href=\"" . htmlspecialchars($confirmLink) . "\">" . htmlspecialchars($confirmLink) . "</a></p>"
+        "htmlContent" => "<p><a href=\"" . htmlspecialchars($confirmLink) . "\"><strong>Click here to confirm your subscription</strong></a></p>"
+            . "<p>Thanks for subscribing to ScratchNews! Confirming gets you Scratch news in your inbox.</p>"
             . "<p>If you didn't request this, you can ignore this email.</p>"
     ]);
     return sendBrevoEmail($payload);
