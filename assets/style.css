@@ -667,6 +667,11 @@ body.dark .explore-filter-form label { color: #f0f0f0; }
 .subscribe-input-row .btn { height: 38px; padding: 0 1.2rem; margin: 0; display: inline-flex; align-items: center; justify-content: center; text-align: center; box-sizing: border-box; border-radius: 20px; }
 .subscribe-popup { background: #2ecc71; color: #fff; text-align: center; padding: 0.7rem; font-weight: 600; }
 .subscribe-popup-error { background: #e74c3c; }
+.subscribe-subtitle {
+    font-weight: 400;
+    font-size: 0.9rem;
+    margin: 0.3rem 0 0;
+}
 @media (max-width: 700px) {
     .subscribe-widget { flex-direction: column; align-items: stretch; }
     .subscribe-form { align-items: stretch; }
