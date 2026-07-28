@@ -41,6 +41,16 @@ startSession();
   { "id": 3, "name": "Community", "slug": "community" }
 ]</pre>
 
+    <h3 style="margin-top:2rem;">GET /api/explore.php</h3>
+    <p>Same response shape as <code>/api/articles.php</code>, but with Explore-page-style filtering and sorting. Optional query params:</p>
+    <ul>
+        <li><code>category</code> — a category slug, or <code>all</code> (default)</li>
+        <li><code>sort</code> — one of <code>metrics</code> (default, trending), <code>recent</code>, <code>popular</code>, <code>most_liked</code>, <code>most_disliked</code>, <code>oldest</code></li>
+        <li><code>author</code> — substring match against author name</li>
+        <li><code>from</code> / <code>to</code> — date range, <code>YYYY-MM-DD</code></li>
+        <li><code>page</code>, <code>per_page</code> (max 50)</li>
+    </ul>
+
     <h3 style="margin-top:2rem;">Errors</h3>
     <p>Requests from an IP that isn't on the allowlist get a <code>403</code> with <code>{"error": "IP not authorized for API access"}</code>.</p>
 </main>
