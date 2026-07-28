@@ -192,7 +192,13 @@ function startSession(): void {
                 $_SESSION['is_admin'] = !empty($user['is_admin']);
                 $_SESSION['dark_mode'] = $user['dark_mode'];
                 $newToken = setRememberToken($user['id']);
-                setcookie('remember_me', $user['id'] . ':' . $newToken, time() + 60 * 60 * 24 * 30, '/; SameSite=Lax', '', true, true);
+                setcookie('remember_me', $user['id'] . ':' . $newToken, [
+                    'expires' => time() + 60 * 60 * 24 * 30,
+                    'path' => '/',
+                    'secure' => true,
+                    'httponly' => true,
+                    'samesite' => 'Lax',
+                ]);
             } else {
                 setcookie('remember_me', '', time() - 3600, '/');
             }

@@ -1,6 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
 require_once __DIR__ . '/functions.php';
 startSession();
 
@@ -21,7 +19,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $_SESSION['is_admin'] = !empty($user['is_admin']);
     $_SESSION['dark_mode'] = $user['dark_mode'];
     $token = setRememberToken($user['id']);
-    setcookie('remember_me', $user['id'] . ':' . $token, time() + 60 * 60 * 24 * 30, '/; SameSite=Lax', '', true, true);
+    setcookie('remember_me', $user['id'] . ':' . $token, [
+        'expires' => time() + 60 * 60 * 24 * 30,
+        'path' => '/',
+        'secure' => true,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
     header('Location: ' . ($_SESSION['is_admin'] ? '/admin/' : '/'));
     exit;
 } else {
