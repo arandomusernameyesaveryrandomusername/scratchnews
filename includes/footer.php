@@ -46,15 +46,21 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 (function() {
     var KEY_NAME = 'sn_session_key';
+    var SRC_NAME = 'sn_session_source';
     var INTERVAL_MS = 15000;
     var key = sessionStorage.getItem(KEY_NAME);
     if (!key) {
         key = crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '') : (Date.now().toString(16) + Math.random().toString(16).slice(2));
         sessionStorage.setItem(KEY_NAME, key);
     }
+    if (sessionStorage.getItem(SRC_NAME) === null) {
+        var urlSrc = new URLSearchParams(window.location.search).get('src');
+        sessionStorage.setItem(SRC_NAME, urlSrc || '');
+    }
+    var source = sessionStorage.getItem(SRC_NAME);
     function ping() {
         if (document.hidden) return;
-        var data = new URLSearchParams({ session_key: key });
+        var data = new URLSearchParams({ session_key: key, source: source });
         if (navigator.sendBeacon) {
             navigator.sendBeacon('/heartbeat.php', data);
         } else {
