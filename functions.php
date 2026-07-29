@@ -139,8 +139,9 @@ function recordHeartbeat(string $sessionKey, ?string $source = null, ?int $userI
         $stmt->execute();
         $stmt->close();
     } else {
-        $stmt = $db->prepare("INSERT INTO site_sessions (session_key, seconds_active, first_seen, last_seen, source, user_id) VALUES (?, 0, NOW(), NOW(), ?, ?)");
-        $stmt->bind_param('ssi', $sessionKey, $source, $userId);
+        $initialSeconds = HEARTBEAT_INTERVAL_SECONDS;
+        $stmt = $db->prepare("INSERT INTO site_sessions (session_key, seconds_active, first_seen, last_seen, source, user_id) VALUES (?, ?, NOW(), NOW(), ?, ?)");
+        $stmt->bind_param('sisi', $sessionKey, $initialSeconds, $source, $userId);
         $stmt->execute();
         $stmt->close();
     }
