@@ -20,7 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!empty($_FILES['cover_image']['tmp_name'])) {
                 $imageUrl = saveUploadedImage($_FILES['cover_image']);
             }
-            $id = createArticle($title, $summary, $content, $author ?: 'ScratchNews Staff', $imageUrl, $status);
+            $userId = isset($_POST['user_id']) && (int)$_POST['user_id'] > 0 ? (int)$_POST['user_id'] : ($_SESSION['reader_id'] ?? null);
+            $id = createArticle($title, $summary, $content, $author ?: 'ScratchNews Staff', $imageUrl, $status, $userId);
             $categoryIds = $_POST['categories'] ?? [];
             if (!empty($categoryIds)) {
                 setArticleCategories($id, $categoryIds);
@@ -61,6 +62,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <label for="author">Author</label>
         <input type="text" id="author" name="author" value="<?= e($_POST['author'] ?? 'ScratchNews Staff') ?>">
+
+        <label for="user_id">Attribute to User</label>
+        <?php $db = getDB(); $userList = $db->query("SELECT id, username FROM users ORDER BY id ASC")->fetch_all(MYSQLI_ASSOC); $selectedUserId = (int)($_POST['user_id'] ?? $_SESSION['reader_id'] ?? 0); ?>
+        <select id="user_id" name="user_id">
+            <?php foreach ($userList as $u): ?>
+                <option value="<?= (int)$u['id'] ?>" <?= (int)$u['id'] === $selectedUserId ? 'selected' : '' ?>><?= e($u['username']) ?> (#<?= (int)$u['id'] ?>)</option>
+            <?php endforeach; ?>
+        </select>
 
         <label for="cover_image">Cover Image (optional)</label>
         <input type="file" id="cover_image" name="cover_image" accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml">

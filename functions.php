@@ -31,23 +31,23 @@ function sanitizeArticleHtml(string $html): string {
     return $html;
 }
 
-function createArticle(string $title, string $summary, string $content, string $author, ?string $imageUrl = null, string $status = 'published'): int {
+function createArticle(string $title, string $summary, string $content, string $author, ?string $imageUrl = null, string $status = 'published', ?int $userId = null): int {
     $db = getDB();
     $content = sanitizeArticleHtml($content);
     $id = getNextArticleId();
-    $stmt = $db->prepare("INSERT INTO articles (id, title, summary, content, author, image_url, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param('issssss', $id, $title, $summary, $content, $author, $imageUrl, $status);
+    $stmt = $db->prepare("INSERT INTO articles (id, title, summary, content, author, image_url, status, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param('issssssi', $id, $title, $summary, $content, $author, $imageUrl, $status, $userId);
     $stmt->execute();
     $stmt->close();
     return $id;
 }
 
 // Update an existing article
-function updateArticle(int $id, string $title, string $summary, string $content, string $author, ?string $imageUrl = null, string $status = 'published'): bool {
+function updateArticle(int $id, string $title, string $summary, string $content, string $author, ?string $imageUrl = null, string $status = 'published', ?int $userId = null): bool {
     $db = getDB();
     $content = sanitizeArticleHtml($content);
-    $stmt = $db->prepare("UPDATE articles SET title = ?, summary = ?, content = ?, author = ?, image_url = ?, status = ? WHERE id = ?");
-    $stmt->bind_param('ssssssi', $title, $summary, $content, $author, $imageUrl, $status, $id);
+    $stmt = $db->prepare("UPDATE articles SET title = ?, summary = ?, content = ?, author = ?, image_url = ?, status = ?, user_id = ? WHERE id = ?");
+    $stmt->bind_param('ssssssii', $title, $summary, $content, $author, $imageUrl, $status, $userId, $id);
     $ok = $stmt->execute();
     $stmt->close();
     return $ok;

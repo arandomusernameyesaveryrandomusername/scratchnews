@@ -103,6 +103,7 @@ form textarea { min-height: 200px; resize: vertical; }
     font-weight: 600; cursor: pointer; text-decoration: none; font-size: 1rem;
     font-family: inherit; line-height: 1; appearance: none; box-sizing: border-box;
 }
+.btn.inline { margin-top: 0; width: auto; padding: 0 1.2rem; }
 .btn.danger { background: #d9392a; }
 .btn.secondary { background: #6c757d; }
 table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; }

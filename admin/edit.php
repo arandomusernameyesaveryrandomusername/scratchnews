@@ -36,14 +36,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $imageUrl = $newUrl;
                 }
             }
-            updateArticle($id, $title, $summary, $content, $author ?: 'ScratchNews Staff', $imageUrl, $status);
+            $userId = ($_POST['user_id'] ?? '') !== '' ? (int)$_POST['user_id'] : null;
+            updateArticle($id, $title, $summary, $content, $author ?: 'ScratchNews Staff', $imageUrl, $status, $userId);
             header('Location: /admin/?updated=' . $id);
             exit;
         } catch (RuntimeException $e) {
             $error = $e->getMessage();
         }
     }
-    $article = ['id' => $id, 'title' => $title, 'summary' => $summary, 'content' => $content, 'author' => $author, 'image_url' => $imageUrl ?? null, 'status' => $status];
+    $userId = ($_POST['user_id'] ?? '') !== '' ? (int)$_POST['user_id'] : null;
+    $article = ['id' => $id, 'title' => $title, 'summary' => $summary, 'content' => $content, 'author' => $author, 'image_url' => $imageUrl ?? null, 'status' => $status, 'user_id' => $userId];
 }
 ?>
 <!DOCTYPE html>
@@ -70,6 +72,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <label for="author">Author</label>
         <input type="text" id="author" name="author" value="<?= e($article['author']) ?>">
+
+        <label for="user_id">Attribute to User</label>
+        <?php $db = getDB(); $userList = $db->query("SELECT id, username FROM users ORDER BY id ASC")->fetch_all(MYSQLI_ASSOC); $currentUserId = (int)($article['user_id'] ?? 0); ?>
+        <select id="user_id" name="user_id">
+            <option value="">— None —</option>
+            <?php foreach ($userList as $u): ?>
+                <option value="<?= (int)$u['id'] ?>" <?= (int)$u['id'] === $currentUserId ? 'selected' : '' ?>><?= e($u['username']) ?> (#<?= (int)$u['id'] ?>)</option>
+            <?php endforeach; ?>
+        </select>
 
         <label for="cover_image">Cover Image (optional)</label>
         <?php if (!empty($article['image_url'])): ?>

@@ -325,7 +325,7 @@ $apiAnonLimit = (int)getApiSetting('anonymous_rate_limit', '30');
                         <input type="hidden" name="type" value="update_api_key_limit">
                         <input type="hidden" name="key_id" value="<?= (int)$k['id'] ?>">
                         <input type="number" name="new_rate_limit" min="1" placeholder="unlimited" value="<?= $k['rate_limit_per_minute'] !== null ? (int)$k['rate_limit_per_minute'] : '' ?>" style="width:6rem;">
-                        <button class="btn" type="submit">Update</button>
+                        <button class="btn inline" type="submit">Update</button>
                     </form>
                 </td>
                 <td><?= e($k['created_at']) ?></td>
@@ -334,7 +334,7 @@ $apiAnonLimit = (int)getApiSetting('anonymous_rate_limit', '30');
                         <?= csrfField() ?>
                         <input type="hidden" name="type" value="revoke_api_key">
                         <input type="hidden" name="key_id" value="<?= (int)$k['id'] ?>">
-                        <button class="btn" type="submit">Revoke</button>
+                        <button class="btn inline" type="submit">Revoke</button>
                     </form>
                 </td>
             </tr>
