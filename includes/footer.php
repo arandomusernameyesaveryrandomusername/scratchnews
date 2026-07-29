@@ -12,6 +12,9 @@
         </div>
         <div class="footer-col">
             <h4>Misc</h4>
+            <a href="/stats.php">Stats</a>
+            <a href="/api.php">API</a>
+            <a href="https://discord.com/oauth2/authorize?client_id=1531385304978817166">Discord Bot</a>
             <a href="/feedback.php">Feedback</a>
             <?php if (!empty($_SESSION['reader_username'])): ?><a href="/delete-account">Delete Account</a><?php endif; ?>
             <a href="/random-article.php">Random Article</a>
