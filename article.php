@@ -137,6 +137,10 @@ if (!$article) {
                     <img src="/assets/icons/comment.svg" alt="Comments" class="icon-svg">
                     <span class="icon-count"><?= count($comments) ?></span>
                 </a>
+                <span class="icon-btn" title="Views">
+                    <img src="/assets/icons/views.svg" alt="Views" class="icon-svg">
+                    <span class="icon-count"><?= (int)$article['views'] ?></span>
+                </span>
                 <div class="share-wrap">
                     <button type="button" class="icon-btn" id="shareBtn" title="Share">
                         <img src="/assets/icons/share.svg" alt="Share" class="icon-svg">

@@ -51,6 +51,7 @@ $results = $query !== '' ? searchArticles($query) : [];
                             <span><img src="/assets/icons/unlike.svg" class="icon-svg-sm" alt=""><?= $likeCount ?></span>
                             <span><img src="/assets/icons/undislike.svg" class="icon-svg-sm" alt=""><?= $dislikeCount ?></span>
                             <span><img src="/assets/icons/comment.svg" class="icon-svg-sm" alt=""><?= $commentCount ?></span>
+                            <span><img src="/assets/icons/views.svg" class="icon-svg-sm" alt=""><?= (int)($a['views'] ?? 0) ?></span>
                         </div>
                     </div>
                 </a>
