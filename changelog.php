@@ -16,6 +16,7 @@ startSession();
 <?php include __DIR__ . '/includes/empty-header.php'; ?>
 <main>
     <h2>Changelog</h2>
+    <p>v0.15.1 - Session tracking for "Time On Site", exclude/delete/flag sessions</p>
     <p>[Jul29] v0.15 - Changed API IP Allow to API Key Allow, everyone gets free 30 a minute API requests. Added views and article-to-user tying for admins.</p>
     <p>[Jul27/28] v0.14.2 - Added Discord ScratchNews Bot</p>
     <p>[Jul27] v0.14.1 - Added Read-only API</p>
