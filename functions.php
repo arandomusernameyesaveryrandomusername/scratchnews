@@ -119,6 +119,50 @@ function getRecentVisits(int $limit = 200, ?string $includeIp = null, ?string $e
     return $rows;
 }
 
+// ---- Time on Site ----
+define('HEARTBEAT_INTERVAL_SECONDS', 15);
+
+function recordHeartbeat(string $sessionKey): void {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT last_seen FROM site_sessions WHERE session_key = ?");
+    $stmt->bind_param('s', $sessionKey);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if ($row) {
+        $secondsSinceLast = time() - strtotime($row['last_seen']);
+        if ($secondsSinceLast < HEARTBEAT_INTERVAL_SECONDS - 5) return;
+        $add = HEARTBEAT_INTERVAL_SECONDS;
+        $stmt = $db->prepare("UPDATE site_sessions SET seconds_active = seconds_active + ?, last_seen = NOW() WHERE session_key = ?");
+        $stmt->bind_param('is', $add, $sessionKey);
+        $stmt->execute();
+        $stmt->close();
+    } else {
+        $stmt = $db->prepare("INSERT INTO site_sessions (session_key, seconds_active, first_seen, last_seen) VALUES (?, 0, NOW(), NOW())");
+        $stmt->bind_param('s', $sessionKey);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    $db->query("DELETE FROM site_sessions WHERE last_seen < DATE_SUB(NOW(), INTERVAL 90 DAY)");
+}
+
+function getTimeOnSiteStats(int $days = 30): array {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT seconds_active FROM site_sessions WHERE last_seen >= DATE_SUB(NOW(), INTERVAL ? DAY) AND seconds_active > 0");
+    $stmt->bind_param('i', $days);
+    $stmt->execute();
+    $values = array_column($stmt->get_result()->fetch_all(MYSQLI_ASSOC), 'seconds_active');
+    $stmt->close();
+
+    sort($values);
+    $count = count($values);
+    $avg = $count ? array_sum($values) / $count : 0;
+    $median = $count ? ($count % 2 ? $values[intdiv($count, 2)] : ($values[$count / 2 - 1] + $values[$count / 2]) / 2) : 0;
+    return ['count' => $count, 'avg_seconds' => round($avg), 'median_seconds' => round($median)];
+}
+
 // ---- Reader accounts ----
 function createUser(string $username, string $email, string $password) {
     $db = getDB();

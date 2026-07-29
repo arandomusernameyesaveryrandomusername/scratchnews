@@ -32,3 +32,24 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+<script>
+(function() {
+    var KEY_NAME = 'sn_session_key';
+    var INTERVAL_MS = 15000;
+    var key = sessionStorage.getItem(KEY_NAME);
+    if (!key) {
+        key = crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '') : (Date.now().toString(16) + Math.random().toString(16).slice(2));
+        sessionStorage.setItem(KEY_NAME, key);
+    }
+    function ping() {
+        if (document.hidden) return;
+        var data = new URLSearchParams({ session_key: key });
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon('/heartbeat.php', data);
+        } else {
+            fetch('/heartbeat.php', { method: 'POST', body: data, keepalive: true });
+        }
+    }
+    setInterval(ping, INTERVAL_MS);
+})();
+</script>

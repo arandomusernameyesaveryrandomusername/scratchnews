@@ -33,9 +33,15 @@ $conversionRate = $totalUniqueIps > 0 ? round(($totalSignups / $totalUniqueIps) 
         Map rendering — needs a follow-up session to wire up (Leaflet/simple SVG world map + click-into-region), have the lat/long data now.
     </div>
 
-    <h3 style="margin-top:2rem;">Time on Site</h3>
-    <p style="color:#888;">Not tracked yet — needs a JS heartbeat script (ping every N seconds while a tab is open/focused) plus a table to store session durations. Flagging as a separate build, not faking numbers here.</p>
-
+    <h3 style="margin-top:2rem;">Time on Site (last 30 days)</h3>
+    <?php $tos = getTimeOnSiteStats(30); ?>
+    <?php if ($tos['count'] > 0): ?>
+        <p>Average: <?= (int)floor($tos['avg_seconds'] / 60) ?>m <?= (int)($tos['avg_seconds'] % 60) ?>s
+            &nbsp;|&nbsp; Median: <?= (int)floor($tos['median_seconds'] / 60) ?>m <?= (int)($tos['median_seconds'] % 60) ?>s
+            &nbsp;|&nbsp; Sessions tracked: <?= (int)$tos['count'] ?></p>
+    <?php else: ?>
+        <p style="color:#888;">No session data yet — will populate as visitors browse with the heartbeat script live.</p>
+    <?php endif; ?>
     <h3 style="margin-top:2rem;">Daily Unique Visitors (last 30 days)</h3>
     <table>
         <tr><th>Date</th><th>Unique Visitors</th></tr>
