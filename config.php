@@ -8,7 +8,7 @@ define('DB_PASS', 'ltaqe0ytjXmcdHl');
 define('ADMIN_USER', 'ScratchNews');
 define('ADMIN_PASS_HASH', '$2y$10$lXSP7uyjOPjXW04m3PtPdOwixC4a2mkkV2V8NlDRVrKhJQrD7Uh7e');
 define('SITE_NAME', 'ScratchNews');
-define('SITE_VERSION', '0.14.2');
+define('SITE_VERSION', '0.15');
 define('BREVO_API_KEY', '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');
 define('BREVO_SENDER_EMAIL', 'david.todb@gmail.com');
 
