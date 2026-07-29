@@ -188,43 +188,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $success = "Updated categories for article #$articleId.";
             }
         }
-    } elseif ($type === 'add_api_ip') {
-        $ip = trim($_POST['ip_address'] ?? '');
-        $label = trim($_POST['ip_label'] ?? '');
-
-        $isValid = false;
-        if (strpos($ip, '/') !== false) {
-            [$subnet, $bits] = array_pad(explode('/', $ip, 2), 2, null);
-            $isValid = filter_var($subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false
-                && ctype_digit((string)$bits) && (int)$bits >= 0 && (int)$bits <= 32;
-        } else {
-            $isValid = filter_var($ip, FILTER_VALIDATE_IP) !== false;
+    } elseif ($type === 'create_api_key') {
+        $label = trim($_POST['key_label'] ?? '');
+        $rateLimitRaw = trim($_POST['key_rate_limit'] ?? '');
+        $rateLimit = $rateLimitRaw === '' ? null : max(1, (int)$rateLimitRaw);
+        $newKey = generateApiKey($label !== '' ? $label : 'Unlabeled key', $rateLimit);
+        $success = "New API key created — copy it now, it won't be shown again: $newKey";
+    } elseif ($type === 'revoke_api_key') {
+        $keyId = (int)($_POST['key_id'] ?? 0);
+        if ($keyId > 0) {
+            revokeApiKey($keyId);
+            $success = "API key revoked.";
         }
-
-        if (!$isValid) {
-            $error = "\"$ip\" isn't a valid IP address or CIDR range (e.g. 74.220.51.0/24).";
-        } else {
-            $stmt = $db->prepare("INSERT INTO api_allowed_ips (ip_address, label) VALUES (?, ?) ON DUPLICATE KEY UPDATE label = VALUES(label)");
-            $stmt->bind_param("ss", $ip, $label);
-            $stmt->execute();
-            $stmt->close();
-            $success = "Added $ip to the API allowlist.";
+    } elseif ($type === 'update_api_key_limit') {
+        $keyId = (int)($_POST['key_id'] ?? 0);
+        $rateLimitRaw = trim($_POST['new_rate_limit'] ?? '');
+        $rateLimit = $rateLimitRaw === '' ? null : max(1, (int)$rateLimitRaw);
+        if ($keyId > 0) {
+            setApiKeyRateLimit($keyId, $rateLimit);
+            $success = $rateLimit === null ? "Key #$keyId set to unlimited." : "Key #$keyId limit set to $rateLimit/min.";
         }
-    } elseif ($type === 'remove_api_ip') {
-        $ipId = (int)($_POST['ip_id'] ?? 0);
-        if ($ipId > 0) {
-            $stmt = $db->prepare("DELETE FROM api_allowed_ips WHERE id = ?");
-            $stmt->bind_param("i", $ipId);
-            $stmt->execute();
-            $stmt->close();
-            $success = "Removed IP from the API allowlist.";
-        }
+    } elseif ($type === 'update_api_settings') {
+        $anonLimitRaw = trim($_POST['anonymous_rate_limit'] ?? '');
+        $anonLimit = $anonLimitRaw === '' ? 0 : max(0, (int)$anonLimitRaw);
+        setApiSetting('anonymous_rate_limit', (string)$anonLimit);
+        setApiSetting('rate_limiting_enabled', isset($_POST['rate_limiting_enabled']) ? '1' : '0');
+        $success = "API settings updated.";
     }
 }
 
 $articles = getAllArticles();
 $allUsers = $db->query("SELECT id, username FROM users ORDER BY id ASC")->fetch_all(MYSQLI_ASSOC);
-$apiIps = $db->query("SELECT * FROM api_allowed_ips ORDER BY created_at DESC")->fetch_all(MYSQLI_ASSOC);
+$apiKeys = $db->query("SELECT * FROM api_keys ORDER BY created_at DESC")->fetch_all(MYSQLI_ASSOC);
+$apiRateLimitingEnabled = getApiSetting('rate_limiting_enabled', '1') === '1';
+$apiAnonLimit = (int)getApiSetting('anonymous_rate_limit', '30');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -293,29 +290,51 @@ $apiIps = $db->query("SELECT * FROM api_allowed_ips ORDER BY created_at DESC")->
         <button class="btn" type="submit">Assign (up to 3)</button>
     </form>
 
-    <h3 style="margin-top:2rem;">API Allowed IPs</h3>
+    <h3 style="margin-top:2rem;">API Settings</h3>
     <form method="post">
         <?= csrfField() ?>
-        <input type="hidden" name="type" value="add_api_ip">
-        <label for="ip_address">IP Address</label>
-        <input type="text" id="ip_address" name="ip_address" placeholder="e.g. 203.0.113.42" required>
-        <label for="ip_label">Label (optional)</label>
-        <input type="text" id="ip_label" name="ip_label" placeholder="e.g. Discord bot server">
-        <button class="btn" type="submit">Add</button>
+        <input type="hidden" name="type" value="update_api_settings">
+        <label>
+            <input type="checkbox" name="rate_limiting_enabled" <?= $apiRateLimitingEnabled ? 'checked' : '' ?>>
+            Rate limiting enabled (uncheck to fully open the API, no limits at all)
+        </label>
+        <label for="anonymous_rate_limit">Default limit for requests with no key (per min, 0 = unlimited)</label>
+        <input type="number" id="anonymous_rate_limit" name="anonymous_rate_limit" min="0" value="<?= (int)$apiAnonLimit ?>">
+        <button class="btn" type="submit">Save</button>
+    </form>
+
+    <h3 style="margin-top:2rem;">API Keys</h3>
+    <form method="post">
+        <?= csrfField() ?>
+        <input type="hidden" name="type" value="create_api_key">
+        <label for="key_label">Label</label>
+        <input type="text" id="key_label" name="key_label" placeholder="e.g. ScratchStats (MaterArc)" required>
+        <label for="key_rate_limit">Rate limit (per min, blank = unlimited)</label>
+        <input type="number" id="key_rate_limit" name="key_rate_limit" min="1" placeholder="unlimited">
+        <button class="btn" type="submit">Create Key</button>
     </form>
     <table>
-        <tr><th>IP</th><th>Label</th><th>Added</th><th></th></tr>
-        <?php foreach ($apiIps as $ipRow): ?>
+        <tr><th>ID</th><th>Label</th><th>Rate Limit</th><th>Created</th><th></th></tr>
+        <?php foreach ($apiKeys as $k): ?>
             <tr>
-                <td><?= e($ipRow['ip_address']) ?></td>
-                <td><?= e($ipRow['label'] ?? '') ?></td>
-                <td><?= e($ipRow['created_at']) ?></td>
+                <td>#<?= (int)$k['id'] ?></td>
+                <td><?= e($k['label'] ?? '') ?></td>
+                <td>
+                    <form method="post" style="display:flex;gap:0.5rem;align-items:center;">
+                        <?= csrfField() ?>
+                        <input type="hidden" name="type" value="update_api_key_limit">
+                        <input type="hidden" name="key_id" value="<?= (int)$k['id'] ?>">
+                        <input type="number" name="new_rate_limit" min="1" placeholder="unlimited" value="<?= $k['rate_limit_per_minute'] !== null ? (int)$k['rate_limit_per_minute'] : '' ?>" style="width:6rem;">
+                        <button class="btn" type="submit">Update</button>
+                    </form>
+                </td>
+                <td><?= e($k['created_at']) ?></td>
                 <td>
                     <form method="post" style="display:inline;">
                         <?= csrfField() ?>
-                        <input type="hidden" name="type" value="remove_api_ip">
-                        <input type="hidden" name="ip_id" value="<?= (int)$ipRow['id'] ?>">
-                        <button class="btn" type="submit">Remove</button>
+                        <input type="hidden" name="type" value="revoke_api_key">
+                        <input type="hidden" name="key_id" value="<?= (int)$k['id'] ?>">
+                        <button class="btn" type="submit">Revoke</button>
                     </form>
                 </td>
             </tr>

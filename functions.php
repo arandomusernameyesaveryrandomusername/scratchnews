@@ -1379,45 +1379,118 @@ function getExploreArticles(string $categorySlug, string $sort, string $authorFi
     return $rows;
 }
 
-// ---- Read-only API access control ----
+// ---- API keys & rate limiting ----
 
-// Returns true if $ip falls inside $entry, which may be a plain IP
-// ("203.0.113.42") or a CIDR range ("74.220.51.0/24").
-function ipMatchesEntry(string $ip, string $entry): bool {
-    if (strpos($entry, '/') === false) {
-        return $ip === $entry;
-    }
-
-    [$subnet, $bits] = explode('/', $entry, 2);
-    $bits = (int)$bits;
-
-    $ipLong = ip2long($ip);
-    $subnetLong = ip2long($subnet);
-    if ($ipLong === false || $subnetLong === false || $bits < 0 || $bits > 32) {
-        return false;
-    }
-
-    $mask = $bits === 0 ? 0 : (-1 << (32 - $bits));
-    return ($ipLong & $mask) === ($subnetLong & $mask);
+function generateApiKey(string $label, ?int $rateLimitPerMinute = null): string {
+    $db = getDB();
+    $key = bin2hex(random_bytes(24));
+    $hash = hash('sha256', $key);
+    $stmt = $db->prepare("INSERT INTO api_keys (key_hash, label, rate_limit_per_minute) VALUES (?, ?, ?)");
+    $stmt->bind_param('ssi', $hash, $label, $rateLimitPerMinute);
+    $stmt->execute();
+    $stmt->close();
+    return $key; // only returned once — only the hash is stored
 }
 
-function isIpAllowedForApi(string $ip): bool {
+function revokeApiKey(int $id): void {
     $db = getDB();
-    $result = $db->query("SELECT ip_address FROM api_allowed_ips");
-    while ($row = $result->fetch_assoc()) {
-        if (ipMatchesEntry($ip, $row['ip_address'])) {
-            return true;
-        }
+    $stmt = $db->prepare("DELETE FROM api_keys WHERE id = ?");
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $stmt->close();
+}
+
+function setApiKeyRateLimit(int $id, ?int $rateLimitPerMinute): void {
+    $db = getDB();
+    $stmt = $db->prepare("UPDATE api_keys SET rate_limit_per_minute = ? WHERE id = ?");
+    $stmt->bind_param('ii', $rateLimitPerMinute, $id);
+    $stmt->execute();
+    $stmt->close();
+}
+
+function getApiKeyByToken(string $token): ?array {
+    $db = getDB();
+    $hash = hash('sha256', $token);
+    $stmt = $db->prepare("SELECT * FROM api_keys WHERE key_hash = ?");
+    $stmt->bind_param('s', $hash);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $row ?: null;
+}
+
+function getApiSetting(string $key, string $default = ''): string {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT setting_value FROM api_settings WHERE setting_key = ?");
+    $stmt->bind_param('s', $key);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $row ? $row['setting_value'] : $default;
+}
+
+function setApiSetting(string $key, string $value): void {
+    $db = getDB();
+    $stmt = $db->prepare("INSERT INTO api_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+    $stmt->bind_param('ss', $key, $value);
+    $stmt->execute();
+    $stmt->close();
+}
+
+// Returns true if allowed, false if this identifier should be rate-limited.
+function checkAndLogApiRequest(string $identifier, ?int $limitPerMinute): bool {
+    $db = getDB();
+
+    if ($limitPerMinute !== null) {
+        $stmt = $db->prepare("SELECT COUNT(*) AS c FROM api_requests WHERE identifier = ? AND requested_at > DATE_SUB(NOW(), INTERVAL 1 MINUTE)");
+        $stmt->bind_param('s', $identifier);
+        $stmt->execute();
+        $count = (int)$stmt->get_result()->fetch_assoc()['c'];
+        $stmt->close();
+        if ($count >= $limitPerMinute) return false;
     }
-    return false;
+
+    $stmt = $db->prepare("INSERT INTO api_requests (identifier, requested_at) VALUES (?, NOW())");
+    $stmt->bind_param('s', $identifier);
+    $stmt->execute();
+    $stmt->close();
+
+    $db->query("DELETE FROM api_requests WHERE requested_at < DATE_SUB(NOW(), INTERVAL 10 MINUTE)");
+    return true;
 }
 
 function requireApiAccess(): void {
-    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
-    if ($ip === '' || !isIpAllowedForApi($ip)) {
-        http_response_code(403);
+    if (getApiSetting('rate_limiting_enabled', '1') === '0') {
+        return; // kill switch: fully open, no limits at all
+    }
+
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? (function_exists('apache_request_headers') ? (apache_request_headers()['Authorization'] ?? '') : '');
+    $token = '';
+    if (preg_match('/^Bearer\s+(.+)$/i', $authHeader, $m)) {
+        $token = trim($m[1]);
+    }
+
+    if ($token !== '') {
+        $key = getApiKeyByToken($token);
+        if (!$key) {
+            http_response_code(401);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Invalid API key']);
+            exit;
+        }
+        $identifier = 'key:' . $key['id'];
+        $limit = $key['rate_limit_per_minute'] !== null ? (int)$key['rate_limit_per_minute'] : null;
+    } else {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $identifier = 'ip:' . $ip;
+        $default = (int)getApiSetting('anonymous_rate_limit', '30');
+        $limit = $default > 0 ? $default : null;
+    }
+
+    if (!checkAndLogApiRequest($identifier, $limit)) {
+        http_response_code(429);
         header('Content-Type: application/json');
-        echo json_encode(['error' => 'IP not authorized for API access']);
+        echo json_encode(['error' => 'Rate limit exceeded, slow down']);
         exit;
     }
 }
