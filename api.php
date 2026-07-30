@@ -44,15 +44,26 @@ startSession();
     <h3 style="margin-top:2rem;">GET /api/explore.php</h3>
     <p>Same response shape as <code>/api/articles.php</code>, but with Explore-page-style filtering and sorting. Optional query params:</p>
     <ul>
-        <li><code>category</code> — a category slug, or <code>all</code> (default)</li>
-        <li><code>sort</code> — one of <code>metrics</code> (default, trending), <code>recent</code>, <code>popular</code>, <code>most_liked</code>, <code>most_disliked</code>, <code>oldest</code></li>
-        <li><code>author</code> — substring match against author name</li>
-        <li><code>from</code> / <code>to</code> — date range, <code>YYYY-MM-DD</code></li>
+        <li><code>category</code> : a category slug, or <code>all</code> (default)</li>
+        <li><code>sort</code> : one of <code>metrics</code> (default, trending), <code>recent</code>, <code>popular</code>, <code>most_liked</code>, <code>most_disliked</code>, <code>oldest</code></li>
+        <li><code>author</code> : substring match against author name</li>
+        <li><code>from</code> / <code>to</code> : date range, <code>YYYY-MM-DD</code></li>
         <li><code>page</code>, <code>per_page</code> (max 50)</li>
     </ul>
 
+    <h3 style="margin-top:2rem;">Authentication</h3>
+    <p>Send <code>Authorization: Bearer &lt;your key&gt;</code> for a higher rate limit. Without a key you get 30 requests/minute by default, bucketed by IP. Want a key with a higher limit? Reach out on <a href="https://discord.gg/Z6GBswx5Q">Discord</a> and tell me why.</p>
+
     <h3 style="margin-top:2rem;">Errors</h3>
-    <p>Requests from an IP that isn't on the allowlist get a <code>403</code> with <code>{"error": "IP not authorized for API access"}</code>.</p>
+    <p>An invalid API key returns <code>401</code> with <code>{"error": "Invalid API key"}</code>. Exceeding your rate limit returns <code>429</code> with <code>{"error": "Rate limit exceeded, slow down"}</code>.</p>
+
+    <h3 style="margin-top:2rem;">Static mirror (for high-volume or blocked consumers)</h3>
+    <p>InfinityFree's free-tier hosting blocks automated/bot traffic at the network level, which breaks server-to-server API access for some consumers regardless of a valid key. For that case, a periodically-updated static snapshot is available with no auth and no rate limit:</p>
+    <ul>
+        <li><a href="https://raw.githubusercontent.com/xTODB/scratchnews-data/main/data/articles.json">articles.json</a> : all published articles, including <code>views</code>, <code>likes</code>, <code>dislikes</code>, <code>comments</code> per article, so you can replicate any Explore sort yourself</li>
+        <li><a href="https://raw.githubusercontent.com/xTODB/scratchnews-data/main/data/categories.json">categories.json</a></li>
+    </ul>
+    <p>This isn't live : it only reflects the last manual sync, so use the real API above if you need up-to-the-minute data.</p>
 </main>
 <?php include __DIR__ . '/includes/footer.php'; ?>
 </body>
