@@ -12,6 +12,10 @@ define('SITE_VERSION', '0.15.1');
 define('BREVO_API_KEY', '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');
 define('BREVO_SENDER_EMAIL', 'david.todb@gmail.com');
 
+define('GITHUB_TOKEN', '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');
+define('GITHUB_REPO', 'xTODB/scratchnews');
+define('GITHUB_BRANCH', 'main');
+
 function getDB(): mysqli {
     static $conn = null;
     if ($conn === null) {
