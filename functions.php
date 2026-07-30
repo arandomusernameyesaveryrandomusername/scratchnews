@@ -39,6 +39,7 @@ function createArticle(string $title, string $summary, string $content, string $
     $stmt->bind_param('issssssi', $id, $title, $summary, $content, $author, $imageUrl, $status, $userId);
     $stmt->execute();
     $stmt->close();
+    syncToGithub();
     return $id;
 }
 
@@ -50,6 +51,7 @@ function updateArticle(int $id, string $title, string $summary, string $content,
     $stmt->bind_param('ssssssii', $title, $summary, $content, $author, $imageUrl, $status, $userId, $id);
     $ok = $stmt->execute();
     $stmt->close();
+    syncToGithub();
     return $ok;
 }
 
@@ -64,6 +66,7 @@ function deleteArticle(int $id): bool {
     $stmt->bind_param('i', $id);
     $ok = $stmt->execute();
     $stmt->close();
+    syncToGithub();
     return $ok;
 }
 
@@ -681,6 +684,7 @@ function approveSubmission($id) {
     $stmt->close();
 
     sendSubmissionDecisionEmail($submission['email'], $submission['username'], $submission['title'], true);
+    syncToGithub();
     return true;
 }
 
@@ -1522,6 +1526,76 @@ function requireApiAccess(): void {
         header('Content-Type: application/json');
         echo json_encode(['error' => 'Rate limit exceeded, slow down']);
         exit;
+    }
+}
+
+// ── GitHub JSON mirror sync ─────────────────────────────
+
+function githubApiRequest(string $method, string $path, ?array $body = null): array {
+    $ch = curl_init('https://api.github.com' . $path);
+    curl_setopt_array($ch, [
+        CURLOPT_HTTPHEADER => [
+            'Authorization: Bearer ' . GITHUB_TOKEN,
+            'User-Agent: ScratchNews-Sync',
+            'Accept: application/vnd.github+json',
+            'Content-Type: application/json',
+        ],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CUSTOMREQUEST => $method,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_POSTFIELDS => $body !== null ? json_encode($body) : null,
+    ]);
+    $response = curl_exec($ch);
+    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    return ['status' => $status, 'body' => json_decode($response, true)];
+}
+
+function pushJsonToGithub(string $path, array $data): array {
+    $content = base64_encode(json_encode($data, JSON_PRETTY_PRINT));
+    $existing = githubApiRequest('GET', '/repos/' . GITHUB_REPO . '/contents/' . $path . '?ref=' . GITHUB_BRANCH);
+    $sha = $existing['status'] === 200 ? ($existing['body']['sha'] ?? null) : null;
+
+    $payload = ['message' => 'Sync ' . $path, 'content' => $content, 'branch' => GITHUB_BRANCH];
+    if ($sha) $payload['sha'] = $sha;
+
+    return githubApiRequest('PUT', '/repos/' . GITHUB_REPO . '/contents/' . $path, $payload);
+}
+
+function getEngagementCounts(): array {
+    $db = getDB();
+    $counts = [];
+    foreach (['likes' => 'like_count', 'dislikes' => 'dislike_count', 'comments' => 'comment_count'] as $table => $key) {
+        $rows = $db->query("SELECT article_id, COUNT(*) AS c FROM $table GROUP BY article_id")->fetch_all(MYSQLI_ASSOC);
+        foreach ($rows as $row) {
+            $counts[(int)$row['article_id']][$key] = (int)$row['c'];
+        }
+    }
+    return $counts;
+}
+
+// Best-effort: never throws, so a GitHub/network hiccup can't break article save/approve/delete.
+function syncToGithub(): array {
+    try {
+        $engagement = getEngagementCounts();
+        $articles = array_map(function ($a) use ($engagement) {
+            $formatted = formatArticleForApi($a);
+            $id = $formatted['id'];
+            $formatted['likes'] = $engagement[$id]['like_count'] ?? 0;
+            $formatted['dislikes'] = $engagement[$id]['dislike_count'] ?? 0;
+            $formatted['comments'] = $engagement[$id]['comment_count'] ?? 0;
+            return $formatted;
+        }, getAllArticles());
+
+        $articlesPayload = ['data' => $articles, 'total' => count($articles), 'synced_at' => gmdate('c')];
+        $categoriesPayload = ['data' => getAllCategories(), 'synced_at' => gmdate('c')];
+
+        return [
+            'articles.json' => pushJsonToGithub('data/articles.json', $articlesPayload),
+            'categories.json' => pushJsonToGithub('data/categories.json', $categoriesPayload),
+        ];
+    } catch (\Throwable $e) {
+        return ['error' => $e->getMessage()];
     }
 }
 
