@@ -1529,39 +1529,6 @@ function requireApiAccess(): void {
     }
 }
 
-// ── GitHub JSON mirror sync ─────────────────────────────
-
-function githubApiRequest(string $method, string $path, ?array $body = null): array {
-    $ch = curl_init('https://api.github.com' . $path);
-    curl_setopt_array($ch, [
-        CURLOPT_HTTPHEADER => [
-            'Authorization: Bearer ' . GITHUB_TOKEN,
-            'User-Agent: ScratchNews-Sync',
-            'Accept: application/vnd.github+json',
-            'Content-Type: application/json',
-        ],
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_CUSTOMREQUEST => $method,
-        CURLOPT_TIMEOUT => 10,
-        CURLOPT_POSTFIELDS => $body !== null ? json_encode($body) : null,
-    ]);
-    $response = curl_exec($ch);
-    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    return ['status' => $status, 'body' => json_decode($response, true)];
-}
-
-function pushJsonToGithub(string $path, array $data): array {
-    $content = base64_encode(json_encode($data, JSON_PRETTY_PRINT));
-    $existing = githubApiRequest('GET', '/repos/' . GITHUB_REPO . '/contents/' . $path . '?ref=' . GITHUB_BRANCH);
-    $sha = $existing['status'] === 200 ? ($existing['body']['sha'] ?? null) : null;
-
-    $payload = ['message' => 'Sync ' . $path, 'content' => $content, 'branch' => GITHUB_BRANCH];
-    if ($sha) $payload['sha'] = $sha;
-
-    return githubApiRequest('PUT', '/repos/' . GITHUB_REPO . '/contents/' . $path, $payload);
-}
-
 function getEngagementCounts(): array {
     $db = getDB();
     $counts = [];
