@@ -38,10 +38,30 @@ function pushJsonToGithub(string $path, array $data): array {
 
 $results = null;
 
+function getEngagementCounts(): array {
+    $db = getDB();
+    $counts = [];
+    foreach (['likes' => 'like_count', 'dislikes' => 'dislike_count', 'comments' => 'comment_count'] as $table => $key) {
+        $rows = $db->query("SELECT article_id, COUNT(*) AS c FROM $table GROUP BY article_id")->fetch_all(MYSQLI_ASSOC);
+        foreach ($rows as $row) {
+            $counts[(int)$row['article_id']][$key] = (int)$row['c'];
+        }
+    }
+    return $counts;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     requireCsrf();
 
-    $articles = array_map('formatArticleForApi', getAllArticles());
+    $engagement = getEngagementCounts();
+$articles = array_map(function ($a) use ($engagement) {
+    $formatted = formatArticleForApi($a);
+    $id = $formatted['id'];
+    $formatted['likes'] = $engagement[$id]['like_count'] ?? 0;
+    $formatted['dislikes'] = $engagement[$id]['dislike_count'] ?? 0;
+    $formatted['comments'] = $engagement[$id]['comment_count'] ?? 0;
+    return $formatted;
+}, getAllArticles());
     $articlesPayload = ['data' => $articles, 'total' => count($articles), 'synced_at' => gmdate('c')];
 
     $categoriesPayload = ['data' => getAllCategories(), 'synced_at' => gmdate('c')];
