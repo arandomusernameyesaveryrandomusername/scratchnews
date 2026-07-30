@@ -63,7 +63,7 @@ startSession();
         <li><a href="https://raw.githubusercontent.com/xTODB/scratchnews-data/main/data/articles.json">articles.json</a> : all published articles, including <code>views</code>, <code>likes</code>, <code>dislikes</code>, <code>comments</code> per article, so you can replicate any Explore sort yourself</li>
         <li><a href="https://raw.githubusercontent.com/xTODB/scratchnews-data/main/data/categories.json">categories.json</a></li>
     </ul>
-    <p>This isn't live : it only reflects the last manual sync, so use the real API above if you need up-to-the-minute data.</p>
+    <p>This fallback API updates automatically whenever an article is published, edited, or removed.</p>
 </main>
 <?php include __DIR__ . '/includes/footer.php'; ?>
 </body>
