@@ -25,6 +25,7 @@
             <div class="footer-col">
                 <h4>More</h4>
                 <a href="/random-article.php">Random Article</a>
+                <a href="https:/ko-fi.com/scratchnews" class="header-quick-link">Donate</a>
             </div>
         </div>
     </div>
