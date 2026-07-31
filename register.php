@@ -94,8 +94,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 .wizard-progress-track { flex:1; height:10px; border-radius:5px; background:#ccc; overflow:hidden; }
 .wizard-progress-fill { height:100%; background:#e8a33d; border-radius:5px; transition:width 0.25s ease; }
 .wizard-progress-label { font-weight:bold; white-space:nowrap; }
-.wizard-step { display:none; }
-.wizard-step.active { display:block; }
+.wizard-step { visibility: hidden; height: 0; overflow: hidden; }
+.wizard-step.active { visibility: visible; height: auto; overflow: visible; }
 .wizard-nav-row { display:flex; justify-content:flex-end; gap:0.6rem; margin-top:1.25rem; }
 .wizard-nav-row .btn.secondary { margin-right:auto; }
 .wizard-step2-row { display:flex; gap:1.25rem; align-items:flex-start; flex-wrap:wrap; }
