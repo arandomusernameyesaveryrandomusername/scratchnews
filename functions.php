@@ -1585,3 +1585,86 @@ function formatArticleForApi(array $article): array {
         }, getArticleCategories((int)$article['id'])),
     ];
 }
+
+function isFollowing(int $followerId, int $followedId): bool {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT 1 FROM follows WHERE follower_id = ? AND followed_id = ?");
+    $stmt->bind_param('ii', $followerId, $followedId);
+    $stmt->execute();
+    $exists = $stmt->get_result()->fetch_row() !== null;
+    $stmt->close();
+    return $exists;
+}
+
+function followUser(int $followerId, int $followedId): void {
+    if ($followerId === $followedId) return;
+    $db = getDB();
+    $stmt = $db->prepare("INSERT IGNORE INTO follows (follower_id, followed_id) VALUES (?, ?)");
+    $stmt->bind_param('ii', $followerId, $followedId);
+    $stmt->execute();
+    $stmt->close();
+}
+
+function unfollowUser(int $followerId, int $followedId): void {
+    $db = getDB();
+    $stmt = $db->prepare("DELETE FROM follows WHERE follower_id = ? AND followed_id = ?");
+    $stmt->bind_param('ii', $followerId, $followedId);
+    $stmt->execute();
+    $stmt->close();
+}
+
+function getFollowerCount(int $userId): int {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT COUNT(*) FROM follows WHERE followed_id = ?");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $stmt->bind_result($count);
+    $stmt->fetch();
+    $stmt->close();
+    return (int)$count;
+}
+
+function getProfileCommentCount(int $userId): int {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT COUNT(*) FROM profile_comments WHERE profile_user_id = ?");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $stmt->bind_result($count);
+    $stmt->fetch();
+    $stmt->close();
+    return (int)$count;
+}
+
+function getProfileComments(int $userId): array {
+    $db = getDB();
+    $stmt = $db->prepare(
+        "SELECT pc.*, u.username AS author_username, u.avatar_url AS author_avatar
+         FROM profile_comments pc
+         JOIN users u ON u.id = pc.author_id
+         WHERE pc.profile_user_id = ?
+         ORDER BY pc.created_at DESC"
+    );
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $rows;
+}
+
+function addProfileComment(int $profileUserId, int $authorId, string $content): int {
+    $db = getDB();
+    $stmt = $db->prepare("INSERT INTO profile_comments (profile_user_id, author_id, content) VALUES (?, ?, ?)");
+    $stmt->bind_param('iis', $profileUserId, $authorId, $content);
+    $stmt->execute();
+    $id = $stmt->insert_id;
+    $stmt->close();
+    return $id;
+}
+
+function updateUserProfile(int $userId, ?string $avatarUrl, ?string $bannerUrl, ?string $bio): void {
+    $db = getDB();
+    $stmt = $db->prepare("UPDATE users SET avatar_url = ?, banner_url = ?, bio = ? WHERE id = ?");
+    $stmt->bind_param('sssi', $avatarUrl, $bannerUrl, $bio, $userId);
+    $stmt->execute();
+    $stmt->close();
+}
