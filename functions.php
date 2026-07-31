@@ -893,16 +893,19 @@ function getNextArticleId(): int {
     return $row['next_id'] ? (int)$row['next_id'] : 1;
 }
 
-function saveUploadedImage(array $file): ?string {
+function saveUploadedImage(array $file, string $type = 'articles', int $maxDim = 1600): ?string {
     if (empty($file['tmp_name']) || $file['error'] !== UPLOAD_ERR_OK) return null;
     if ($file['size'] > 3 * 1024 * 1024) throw new RuntimeException('Image must be under 3MB.');
+
+    $allowedTypes = ['articles', 'avatars', 'banners'];
+    if (!in_array($type, $allowedTypes, true)) $type = 'articles';
 
     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $detectedType = finfo_file($finfo, $file['tmp_name']);
     finfo_close($finfo);
 
-    $dir = __DIR__ . '/assets/uploads/articles';
+    $dir = __DIR__ . '/assets/uploads/' . $type;
     if (!is_dir($dir)) mkdir($dir, 0755, true);
 
     if ($ext === 'svg' || in_array($detectedType, ['image/svg+xml', 'text/xml', 'text/html', 'text/plain'], true)) {
@@ -913,7 +916,7 @@ function saveUploadedImage(array $file): ?string {
         $content = sanitizeSvg($content);
         $filename = bin2hex(random_bytes(8)) . '.svg';
         file_put_contents($dir . '/' . $filename, $content);
-        return '/assets/uploads/articles/' . $filename;
+        return '/assets/uploads/' . $type . '/' . $filename;
     }
 
     $info = getimagesize($file['tmp_name']);
@@ -922,8 +925,8 @@ function saveUploadedImage(array $file): ?string {
     if (!isset($allowed[$info['mime']])) throw new RuntimeException('Only JPG, PNG, GIF, WEBP, or SVG images are allowed.');
     $filename = bin2hex(random_bytes(8)) . '.' . $allowed[$info['mime']];
     move_uploaded_file($file['tmp_name'], $dir . '/' . $filename);
-    resizeImageIfNeeded($dir . '/' . $filename, $info['mime']);
-    return '/assets/uploads/articles/' . $filename;
+    resizeImageIfNeeded($dir . '/' . $filename, $info['mime'], $maxDim);
+    return '/assets/uploads/' . $type . '/' . $filename;
 }
 
 function sanitizeSvg(string $svg): string {
