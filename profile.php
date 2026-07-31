@@ -54,6 +54,11 @@ $bioHasMore = $bioRaw !== '' && strpos($bioRaw, "\n") !== false;
 .profile-follow-btn.not-following { background:#1da1f2; color:#fff; }
 .profile-follow-btn.following { background:#e2e2e2; color:#333; }
 .profile-bio { margin:0.5rem 0; }
+.bio-readmore-btn { background:none; border:none; color:#1da1f2; font:inherit; cursor:pointer; padding:0; margin-left:0.3rem; text-decoration:underline; }
+.bio-modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; z-index:1000; }
+.bio-modal-backdrop[hidden] { display:none; }
+.bio-modal-card { background:#fff; color:#111; border-radius:10px; padding:1.5rem; max-width:420px; width:90%; position:relative; box-shadow:0 10px 30px rgba(0,0,0,0.3); }
+.bio-modal-close { position:absolute; top:0.6rem; right:0.9rem; background:none; border:none; font-size:1.4rem; line-height:1; cursor:pointer; color:#333; }
 .profile-stat-link { background:none; border:none; padding:0; font:inherit; cursor:pointer; }
 .profile-controls-row { display:flex; justify-content:space-between; align-items:center; margin:0.5rem 0; }
 .profile-icon-controls { display:flex; gap:0.5rem; align-items:center; }
@@ -109,12 +114,20 @@ details.customize-details summary::-webkit-details-marker { display:none; }
     </div>
     <?php if ($bioRaw !== ''): ?>
         <p class="profile-bio">
-            <span class="bio-short"><?= nl2br(e($bioFirstLine)) ?></span>
+            <?= nl2br(e($bioFirstLine)) ?>
             <?php if ($bioHasMore): ?>
-                <span class="bio-full" hidden><?= nl2br(e($bioRaw)) ?></span>
-                <button type="button" class="stat-link bio-toggle">Read more</button>
+                <button type="button" class="bio-readmore-btn" data-modal-target="bio-modal-<?= (int)$user['id'] ?>">Read more</button>
             <?php endif; ?>
         </p>
+        <?php if ($bioHasMore): ?>
+        <div class="bio-modal-backdrop" id="bio-modal-<?= (int)$user['id'] ?>" hidden>
+            <div class="bio-modal-card">
+                <button type="button" class="bio-modal-close" aria-label="Close">&times;</button>
+                <h3 style="margin-top:0;">@<?= e($user['username']) ?></h3>
+                <p style="white-space:pre-line; margin-bottom:0;"><?= nl2br(e($bioRaw)) ?></p>
+            </div>
+        </div>
+        <?php endif; ?>
     <?php endif; ?>
     <?php if ($isOwnProfile): ?>
     <div class="profile-controls-row">
@@ -238,16 +251,18 @@ document.querySelectorAll('time.local-date, time.local-datetime').forEach(functi
         el.textContent = d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
     }
 });
-document.querySelectorAll('.bio-toggle').forEach(function(btn) {
+document.querySelectorAll('.bio-readmore-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
-        var p = btn.closest('.profile-bio');
-        var short = p.querySelector('.bio-short');
-        var full = p.querySelector('.bio-full');
-        var isExpanded = !full.hidden;
-        full.hidden = isExpanded;
-        short.hidden = !isExpanded;
-        btn.textContent = isExpanded ? 'Read more' : 'Show less';
+        var modal = document.getElementById(btn.getAttribute('data-modal-target'));
+        if (modal) modal.hidden = false;
     });
+});
+document.querySelectorAll('.bio-modal-backdrop').forEach(function(backdrop) {
+    backdrop.addEventListener('click', function(e) {
+        if (e.target === backdrop) backdrop.hidden = true;
+    });
+    var closeBtn = backdrop.querySelector('.bio-modal-close');
+    if (closeBtn) closeBtn.addEventListener('click', function() { backdrop.hidden = true; });
 });
 </script>
 </body>
