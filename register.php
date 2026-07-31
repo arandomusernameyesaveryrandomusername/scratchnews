@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <title>Sign Up - <?= e(SITE_NAME) ?></title>
 <link rel="stylesheet" href="/assets/style.css?v=9">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsvectormap/1.5.3/css/jsvectormap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsvectormap/1.3.3/css/jsvectormap.min.css">
 <style>
 .wizard-card { max-width:640px; margin:0 auto; }
 .wizard-progress-row { display:flex; align-items:center; gap:0.75rem; margin:0.5rem 0 1.25rem; }
