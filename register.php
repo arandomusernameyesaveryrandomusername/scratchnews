@@ -13,15 +13,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     $honeypot = trim($_POST['website'] ?? '');
+    $bio = trim($_POST['bio'] ?? '');
+    if (mb_strlen($bio) > 500) $bio = mb_substr($bio, 0, 500);
+    $darkMode = !empty($_POST['dark_mode']);
+    $lat = ($_POST['latitude'] ?? '') !== '' ? (float)$_POST['latitude'] : null;
+    $lng = ($_POST['longitude'] ?? '') !== '' ? (float)$_POST['longitude'] : null;
+    $countryCode = trim($_POST['country_code'] ?? '') ?: null;
+    $regionName = trim($_POST['region_name'] ?? '') ?: null;
+    if ($countryCode !== null) $countryCode = mb_substr($countryCode, 0, 2);
+    if ($regionName !== null) $regionName = mb_substr($regionName, 0, 100);
 
     if ($honeypot !== '') {
-        // Silently pretend it worked; bots that fill every field get nothing to learn from
         header('Location: /?justregistered=1');
         exit;
     } elseif (tooManySignupAttempts($ip)) {
         $error = 'Too many signup attempts from your network. Please try again later.';
     } elseif ($username === '' || $email === '' || $password === '') {
-        $error = 'All fields are required.';
+        $error = 'Username, email, and password are required.';
     } elseif (!preg_match('/^[A-Za-z0-9_]{3,20}$/', $username)) {
         $error = 'Username must be 3-20 characters and can only contain letters, numbers, and underscores.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -42,8 +50,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $token = issueVerificationToken($result);
             sendVerificationEmail($email, $username, $token);
 
+            $avatarUrl = null;
+            $bannerUrl = null;
+            try {
+                if (!empty($_FILES['avatar']['tmp_name'])) $avatarUrl = saveUploadedImage($_FILES['avatar'], 'avatars');
+                if (!empty($_FILES['banner']['tmp_name'])) $bannerUrl = saveUploadedImage($_FILES['banner'], 'banners');
+            } catch (RuntimeException $e) {
+                // Non-fatal: account still gets created without the image.
+            }
+            if ($avatarUrl !== null || $bannerUrl !== null || $bio !== '') {
+                updateUserProfile($result, $avatarUrl, $bannerUrl, $bio);
+            }
+
+            setDarkModePreference($result, $darkMode);
+            if ($lat !== null && $lng !== null) {
+                updateUserLocation($result, $lat, $lng, $countryCode, $regionName);
+            }
+
             $_SESSION['reader_id'] = $result;
             $_SESSION['reader_username'] = $username;
+            $_SESSION['is_admin'] = false;
+            $_SESSION['dark_mode'] = $darkMode;
             header('Location: /?justregistered=1');
             exit;
         }
@@ -57,7 +84,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <title>Sign Up - <?= e(SITE_NAME) ?></title>
-<link rel="stylesheet" href="/assets/style.css?v=6">
+<link rel="stylesheet" href="/assets/style.css?v=9">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsvectormap/1.5.3/css/jsvectormap.min.css">
+<style>
+.wizard-card { max-width:640px; margin:0 auto; }
+.wizard-progress-row { display:flex; align-items:center; gap:0.75rem; margin:0.5rem 0 1.25rem; }
+.wizard-progress-track { flex:1; height:10px; border-radius:5px; background:#ccc; overflow:hidden; }
+.wizard-progress-fill { height:100%; background:#e8a33d; border-radius:5px; transition:width 0.25s ease; }
+.wizard-progress-label { font-weight:bold; white-space:nowrap; }
+.wizard-step { display:none; }
+.wizard-step.active { display:block; }
+.wizard-nav-row { display:flex; justify-content:flex-end; gap:0.6rem; margin-top:1.25rem; }
+.wizard-nav-row .btn.secondary { margin-right:auto; }
+.wizard-step2-row { display:flex; gap:1.25rem; align-items:flex-start; flex-wrap:wrap; }
+.wizard-avatar-upload { width:110px; height:110px; border-radius:50%; border:2px dashed #999; background:#eee no-repeat center/cover; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; color:#666; }
+.wizard-avatar-upload svg { width:28px; height:28px; fill:currentColor; }
+.wizard-banner-upload { width:100%; max-width:420px; height:110px; border-radius:8px; border:2px dashed #999; background:#eee no-repeat center/contain; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#666; margin-top:0.5rem; }
+.wizard-banner-upload svg { width:26px; height:26px; fill:currentColor; }
+.wizard-step2-fields { flex:1; min-width:220px; }
+.wizard-darkmode-toggle { display:inline-flex; align-items:center; gap:0.4rem; background:none; border:1px solid #999; border-radius:20px; padding:0.3rem 0.8rem; cursor:pointer; color:inherit; margin-top:0.75rem; }
+.wizard-darkmode-toggle svg { width:16px; height:16px; fill:currentColor; }
+.wizard-location-card { border:1px solid #ddd; border-radius:8px; padding:1rem; }
+.wizard-location-btn { margin-top:0.75rem; }
+.wizard-map-wrap { width:100%; height:280px; margin-top:1rem; display:none; }
+.wizard-location-status { margin-top:0.6rem; font-size:0.9rem; }
+</style>
 </head>
 <body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
 <header>
@@ -66,24 +117,210 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </a>
     <nav><a href="/login">Log In</a></nav>
 </header>
-<main>
-    <h2>Create a ScratchNews Account</h2>
+<main class="wizard-card">
     <?php if ($error): ?><div class="alert error"><?= e($error) ?></div><?php endif; ?>
-    <form method="post">
+    <div class="wizard-progress-row">
+        <div class="wizard-progress-track"><div class="wizard-progress-fill" id="wizardFill" style="width:33.33%"></div></div>
+        <span class="wizard-progress-label" id="wizardLabel">1/3</span>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" id="wizardForm">
         <?= csrfField() ?>
         <div style="position:absolute;left:-9999px;" aria-hidden="true">
             <label for="website">Leave this field blank</label>
             <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
         </div>
-        <label for="username">Username</label>
-        <input type="text" id="username" name="username" value="<?= e($_POST['username'] ?? '') ?>" required>
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" value="<?= e($_POST['email'] ?? '') ?>" required>
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" required>
-        <button class="btn" type="submit">Sign Up</button>
+        <input type="hidden" name="dark_mode" id="darkModeField" value="0">
+        <input type="hidden" name="latitude" id="latitudeField" value="">
+        <input type="hidden" name="longitude" id="longitudeField" value="">
+        <input type="hidden" name="country_code" id="countryCodeField" value="">
+        <input type="hidden" name="region_name" id="regionNameField" value="">
+
+        <section class="wizard-step active" data-step="1">
+            <h2>Create an account in 3 steps</h2>
+            <h3>Step 1: Basics</h3>
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" value="<?= e($_POST['username'] ?? '') ?>" required>
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required minlength="6">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="<?= e($_POST['email'] ?? '') ?>" required>
+            <div class="wizard-nav-row">
+                <button type="button" class="btn" data-next>Next</button>
+            </div>
+        </section>
+
+        <section class="wizard-step" data-step="2">
+            <h3>Step 2: Customization</h3>
+            <div class="wizard-step2-row">
+                <label class="wizard-avatar-upload" id="avatarUploadBox" title="Upload a profile picture">
+                    <svg viewBox="0 0 24 24"><path d="M5 20h14a1 1 0 001-1v-9a1 1 0 00-1-1h-3.17l-1.24-1.86A1 1 0 0013.76 6h-3.52a1 1 0 00-.83.44L8.17 9H5a1 1 0 00-1 1v9a1 1 0 001 1zm7-3a4 4 0 110-8 4 4 0 010 8z"/></svg>
+                    <input type="file" name="avatar" id="avatarInput" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" style="display:none;">
+                </label>
+                <div class="wizard-step2-fields">
+                    <label for="bio">Description (optional)</label>
+                    <textarea id="bio" name="bio" rows="3" maxlength="500" placeholder="Say something about yourself..."></textarea>
+                    <label class="wizard-banner-upload" id="bannerUploadBox" title="Upload a banner">
+                        <svg viewBox="0 0 24 24"><path d="M5 20h14a1 1 0 001-1v-9a1 1 0 00-1-1h-3.17l-1.24-1.86A1 1 0 0013.76 6h-3.52a1 1 0 00-.83.44L8.17 9H5a1 1 0 00-1 1v9a1 1 0 001 1zm7-3a4 4 0 110-8 4 4 0 010 8z"/></svg>
+                        <input type="file" name="banner" id="bannerInput" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" style="display:none;">
+                    </label>
+                    <button type="button" class="wizard-darkmode-toggle" id="darkModeToggle">
+                        <svg id="darkModeIcon" viewBox="0 0 24 24"><path d="M20.7 14.9A8.5 8.5 0 019.1 3.3a1 1 0 00-1.2-1.3 10 10 0 1013.9 13.9 1 1 0 00-1.1-1z"/></svg>
+                        <span id="darkModeLabel">Dark mode: off</span>
+                    </button>
+                </div>
+            </div>
+            <div class="wizard-nav-row">
+                <button type="button" class="btn secondary" data-prev>Previous</button>
+                <button type="button" class="btn" data-next>Next</button>
+            </div>
+        </section>
+
+        <section class="wizard-step" data-step="3">
+            <h3>Inform every Scratcher, state by state, country by country</h3>
+            <div class="wizard-location-card">
+                <p>ScratchNews is growing, so we've set a goal: get a user from every state in the US and from 50 countries around the world. This requires location, though — turn it on once, and be the first from your state or country. Forever.</p>
+                <button type="button" class="btn wizard-location-btn" id="locationBtn">Turn on Location</button>
+                <p class="wizard-location-status" id="locationStatus"></p>
+                <div class="wizard-map-wrap" id="mapWrap"></div>
+            </div>
+            <div class="wizard-nav-row">
+                <button type="button" class="btn secondary" data-prev>Previous</button>
+                <button type="submit" class="btn" id="finishBtn">Finish Account</button>
+            </div>
+        </section>
     </form>
-    <p style="margin-top:1rem;">Already have an account? <a href="/signin">Log in</a></p>
 </main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsvectormap/1.5.3/js/jsvectormap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsvectormap/1.5.3/maps/world.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsvectormap/1.5.3/maps/us-aea-en.js"></script>
+<script>
+(function() {
+    var steps = Array.prototype.slice.call(document.querySelectorAll('.wizard-step'));
+    var fill = document.getElementById('wizardFill');
+    var label = document.getElementById('wizardLabel');
+    var current = 1;
+
+    function showStep(n) {
+        steps.forEach(function(s) { s.classList.toggle('active', parseInt(s.dataset.step, 10) === n); });
+        fill.style.width = (n / 3 * 100) + '%';
+        label.textContent = n + '/3';
+        current = n;
+    }
+
+    function validateStep1() {
+        var username = document.getElementById('username');
+        var password = document.getElementById('password');
+        var email = document.getElementById('email');
+        if (!/^[A-Za-z0-9_]{3,20}$/.test(username.value)) { alert('Username must be 3-20 characters (letters, numbers, underscores only).'); return false; }
+        if (password.value.length < 6) { alert('Password must be at least 6 characters.'); return false; }
+        if (!email.value.includes('@')) { alert('Please enter a valid email address.'); return false; }
+        return true;
+    }
+
+    document.querySelectorAll('[data-next]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            if (current === 1 && !validateStep1()) return;
+            showStep(current + 1);
+        });
+    });
+    document.querySelectorAll('[data-prev]').forEach(function(btn) {
+        btn.addEventListener('click', function() { showStep(current - 1); });
+    });
+
+    <?php if ($error): ?>
+    showStep(1);
+    <?php endif; ?>
+
+    // Avatar/banner preview
+    document.getElementById('avatarUploadBox').addEventListener('click', function(e) {
+        if (e.target.tagName !== 'INPUT') document.getElementById('avatarInput').click();
+    });
+    document.getElementById('avatarInput').addEventListener('change', function() {
+        var f = this.files[0];
+        if (!f) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('avatarUploadBox').style.backgroundImage = 'url(' + e.target.result + ')';
+        };
+        reader.readAsDataURL(f);
+    });
+    document.getElementById('bannerUploadBox').addEventListener('click', function(e) {
+        if (e.target.tagName !== 'INPUT') document.getElementById('bannerInput').click();
+    });
+    document.getElementById('bannerInput').addEventListener('change', function() {
+        var f = this.files[0];
+        if (!f) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('bannerUploadBox').style.backgroundImage = 'url(' + e.target.result + ')';
+        };
+        reader.readAsDataURL(f);
+    });
+
+    // Dark mode toggle (preview only until account is created)
+    var darkEnabled = false;
+    document.getElementById('darkModeToggle').addEventListener('click', function() {
+        darkEnabled = !darkEnabled;
+        document.getElementById('darkModeField').value = darkEnabled ? '1' : '0';
+        document.getElementById('darkModeLabel').textContent = 'Dark mode: ' + (darkEnabled ? 'on' : 'off');
+        document.body.classList.toggle('dark', darkEnabled);
+        document.getElementById('darkModeIcon').innerHTML = darkEnabled
+            ? '<path d="M12 7a5 5 0 100 10 5 5 0 000-10zm0-5a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm0 17a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm9-7a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5 12a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zm12.66-6.66a1 1 0 010 1.42l-.71.7a1 1 0 11-1.41-1.41l.7-.71a1 1 0 011.42 0zM6.46 17.54a1 1 0 010 1.42l-.7.7a1 1 0 11-1.42-1.41l.71-.71a1 1 0 011.41 0zm11.2 0a1 1 0 011.41 0l.71.71a1 1 0 11-1.42 1.41l-.7-.7a1 1 0 010-1.42zM6.46 6.46a1 1 0 01-1.41 0l-.71-.7a1 1 0 111.42-1.42l.7.71a1 1 0 010 1.41z"/>'
+            : '<path d="M20.7 14.9A8.5 8.5 0 019.1 3.3a1 1 0 00-1.2-1.3 10 10 0 1013.9 13.9 1 1 0 00-1.1-1z"/>';
+    });
+
+    // Location + map
+    document.getElementById('locationBtn').addEventListener('click', function() {
+        var statusEl = document.getElementById('locationStatus');
+        if (!navigator.geolocation) { statusEl.textContent = "Your browser doesn't support location."; return; }
+        statusEl.textContent = 'Requesting location...';
+        navigator.geolocation.getCurrentPosition(function(pos) {
+            var lat = pos.coords.latitude, lng = pos.coords.longitude;
+            document.getElementById('latitudeField').value = lat;
+            document.getElementById('longitudeField').value = lng;
+            statusEl.textContent = 'Looking up your region...';
+            fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lng + '&localityLanguage=en')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    var countryCode = data.countryCode || '';
+                    var regionName = data.principalSubdivision || '';
+                    var regionCode = (data.principalSubdivisionCode || '').replace(/^US-/, '');
+                    document.getElementById('countryCodeField').value = countryCode;
+                    document.getElementById('regionNameField').value = regionName;
+                    statusEl.textContent = countryCode === 'US'
+                        ? "You're set as being from " + regionName + ", USA."
+                        : "You're set as being from " + (regionName ? regionName + ', ' : '') + (data.countryName || countryCode) + '.';
+                    renderMap(countryCode === 'US', countryCode === 'US' ? regionCode : countryCode);
+                })
+                .catch(function() {
+                    statusEl.textContent = 'Location saved, but we could not determine your region.';
+                });
+        }, function() {
+            statusEl.textContent = 'Location permission denied — no problem, you can still finish creating your account.';
+        });
+    });
+
+    function renderMap(isUS, selectedCode) {
+        var wrap = document.getElementById('mapWrap');
+        wrap.style.display = 'block';
+        wrap.innerHTML = '';
+        try {
+            new jsVectorMap({
+                selector: '#mapWrap',
+                map: isUS ? 'us_aea_en' : 'world',
+                zoomButtons: false,
+                selectedRegions: selectedCode ? [selectedCode] : [],
+                regionStyle: {
+                    initial: { fill: '#666' },
+                    selected: { fill: '#e8a33d' }
+                }
+            });
+        } catch (e) {
+            wrap.style.display = 'none';
+        }
+    }
+})();
+</script>
 </body>
 </html>

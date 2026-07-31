@@ -1668,3 +1668,12 @@ function updateUserProfile(int $userId, ?string $avatarUrl, ?string $bannerUrl, 
     $stmt->execute();
     $stmt->close();
 }
+
+function updateUserLocation(int $userId, ?float $lat, ?float $lng, ?string $countryCode, ?string $regionName): void {
+    $db = getDB();
+    $shared = ($lat !== null && $lng !== null) ? 1 : 0;
+    $stmt = $db->prepare("UPDATE users SET latitude = ?, longitude = ?, country_code = ?, region_name = ?, location_shared = ? WHERE id = ?");
+    $stmt->bind_param('ddssii', $lat, $lng, $countryCode, $regionName, $shared, $userId);
+    $stmt->execute();
+    $stmt->close();
+}
