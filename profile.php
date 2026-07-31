@@ -79,6 +79,11 @@ details.customize-details summary::-webkit-details-marker { display:none; }
     <h2>User Not Found</h2>
     <p>No account exists under that username.</p>
 <?php else: ?>
+    <?php if (!empty($user['banner_url'])): ?>
+        <div class="profile-banner" style="background-image:url('<?= e($user['banner_url']) ?>');"></div>
+    <?php elseif ($isOwnProfile): ?>
+        <div class="profile-banner"></div>
+    <?php endif; ?>
     <div class="profile-header-row">
         <?php if (!empty($user['avatar_url'])): ?>
             <img src="<?= e($user['avatar_url']) ?>" alt="" class="profile-avatar">
@@ -106,11 +111,6 @@ details.customize-details summary::-webkit-details-marker { display:none; }
     </div>
     <?php if ($bio !== ''): ?>
         <p class="profile-bio"><?= e($bio) ?><?php if ($bioTruncated): ?> <a href="#" class="stat-link">Read more</a><?php endif; ?></p>
-    <?php endif; ?>
-    <?php if (!empty($user['banner_url'])): ?>
-        <div class="profile-banner" style="background-image:url('<?= e($user['banner_url']) ?>');"></div>
-    <?php elseif ($isOwnProfile): ?>
-        <div class="profile-banner"></div>
     <?php endif; ?>
     <?php if ($isOwnProfile): ?>
     <div class="profile-controls-row">
