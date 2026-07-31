@@ -40,6 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Please use a permanent email address, not a temporary/disposable one.';
     } elseif (!checkdnsrr(substr(strrchr($email, '@'), 1), 'MX')) {
         $error = 'That email address domain doesn\'t appear to accept mail. Please check it and try again.';
+    } elseif ($lat === null || $lng === null) {
+        $error = 'Location is required to finish creating your account. Please turn it on in step 3.';
     } else {
         $result = createUser($username, $email, $password);
         if ($result === 'duplicate') {
@@ -104,10 +106,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 .wizard-step2-fields { flex:1; min-width:220px; }
 .wizard-darkmode-toggle { display:inline-flex; align-items:center; gap:0.4rem; background:none; border:1px solid #999; border-radius:20px; padding:0.3rem 0.8rem; cursor:pointer; color:inherit; margin-top:0.75rem; }
 .wizard-darkmode-toggle svg { width:16px; height:16px; fill:currentColor; }
-.wizard-location-card { border:1px solid #ddd; border-radius:8px; padding:1rem; }
+.wizard-location-card { display:flex; gap:1.5rem; align-items:flex-start; flex-wrap:wrap; }
+.wizard-map-wrap { width:280px; height:220px; flex-shrink:0; background:#666; border-radius:6px; }
+.wizard-location-text { flex:1; min-width:240px; }
 .wizard-location-btn { margin-top:0.75rem; }
-.wizard-map-wrap { width:100%; height:280px; margin-top:1rem; display:none; }
 .wizard-location-status { margin-top:0.6rem; font-size:0.9rem; }
+#finishBtn[disabled] { opacity:0.5; cursor:not-allowed; }
 </style>
 </head>
 <body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
@@ -179,14 +183,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <section class="wizard-step" data-step="3">
             <h3>Inform every Scratcher, state by state, country by country</h3>
             <div class="wizard-location-card">
-                <p>ScratchNews is growing, so we've set a goal: get a user from every state in the US and from 50 countries around the world. This requires location, though — turn it on once, and be the first from your state or country. Forever.</p>
-                <button type="button" class="btn wizard-location-btn" id="locationBtn">Turn on Location</button>
-                <p class="wizard-location-status" id="locationStatus"></p>
                 <div class="wizard-map-wrap" id="mapWrap"></div>
+                <div class="wizard-location-text">
+                    <p>ScratchNews is growing, so we've set a goal: get a user from every state in the US and from 50 countries around the world. This requires location, though. Turn it on once, and be the first from your state or country. Forever.</p>
+                    <button type="button" class="btn wizard-location-btn" id="locationBtn">Turn on Location</button>
+                    <p class="wizard-location-status" id="locationStatus">Location is required to finish creating your account.</p>
+                </div>
             </div>
             <div class="wizard-nav-row">
                 <button type="button" class="btn secondary" data-prev>Previous</button>
-                <button type="submit" class="btn" id="finishBtn">Finish Account</button>
+                <button type="submit" class="btn" id="finishBtn" disabled>Finish Account</button>
             </div>
         </section>
     </form>
@@ -229,7 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     });
 
     <?php if ($error): ?>
-    showStep(1);
+    showStep(<?= (strpos($error, 'Location is required') !== false) ? 3 : 1 ?>);
     <?php endif; ?>
 
     // Avatar/banner preview
@@ -270,10 +276,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             : '<path d="M20.7 14.9A8.5 8.5 0 019.1 3.3a1 1 0 00-1.2-1.3 10 10 0 1013.9 13.9 1 1 0 00-1.1-1z"/>';
     });
 
-    // Location + map
+    // Location + map. A map is always shown; it updates once we know where you are.
+    var mapInstance = null;
+    function renderMap(isUS, selectedCode) {
+        var wrap = document.getElementById('mapWrap');
+        wrap.innerHTML = '';
+        try {
+            mapInstance = new jsVectorMap({
+                selector: '#mapWrap',
+                map: isUS ? 'us_aea_en' : 'world',
+                zoomButtons: false,
+                selectedRegions: selectedCode ? [selectedCode] : [],
+                regionStyle: {
+                    initial: { fill: '#999' },
+                    selected: { fill: '#e8a33d' }
+                }
+            });
+        } catch (e) {
+            wrap.style.background = '#666';
+        }
+    }
+    renderMap(false, null); // default: blank world map until we know the user's location
+
     document.getElementById('locationBtn').addEventListener('click', function() {
         var statusEl = document.getElementById('locationStatus');
-        if (!navigator.geolocation) { statusEl.textContent = "Your browser doesn't support location."; return; }
+        if (!navigator.geolocation) {
+            statusEl.textContent = "Your browser doesn't support location, so this account can't be finished on this device.";
+            return;
+        }
         statusEl.textContent = 'Requesting location...';
         navigator.geolocation.getCurrentPosition(function(pos) {
             var lat = pos.coords.latitude, lng = pos.coords.longitude;
@@ -292,34 +322,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ? "You're set as being from " + regionName + ", USA."
                         : "You're set as being from " + (regionName ? regionName + ', ' : '') + (data.countryName || countryCode) + '.';
                     renderMap(countryCode === 'US', countryCode === 'US' ? regionCode : countryCode);
+                    document.getElementById('finishBtn').disabled = false;
                 })
                 .catch(function() {
-                    statusEl.textContent = 'Location saved, but we could not determine your region.';
+                    // We still have lat/lng even if the lookup failed, so location is satisfied either way.
+                    statusEl.textContent = 'Location saved. We could not figure out your exact region, but your account can still be finished.';
+                    document.getElementById('finishBtn').disabled = false;
                 });
-        }, function() {
-            statusEl.textContent = 'Location permission denied — no problem, you can still finish creating your account.';
-        });
+        }, function(err) {
+            var msg;
+            if (err.code === err.PERMISSION_DENIED) {
+                msg = 'Location was blocked for this site. Location is required, click the lock/site-info icon in your address bar, allow location, then click Turn on Location again.';
+            } else if (err.code === err.POSITION_UNAVAILABLE) {
+                msg = 'Location services are turned off on your device. Turn them on in your system settings, then click Turn on Location again.';
+            } else if (err.code === err.TIMEOUT) {
+                msg = 'Location request timed out. Click Turn on Location to try again.';
+            } else {
+                msg = 'Could not get your location. Click Turn on Location to try again.';
+            }
+            statusEl.textContent = msg;
+        }, { timeout: 10000, maximumAge: 0, enableHighAccuracy: false });
     });
-
-    function renderMap(isUS, selectedCode) {
-        var wrap = document.getElementById('mapWrap');
-        wrap.style.display = 'block';
-        wrap.innerHTML = '';
-        try {
-            new jsVectorMap({
-                selector: '#mapWrap',
-                map: isUS ? 'us_aea_en' : 'world',
-                zoomButtons: false,
-                selectedRegions: selectedCode ? [selectedCode] : [],
-                regionStyle: {
-                    initial: { fill: '#666' },
-                    selected: { fill: '#e8a33d' }
-                }
-            });
-        } catch (e) {
-            wrap.style.display = 'none';
-        }
-    }
 })();
 </script>
 </body>
