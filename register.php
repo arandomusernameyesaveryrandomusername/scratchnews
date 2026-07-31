@@ -208,11 +208,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     var current = 1;
 
     function showStep(n) {
-        steps.forEach(function(s) { s.classList.toggle('active', parseInt(s.dataset.step, 10) === n); });
-        fill.style.width = (n / 3 * 100) + '%';
-        label.textContent = n + '/3';
-        current = n;
+    steps.forEach(function(s) { s.classList.toggle('active', parseInt(s.dataset.step, 10) === n); });
+    fill.style.width = (n / 3 * 100) + '%';
+    label.textContent = n + '/3';
+    current = n;
+    if (n === 3) {
+        // Trigger map re-render
+        renderMap(false, null);
     }
+}
 
     function validateStep1() {
         var username = document.getElementById('username');
