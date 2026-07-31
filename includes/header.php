@@ -7,7 +7,7 @@
             <a href="/submit.php" class="header-quick-link">Submit Article</a>
             <a href="/explore" class="header-quick-link">Explore</a>
             <a href="/api.php" class="header-quick-link">API</a>
-            <a href="https:/ko-fi.com/scratchnews" class="header-quick-link">Donate</a>
+            <a href="https://ko-fi.com/scratchnews" class="header-quick-link">Donate</a>
         </div>
     </div>
 <form method="get" action="/search" class="search-form">
