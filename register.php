@@ -197,9 +197,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </section>
     </form>
 </main>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsvectormap/1.5.3/js/jsvectormap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsvectormap/1.5.3/maps/world.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsvectormap/1.5.3/maps/us-aea-en.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsvectormap/1.3.3/js/jsvectormap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsvectormap/1.3.3/maps/world.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsvectormap/1.3.3/maps/us-aea-en.js"></script>
 <script>
 (function() {
     var steps = Array.prototype.slice.call(document.querySelectorAll('.wizard-step'));
