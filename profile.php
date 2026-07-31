@@ -22,6 +22,13 @@ $comments = $user ? getCommentsByUser($user['id']) : [];
 $articleCount = $user ? getArticleCountByUser($user['id']) : 0;
 $view = $_GET['view'] ?? 'comments';
 $userArticles = ($user && $view === 'articles') ? getArticlesByUser($user['id']) : [];
+
+$bio = $user['bio'] ?? '';
+$bioTruncated = false;
+if (mb_strlen($bio) > 140) {
+    $bio = mb_substr($bio, 0, 140) . '...';
+    $bioTruncated = true;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -31,6 +38,16 @@ $userArticles = ($user && $view === 'articles') ? getArticlesByUser($user['id'])
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <title><?= $user ? e($user['username']) : 'User Not Found' ?> - <?= e(SITE_NAME) ?></title>
 <link rel="stylesheet" href="/assets/style.css?v=9">
+<style>
+/* Page-scoped stopgap — fold into style.css once shared */
+.profile-banner { width:100%; height:160px; border-radius:10px; background:linear-gradient(135deg,#e8a33d,#d97b1f); background-size:cover; background-position:center; margin-bottom:-40px; }
+.profile-header-row { display:flex; align-items:flex-end; gap:1rem; padding:0 1rem; }
+.profile-avatar { width:88px; height:88px; border-radius:50%; object-fit:cover; border:4px solid var(--bg, #fff); background:#ccc; flex-shrink:0; }
+.profile-avatar-fallback { width:88px; height:88px; border-radius:50%; border:4px solid var(--bg, #fff); background:#d97b1f; color:#fff; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:bold; flex-shrink:0; }
+.profile-follow-btn { padding:0.4rem 1.2rem; border-radius:20px; background:#ccc; color:#666; border:none; font-weight:bold; cursor:not-allowed; }
+.profile-bio { margin:0.5rem 0; }
+.profile-stat-disabled { opacity:0.5; cursor:default; }
+</style>
 </head>
 <body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
 <script>if(document.body.hasAttribute('data-theme-auto')&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.body.classList.add('dark');}</script>
@@ -40,8 +57,26 @@ $userArticles = ($user && $view === 'articles') ? getArticlesByUser($user['id'])
     <h2>User Not Found</h2>
     <p>No account exists under that username.</p>
 <?php else: ?>
-    <h2>@<?= e($user['username']) ?></h2>
-    <p class="meta">Member since <?= date('M j, Y', strtotime($user['created_at'])) ?></p>
+    <?php if (!empty($user['banner_url'])): ?>
+        <div class="profile-banner" style="background-image:url('<?= e($user['banner_url']) ?>');"></div>
+    <?php else: ?>
+        <div class="profile-banner"></div>
+    <?php endif; ?>
+    <div class="profile-header-row">
+        <?php if (!empty($user['avatar_url'])): ?>
+            <img src="<?= e($user['avatar_url']) ?>" alt="" class="profile-avatar">
+        <?php else: ?>
+            <div class="profile-avatar-fallback"><?= e(mb_strtoupper(mb_substr($user['username'], 0, 1))) ?></div>
+        <?php endif; ?>
+        <div>
+            <h2 style="margin-bottom:0;">@<?= e($user['username']) ?></h2>
+            <p class="meta" style="margin-top:0;">Member since <?= date('M j, Y', strtotime($user['created_at'])) ?></p>
+        </div>
+        <button type="button" class="profile-follow-btn" disabled title="Follows coming soon">Follow</button>
+    </div>
+    <?php if ($bio !== ''): ?>
+        <p class="profile-bio"><?= e($bio) ?><?php if ($bioTruncated): ?> <a href="#" class="stat-link">Read more</a><?php endif; ?></p>
+    <?php endif; ?>
     <?php if (!empty($_SESSION['reader_id']) && $_SESSION['reader_id'] == $user['id']): ?>
     <div style="display:flex; gap:0.5rem; align-items:center; margin:0.5rem 0;">
         <a href="/delete-account" class="btn secondary" style="padding:0.3rem 0.7rem; font-size:0.8rem;">Delete my account</a>
@@ -57,6 +92,7 @@ $userArticles = ($user && $view === 'articles') ? getArticlesByUser($user['id'])
     <div class="profile-stats-row">
         <h3><a href="/@<?= urlencode($user['username']) ?>?view=articles" class="stat-link"><?= (int)$articleCount ?> Articles</a></h3>
         <h3><a href="/@<?= urlencode($user['username']) ?>" class="stat-link">Comments (<?= count($comments) ?>)</a></h3>
+        <h3 class="profile-stat-disabled" title="Coming soon">Profile Comments (0)</h3>
     </div>
     <?php if ($view === 'articles'): ?>
         <?php if (empty($userArticles)): ?>

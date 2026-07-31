@@ -3,7 +3,7 @@ require_once __DIR__ . '/../functions.php';
 startSession();
 header('Content-Type: application/json');
 
-if (empty($_SESSION['user_id'])) {
+if (empty($_SESSION['reader_id'])) {
     http_response_code(401);
     echo json_encode(['error' => 'Not logged in.']);
     exit;
