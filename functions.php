@@ -223,6 +223,72 @@ function getUserByUsername(string $username): ?array {
     return $user ?: null;
 }
 
+// ---- Google Sign-In ----
+// TODO: paste your real Client ID from console.cloud.google.com (OAuth consent screen -> Credentials)
+define('GOOGLE_CLIENT_ID', 'PASTE_YOUR_CLIENT_ID_HERE.apps.googleusercontent.com');
+
+function verifyGoogleIdToken(string $idToken): ?array {
+    $ch = curl_init('https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($idToken));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    if ($httpCode !== 200 || !$response) return null;
+    $payload = json_decode($response, true);
+    if (!$payload || ($payload['aud'] ?? '') !== GOOGLE_CLIENT_ID) return null;
+    if (($payload['email_verified'] ?? '') !== 'true') return null;
+    return $payload;
+}
+
+function findOrCreateGoogleUser(string $googleId, string $email, string $name): ?array {
+    $db = getDB();
+
+    $stmt = $db->prepare("SELECT * FROM users WHERE google_id = ?");
+    $stmt->bind_param('s', $googleId);
+    $stmt->execute();
+    $user = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if ($user) return $user;
+
+    if ($email !== '') {
+        $stmt = $db->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt->bind_param('s', $email);
+        $stmt->execute();
+        $user = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if ($user) {
+            $stmt = $db->prepare("UPDATE users SET google_id = ? WHERE id = ?");
+            $stmt->bind_param('si', $googleId, $user['id']);
+            $stmt->execute();
+            $stmt->close();
+            $user['google_id'] = $googleId;
+            return $user;
+        }
+    }
+
+    $base = $name !== '' ? preg_replace('/[^A-Za-z0-9_]/', '', $name) : 'user';
+    if ($base === '') $base = 'user';
+    $base = mb_substr($base, 0, 15);
+    $username = $base;
+    $suffix = 0;
+    while (getUserByUsername($username)) {
+        $suffix++;
+        $username = mb_substr($base, 0, 15 - strlen((string)$suffix)) . $suffix;
+    }
+
+    $fallbackEmail = $username . '+google@scratchnews.local';
+    $newId = createUser($username, $email !== '' ? $email : $fallbackEmail, bin2hex(random_bytes(16)));
+    if (!is_int($newId)) return null;
+
+    $stmt = $db->prepare("UPDATE users SET google_id = ?, email_verified = 1 WHERE id = ?");
+    $stmt->bind_param('si', $googleId, $newId);
+    $stmt->execute();
+    $stmt->close();
+
+    return getUserById($newId);
+}
+
 // ---- Remember Me ----
 function setRememberToken(int $userId): string {
     $db = getDB();

@@ -15,6 +15,7 @@ define('BREVO_SENDER_EMAIL', 'david.todb@gmail.com');
 define('GITHUB_TOKEN', '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');
 define('GITHUB_REPO', 'xTODB/scratchnews-data');
 define('GITHUB_BRANCH', 'main');
+define('GOOGLE_CLIENT_ID', '926088564769-se27dq865srapskopjuknjbqrf7qbm72.apps.googleusercontent.com');
 
 function getDB(): mysqli {
     static $conn = null;

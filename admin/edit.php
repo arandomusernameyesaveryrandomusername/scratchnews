@@ -113,7 +113,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </select>
     <button class="ql-link" title="Insert link">🔗</button>
     <button class="ql-image" title="Insert image">🖼️</button>
-    <span style="float:right;"><button type="button" id="toggleToolbarPos" title="Move formatting bar to bottom">⇕</button></span>
+    <span style="float:right;">
+        <button type="button" id="copyContentBtn" title="Copy full article content to clipboard">Copy Content</button>
+        <button type="button" id="toggleToolbarPos" title="Move formatting bar to bottom">⇕</button>
+    </span>
 </div>
 <div id="editor-container"><?= $article['content'] ?></div>
 </div>
@@ -150,6 +153,16 @@ quill.getModule('toolbar').addHandler('image', function() {
             });
     };
     input.click();
+});
+document.getElementById('copyContentBtn').addEventListener('click', function() {
+    var btn = this;
+    navigator.clipboard.writeText(quill.root.innerHTML).then(function() {
+        var original = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = original; }, 1200);
+    }).catch(function() {
+        alert('Could not copy. Select the editor text manually instead.');
+    });
 });
 document.getElementById('toggleToolbarPos').addEventListener('click', function() {
     var wrap = document.getElementById('editorWrap');
