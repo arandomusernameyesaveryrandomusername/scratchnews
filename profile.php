@@ -50,7 +50,7 @@ $bioHasMore = $bioRaw !== '' && strpos($bioRaw, "\n") !== false;
 .profile-header-row { display:flex; align-items:flex-start; gap:1rem; }
 .profile-avatar { width:88px; height:88px; border-radius:50%; object-fit:cover; background:#ccc; flex-shrink:0; }
 .profile-avatar-fallback { width:88px; height:88px; border-radius:50%; background:#d97b1f; color:#fff; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:bold; flex-shrink:0; }
-.profile-follow-form { margin:0.4rem 0 0; }
+.profile-follow-form { margin:0; }
 .profile-follow-btn { padding:0.35rem 1.1rem; border-radius:20px; border:none; font-weight:bold; cursor:pointer; margin:0; }
 .profile-follow-btn.not-following { background:#1da1f2; color:#fff; }
 .profile-follow-btn.following { background:#e2e2e2; color:#333; }

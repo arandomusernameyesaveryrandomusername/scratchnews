@@ -34,6 +34,8 @@ if (isUserBanned($user['id'])) {
     exit;
 }
 
+updateUserIp($user['id'], $_SERVER['REMOTE_ADDR'] ?? '');
+
 $_SESSION['reader_id'] = $user['id'];
 $_SESSION['reader_username'] = $user['username'];
 $_SESSION['is_admin'] = !empty($user['is_admin']);

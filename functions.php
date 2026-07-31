@@ -223,9 +223,17 @@ function getUserByUsername(string $username): ?array {
     return $user ?: null;
 }
 
+function updateUserIp(int $userId, string $ip): void {
+    $db = getDB();
+    $stmt = $db->prepare("UPDATE users SET ip_address = ? WHERE id = ?");
+    $stmt->bind_param('si', $ip, $userId);
+    $stmt->execute();
+    $stmt->close();
+}
+
 // ---- Google Sign-In ----
 // TODO: paste your real Client ID from console.cloud.google.com (OAuth consent screen -> Credentials)
-define('GOOGLE_CLIENT_ID', '926088564769-se27dq865srapskopjuknjbqrf7qbm72.apps.googleusercontent.com');
+define('GOOGLE_CLIENT_ID', 'PASTE_YOUR_CLIENT_ID_HERE.apps.googleusercontent.com');
 
 function verifyGoogleIdToken(string $idToken): ?array {
     $ch = curl_init('https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($idToken));

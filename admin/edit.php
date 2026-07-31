@@ -57,6 +57,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <title>Edit Article - <?= e(SITE_NAME) ?></title>
 <link rel="stylesheet" href="/assets/style.css?v=2">
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+<style>
+.editor-toprow { display:flex; justify-content:flex-end; margin-bottom:0.35rem; }
+.editor-copy-btn { background:transparent; border:1px solid currentColor; color:inherit; opacity:0.75; padding:0.2rem 0.7rem; border-radius:4px; font-size:0.85rem; white-space:nowrap; cursor:pointer; }
+.editor-copy-btn:hover { opacity:1; }
+</style>
 </head>
 <body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
 <?php require_once __DIR__ . '/nav.php'; ?>
@@ -92,6 +97,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <input type="file" id="cover_image" name="cover_image" accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml">
 
         <label for="content">Full Article Content</label>
+<div class="editor-toprow">
+    <button type="button" id="copyContentBtn" class="editor-copy-btn" title="Copy full article content to clipboard">Copy Content</button>
+</div>
 <div id="editorWrap">
 <div id="toolbar">
     <button class="ql-bold" title="Bold (Ctrl+B)"><b>B</b></button>
@@ -113,10 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </select>
     <button class="ql-link" title="Insert link">🔗</button>
     <button class="ql-image" title="Insert image">🖼️</button>
-    <span style="float:right;">
-        <button type="button" id="copyContentBtn" title="Copy full article content to clipboard">Copy Content</button>
-        <button type="button" id="toggleToolbarPos" title="Move formatting bar to bottom">⇕</button>
-    </span>
+    <span style="float:right;"><button type="button" id="toggleToolbarPos" title="Move formatting bar to bottom">⇕</button></span>
 </div>
 <div id="editor-container"><?= $article['content'] ?></div>
 </div>

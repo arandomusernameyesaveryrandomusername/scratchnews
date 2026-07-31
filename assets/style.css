@@ -476,6 +476,10 @@ header a:visited { color: #fff; }
     text-decoration: none;
 }
 .user-nav-menu a:hover { background: #f0f0f0; }
+body.dark .admin-nav-menu { background: #1e2125; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+body.dark .admin-nav-menu a { color: #e8e8e8; }
+body.dark .admin-nav-menu a:hover { background: #26292e; }
+body.dark .admin-nav-menu a:visited { color: #e8e8e8; }
 body.dark .user-nav-menu { background: #1e2125; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
 body.dark .user-nav-menu a { color: #e8e8e8; }
 body.dark .user-nav-menu a:hover { background: #26292e; }

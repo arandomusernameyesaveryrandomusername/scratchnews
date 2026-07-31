@@ -42,11 +42,12 @@ $users = array_values(array_filter($users, fn($u) => strpos($u['username'], 'del
     <?php if ($message): ?><div class="alert success"><?= e($message) ?></div><?php endif; ?>
     <div style="display:flex; justify-content:center; overflow-x:auto;">
     <table style="width:auto;">
-        <tr><th>Username</th><th>Email</th><th>Admin</th><th>Verified</th><th>Joined</th><th>Status</th><th>Actions</th></tr>
+        <tr><th>Username</th><th>Email</th><th>IP</th><th>Admin</th><th>Verified</th><th>Joined</th><th>Status</th><th>Actions</th></tr>
         <?php foreach ($users as $u): ?>
             <tr>
                 <td><a href="/@<?= e($u['username']) ?>">@<?= e($u['username']) ?></a></td>
                 <td><?= e($u['email']) ?></td>
+                <td><?= e($u['ip_address'] ?? '—') ?></td>
                 <td><?= $u['is_admin'] ? 'Yes' : '—' ?></td>
                 <td><?= $u['email_verified'] ? 'Yes' : 'No' ?></td>
                 <td><?= utcTimeTag($u['created_at']) ?></td>

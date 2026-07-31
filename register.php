@@ -57,6 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             setDarkModePreference($result, $darkMode);
+            updateUserIp($result, $ip);
 
             $_SESSION['reader_id'] = $result;
             $_SESSION['reader_username'] = $username;
