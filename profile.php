@@ -48,18 +48,23 @@ if (mb_strlen($bio) > 140) {
 <link rel="stylesheet" href="/assets/style.css?v=9">
 <style>
 /* Page-scoped stopgap — fold into style.css once shared */
-.profile-banner-bleed { position:relative; left:50%; right:50%; margin-left:-50vw; margin-right:-50vw; width:100vw; }
-.profile-banner { width:100%; height:200px; background:linear-gradient(135deg,#e8a33d,#d97b1f); background-size:cover; background-position:center; }
-.profile-header-row { display:flex; align-items:flex-start; gap:1rem; padding:0 1rem; margin-top:-40px; }
-.profile-avatar { width:88px; height:88px; border-radius:50%; object-fit:cover; border:4px solid var(--bg, #fff); background:#ccc; flex-shrink:0; }
-.profile-avatar-fallback { width:88px; height:88px; border-radius:50%; border:4px solid var(--bg, #fff); background:#d97b1f; color:#fff; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:bold; flex-shrink:0; }
-.profile-name-col { padding-top:44px; }
+.profile-banner { width:100%; height:200px; border-radius:10px; background:linear-gradient(135deg,#e8a33d,#d97b1f); background-size:cover; background-position:center; margin:0.75rem 0; }
+.profile-header-row { display:flex; align-items:flex-start; gap:1rem; }
+.profile-avatar { width:88px; height:88px; border-radius:50%; object-fit:cover; background:#ccc; flex-shrink:0; }
+.profile-avatar-fallback { width:88px; height:88px; border-radius:50%; background:#d97b1f; color:#fff; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:bold; flex-shrink:0; }
 .profile-follow-btn { padding:0.35rem 1.1rem; border-radius:20px; border:none; font-weight:bold; cursor:pointer; margin-top:0.4rem; }
 .profile-follow-btn.not-following { background:#1da1f2; color:#fff; }
 .profile-follow-btn.following { background:#e2e2e2; color:#333; }
 .profile-bio { margin:0.5rem 0; }
 .profile-stat-link { background:none; border:none; padding:0; font:inherit; cursor:pointer; }
-.customize-panel { border:1px solid #ddd; border-radius:8px; padding:0.75rem 1rem; margin:0.75rem 0; max-width:420px; }
+.profile-controls-row { display:flex; justify-content:space-between; align-items:center; margin:0.5rem 0; }
+.profile-icon-controls { display:flex; gap:0.5rem; align-items:center; }
+.profile-icon-btn { width:40px; height:40px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; border:1px solid #666; background:transparent; cursor:pointer; padding:0; color:inherit; }
+.profile-icon-btn svg { width:20px; height:20px; fill:currentColor; }
+details.customize-details { display:inline-block; }
+details.customize-details summary { list-style:none; }
+details.customize-details summary::-webkit-details-marker { display:none; }
+.customize-panel { border:1px solid #ddd; border-radius:8px; padding:0.75rem 1rem; margin:0.5rem 0; max-width:420px; }
 .customize-panel label { display:block; margin-top:0.6rem; font-size:0.85rem; }
 .customize-panel textarea { width:100%; box-sizing:border-box; }
 .profile-comment-box { display:flex; gap:0.5rem; margin:0.75rem 0; }
@@ -74,20 +79,13 @@ if (mb_strlen($bio) > 140) {
     <h2>User Not Found</h2>
     <p>No account exists under that username.</p>
 <?php else: ?>
-    <div class="profile-banner-bleed">
-        <?php if (!empty($user['banner_url'])): ?>
-            <div class="profile-banner" style="background-image:url('<?= e($user['banner_url']) ?>');"></div>
-        <?php else: ?>
-            <div class="profile-banner"></div>
-        <?php endif; ?>
-    </div>
     <div class="profile-header-row">
         <?php if (!empty($user['avatar_url'])): ?>
             <img src="<?= e($user['avatar_url']) ?>" alt="" class="profile-avatar">
         <?php else: ?>
             <div class="profile-avatar-fallback"><?= e(mb_strtoupper(mb_substr($user['username'], 0, 1))) ?></div>
         <?php endif; ?>
-        <div class="profile-name-col">
+        <div>
             <h2 style="margin-bottom:0;">@<?= e($user['username']) ?></h2>
             <p class="meta" style="margin:0.2rem 0;">
                 Member since <?= date('M j, Y', strtotime($user['created_at'])) ?>
@@ -109,33 +107,50 @@ if (mb_strlen($bio) > 140) {
     <?php if ($bio !== ''): ?>
         <p class="profile-bio"><?= e($bio) ?><?php if ($bioTruncated): ?> <a href="#" class="stat-link">Read more</a><?php endif; ?></p>
     <?php endif; ?>
+    <?php if (!empty($user['banner_url'])): ?>
+        <div class="profile-banner" style="background-image:url('<?= e($user['banner_url']) ?>');"></div>
+    <?php elseif ($isOwnProfile): ?>
+        <div class="profile-banner"></div>
+    <?php endif; ?>
     <?php if ($isOwnProfile): ?>
-    <div style="display:flex; gap:0.5rem; align-items:center; margin:0.5rem 0; flex-wrap:wrap;">
+    <div class="profile-controls-row">
         <a href="/delete-account" class="btn secondary" style="padding:0.3rem 0.7rem; font-size:0.8rem;">Delete my account</a>
-        <form method="post" class="profile-actions-form">
-            <?= csrfField() ?>
-            <input type="hidden" name="dark_mode" value="<?= !empty($_SESSION['dark_mode']) ? '0' : '1' ?>">
-            <button type="submit" class="btn secondary" style="padding:0.3rem 0.7rem; font-size:0.8rem;">
-                <?= !empty($_SESSION['dark_mode']) ? 'Switch to light mode' : 'Switch to dark mode' ?>
-            </button>
-        </form>
+        <div class="profile-icon-controls">
+            <form method="post" class="profile-actions-form">
+                <?= csrfField() ?>
+                <input type="hidden" name="dark_mode" value="<?= !empty($_SESSION['dark_mode']) ? '0' : '1' ?>">
+                <button type="submit" class="profile-icon-btn" title="<?= !empty($_SESSION['dark_mode']) ? 'Switch to light mode' : 'Switch to dark mode' ?>" aria-label="Toggle dark mode">
+                    <?php if (!empty($_SESSION['dark_mode'])): ?>
+                        <!-- currently dark -> show sun (click to go light) -->
+                        <svg viewBox="0 0 24 24"><path d="M12 7a5 5 0 100 10 5 5 0 000-10zm0-5a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm0 17a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm9-7a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5 12a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zm12.66-6.66a1 1 0 010 1.42l-.71.7a1 1 0 11-1.41-1.41l.7-.71a1 1 0 011.42 0zM6.46 17.54a1 1 0 010 1.42l-.7.7a1 1 0 11-1.42-1.41l.71-.71a1 1 0 011.41 0zm11.2 0a1 1 0 011.41 0l.71.71a1 1 0 11-1.42 1.41l-.7-.7a1 1 0 010-1.42zM6.46 6.46a1 1 0 01-1.41 0l-.71-.7a1 1 0 111.42-1.42l.7.71a1 1 0 010 1.41z"/></svg>
+                    <?php else: ?>
+                        <!-- currently light -> show moon (click to go dark) -->
+                        <svg viewBox="0 0 24 24"><path d="M20.7 14.9A8.5 8.5 0 019.1 3.3a1 1 0 00-1.2-1.3 10 10 0 1013.9 13.9 1 1 0 00-1.1-1z"/></svg>
+                    <?php endif; ?>
+                </button>
+            </form>
+            <details class="customize-details">
+                <summary class="profile-icon-btn" title="Customize profile" aria-label="Customize profile">
+                    <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.3-.5-.8-.5-1.2 0-1.1.9-2 2-2h2.3A5.2 5.2 0 0022 10.5C22 5.8 17.5 2 12 2zM6.5 12a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3-4a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3 4a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/></svg>
+                </summary>
+                <div class="customize-panel">
+                    <form method="post" action="/update-profile.php" enctype="multipart/form-data">
+                        <?= csrfField() ?>
+                        <label>Profile picture
+                            <input type="file" name="avatar" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml">
+                        </label>
+                        <label>Banner
+                            <input type="file" name="banner" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml">
+                        </label>
+                        <label>Bio
+                            <textarea name="bio" rows="3" maxlength="500"><?= e($user['bio'] ?? '') ?></textarea>
+                        </label>
+                        <button type="submit" class="btn" style="margin-top:0.6rem;">Save changes</button>
+                    </form>
+                </div>
+            </details>
+        </div>
     </div>
-    <details class="customize-panel">
-        <summary style="cursor:pointer; font-weight:bold;">Customize profile</summary>
-        <form method="post" action="/update-profile.php" enctype="multipart/form-data">
-            <?= csrfField() ?>
-            <label>Profile picture
-                <input type="file" name="avatar" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml">
-            </label>
-            <label>Banner
-                <input type="file" name="banner" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml">
-            </label>
-            <label>Bio
-                <textarea name="bio" rows="3" maxlength="500"><?= e($user['bio'] ?? '') ?></textarea>
-            </label>
-            <button type="submit" class="btn" style="margin-top:0.6rem;">Save changes</button>
-        </form>
-    </details>
     <?php endif; ?>
     <div class="profile-stats-row">
         <h3><a href="/@<?= urlencode($user['username']) ?>?view=articles" class="stat-link"><?= (int)$articleCount ?> Articles</a></h3>
