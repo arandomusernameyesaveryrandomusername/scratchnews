@@ -31,12 +31,9 @@ $viewerFollowing = ($user && !$isOwnProfile && !empty($_SESSION['reader_id']))
     ? isFollowing((int)$_SESSION['reader_id'], $user['id'])
     : false;
 
-$bio = $user['bio'] ?? '';
-$bioTruncated = false;
-if (mb_strlen($bio) > 140) {
-    $bio = mb_substr($bio, 0, 140) . '...';
-    $bioTruncated = true;
-}
+$bioRaw = $user['bio'] ?? '';
+$bioFirstLine = $bioRaw !== '' ? explode("\n", $bioRaw, 2)[0] : '';
+$bioHasMore = $bioRaw !== '' && strpos($bioRaw, "\n") !== false;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -110,8 +107,14 @@ details.customize-details summary::-webkit-details-marker { display:none; }
             <?php endif; ?>
         </div>
     </div>
-    <?php if ($bio !== ''): ?>
-        <p class="profile-bio"><?= e($bio) ?><?php if ($bioTruncated): ?> <a href="#" class="stat-link">Read more</a><?php endif; ?></p>
+    <?php if ($bioRaw !== ''): ?>
+        <p class="profile-bio">
+            <span class="bio-short"><?= nl2br(e($bioFirstLine)) ?></span>
+            <?php if ($bioHasMore): ?>
+                <span class="bio-full" hidden><?= nl2br(e($bioRaw)) ?></span>
+                <button type="button" class="stat-link bio-toggle">Read more</button>
+            <?php endif; ?>
+        </p>
     <?php endif; ?>
     <?php if ($isOwnProfile): ?>
     <div class="profile-controls-row">
@@ -234,6 +237,17 @@ document.querySelectorAll('time.local-date, time.local-datetime').forEach(functi
     } else {
         el.textContent = d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
     }
+});
+document.querySelectorAll('.bio-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var p = btn.closest('.profile-bio');
+        var short = p.querySelector('.bio-short');
+        var full = p.querySelector('.bio-full');
+        var isExpanded = !full.hidden;
+        full.hidden = isExpanded;
+        short.hidden = !isExpanded;
+        btn.textContent = isExpanded ? 'Read more' : 'Show less';
+    });
 });
 </script>
 </body>
