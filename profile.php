@@ -57,7 +57,7 @@ $bioHasMore = $bioRaw !== '' && strpos($bioRaw, "\n") !== false;
 .bio-readmore-btn { background:none; border:none; color:#1da1f2; font:inherit; cursor:pointer; padding:0; margin-left:0.3rem; text-decoration:underline; }
 .bio-modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; z-index:1000; }
 .bio-modal-backdrop[hidden] { display:none; }
-.bio-modal-card { background:#fff; color:#111; border-radius:10px; padding:1.5rem; max-width:420px; width:90%; position:relative; box-shadow:0 10px 30px rgba(0,0,0,0.3); }
+.bio-modal-card { background:#fff; color:#111; border-radius:10px; padding:1.5rem; max-width:600px; width:92%; max-height:80vh; overflow-y:auto; position:relative; box-shadow:0 10px 30px rgba(0,0,0,0.3); }
 .bio-modal-close { position:absolute; top:0.6rem; right:0.9rem; background:none; border:none; font-size:1.4rem; line-height:1; cursor:pointer; color:#333; }
 .profile-stat-link { background:none; border:none; padding:0; font:inherit; cursor:pointer; }
 .profile-controls-row { display:flex; justify-content:space-between; align-items:center; margin:0.5rem 0; }
@@ -113,18 +113,13 @@ details.customize-details summary::-webkit-details-marker { display:none; }
         </div>
     </div>
     <?php if ($bioRaw !== ''): ?>
-        <p class="profile-bio">
-            <?= nl2br(e($bioFirstLine)) ?>
-            <?php if ($bioHasMore): ?>
-                <button type="button" class="bio-readmore-btn" data-modal-target="bio-modal-<?= (int)$user['id'] ?>">Read more</button>
-            <?php endif; ?>
-        </p>
+        <p class="profile-bio"><?= nl2br(e($bioFirstLine)) ?><?php if ($bioHasMore): ?> <button type="button" class="bio-readmore-btn" data-modal-target="bio-modal-<?= (int)$user['id'] ?>">Read more</button><?php endif; ?></p>
         <?php if ($bioHasMore): ?>
         <div class="bio-modal-backdrop" id="bio-modal-<?= (int)$user['id'] ?>" hidden>
             <div class="bio-modal-card">
                 <button type="button" class="bio-modal-close" aria-label="Close">&times;</button>
                 <h3 style="margin-top:0;">@<?= e($user['username']) ?></h3>
-                <p style="white-space:pre-line; margin-bottom:0;"><?= nl2br(e($bioRaw)) ?></p>
+                <p style="margin-bottom:0;"><?= nl2br(e($bioRaw)) ?></p>
             </div>
         </div>
         <?php endif; ?>
