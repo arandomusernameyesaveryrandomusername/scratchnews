@@ -35,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $activeTab = $_GET['tab'] ?? 'general';
 if (!in_array($activeTab, ['general', 'appearance', 'security'], true)) $activeTab = 'general';
+define('HIDE_SUBSCRIBE_WIDGET', true);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -54,8 +55,10 @@ if (!in_array($activeTab, ['general', 'appearance', 'security'], true)) $activeT
 .settings-row:last-child { border-bottom: none; }
 .settings-label { font-weight: 600; }
 .settings-sub { font-size: 0.85rem; opacity: 0.75; margin-top: 0.2rem; }
-.verified-badge { color: #2a8a4a; font-weight: 600; }
+.verified-badge { color: #2a8a4a; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem; }
 .unverified-badge { color: #a33; font-weight: 600; }
+.settings-row .btn { margin-top: 0; width: auto; height: auto; padding: 0.55rem 1.2rem; background: #ff8c1a; }
+.lock-icon { width: 16px; height: 16px; flex-shrink: 0; }
 </style>
 </head>
 <body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
@@ -81,6 +84,9 @@ if (!in_array($activeTab, ['general', 'appearance', 'security'], true)) $activeT
                     <a href="/@<?= e($user['username']) ?>" class="btn secondary">View Profile</a>
                 </div>
                 <p class="settings-sub" style="margin-top:1rem;">More general settings are coming soon.</p>
+                <div style="margin-top:1.5rem;">
+                    <?php require __DIR__ . '/includes/subscribe-widget.php'; ?>
+                </div>
 
             <?php elseif ($activeTab === 'appearance'): ?>
                 <form method="post" class="settings-row" style="border:none;">
@@ -90,7 +96,7 @@ if (!in_array($activeTab, ['general', 'appearance', 'security'], true)) $activeT
                         <div class="settings-label">Dark Mode</div>
                         <div class="settings-sub">Switch between light and dark theme.</div>
                     </div>
-                    <button type="submit" name="dark_mode" value="<?= !empty($user['dark_mode']) ? '0' : '1' ?>" class="btn secondary">
+                    <button type="submit" name="dark_mode" value="<?= !empty($user['dark_mode']) ? '0' : '1' ?>" class="btn">
                         <?= !empty($user['dark_mode']) ? 'Turn Off' : 'Turn On' ?>
                     </button>
                 </form>
@@ -109,7 +115,13 @@ if (!in_array($activeTab, ['general', 'appearance', 'security'], true)) $activeT
                         <div class="settings-sub"><?= e($user['email']) ?></div>
                     </div>
                     <?php if (!empty($user['email_verified'])): ?>
-                        <span class="verified-badge">&#128274; Verified</span>
+                        <span class="verified-badge">
+                            <svg class="lock-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor"/>
+                                <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="currentColor" stroke-width="2" fill="none"/>
+                            </svg>
+                            Verified
+                        </span>
                     <?php else: ?>
                         <form method="post">
                             <?= csrfField() ?>

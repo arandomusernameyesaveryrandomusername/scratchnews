@@ -29,10 +29,10 @@
             </button>
             <div id="userMenu" class="user-nav-menu">
                 <a href="/@<?= e($_SESSION['reader_username']) ?>">Profile</a>
-                <a href="/settings.php">Settings</a>
                 <?php if (!empty($_SESSION['is_admin'])): ?>
                 <a href="/admin/">Admin</a>
                 <?php endif; ?>
+                <a href="/settings.php">Settings</a>
                 <a href="/logout">Log Out</a>
             </div>
         </div>
