@@ -1,11 +1,17 @@
 * { box-sizing: border-box; }
+html, body { height: 100%; }
 body {
     margin: 0;
     font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
     background: #f4f6f8;
     color: #1c1c1c;
     line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
+main { flex: 1 0 auto; }
+.site-footer { flex-shrink: 0; }
 body.no-scroll { overflow: hidden; }
 header {
     background: #d99d4a; /* Scratch orange */
@@ -715,15 +721,18 @@ body.dark .explore-filter-form label { color: #f0f0f0; }
     .subscribe-input-row { flex-direction: column; }
 }
 
-.site-footer { background: #1a1a1a; }
+.site-footer { background: #eceff1; }
 body.dark .site-footer { background: #111; }
 .footer-top { display: flex; flex-direction: column; gap: 1.2rem; padding: 1.5rem; text-align: left; }
 .footer-columns { display: flex; gap: 3rem; flex-wrap: wrap; }
 .footer-logo-svg { height: 32px; }
-.footer-col h4 { margin: 0 0 0.5rem; font-size: 0.95rem; color: var(--brand-bright); }
-.footer-col a { display: block; color: #ccc; text-decoration: none; font-size: 0.9rem; margin-bottom: 0.3rem; }
+.footer-col h4 { margin: 0 0 0.5rem; font-size: 0.95rem; color: var(--brand); }
+body.dark .footer-col h4 { color: var(--brand-bright); }
+.footer-col a { display: block; color: #444; text-decoration: none; font-size: 0.9rem; margin-bottom: 0.3rem; }
+body.dark .footer-col a { color: #ccc; }
 .footer-col a:hover { text-decoration: underline; }
-.footer-copyright { padding: 0.8rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); color: #888; font-size: 0.8rem; text-align: left; }
+.footer-copyright { padding: 0.8rem 1.5rem; border-top: 1px solid rgba(0,0,0,0.1); color: #666; font-size: 0.8rem; text-align: left; }
+body.dark .footer-copyright { border-top: 1px solid rgba(255,255,255,0.1); color: #888; }
 
 .search-form button { display: flex; align-items: center; justify-content: center; }
 .api-code-block {
