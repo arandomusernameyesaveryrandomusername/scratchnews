@@ -295,8 +295,6 @@ body.dark .alert.success { background: #1f4a26; color: #7fdb8f; }
 .icon-svg { width: 24px; height: 24px; object-fit: contain; }
 .icon-svg-sm { width: 15px; height: 15px; vertical-align: -2px; margin-right: 3px; }
 .icon-count { min-width: 1ch; }
-.save-btn .icon-svg { filter: grayscale(1) opacity(0.55); }
-.save-btn.active .icon-svg { filter: none; }
 .share-wrap { position: relative; }
 .share-menu {
     display: none; position: absolute; top: 100%; left: 0; margin-top: 0.4rem;

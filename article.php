@@ -13,7 +13,11 @@ if ($article && ($article['status'] ?? 'published') === 'draft' && empty($_SESSI
 }
 
 if ($article) {
-    incrementArticleView($article['id']);
+    $viewCookie = 'viewed_' . $article['id'];
+    if (empty($_COOKIE[$viewCookie])) {
+        incrementArticleView($article['id']);
+        setcookie($viewCookie, '1', ['path' => '/', 'samesite' => 'Lax']);
+    }
 }
 
 $isBanned = !empty($_SESSION['reader_id']) && isUserBanned($_SESSION['reader_id']);
@@ -148,7 +152,7 @@ if (!$article) {
                     <?= csrfField() ?>
                     <input type="hidden" name="action" value="toggle_save">
                     <button class="icon-btn save-btn <?= $isSaved ? 'active' : '' ?>" type="submit" <?= empty($_SESSION['reader_id']) ? 'disabled' : '' ?> title="<?= $isSaved ? 'Remove from Saved' : 'Save for later' ?>">
-                        <img src="/assets/icons/save.svg" alt="Save" class="icon-svg">
+                        <img src="/assets/icons/<?= $isSaved ? 'save' : 'unsave' ?>.svg" alt="Save" class="icon-svg">
                     </button>
                 </form>
                 <a href="#comments" class="icon-btn" title="Jump to comments" style="text-decoration:none;">
