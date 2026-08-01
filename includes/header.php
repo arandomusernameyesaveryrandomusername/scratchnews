@@ -14,11 +14,22 @@
     <input type="text" name="q" placeholder="Search articles...">
 </form>
 <nav>
-    <?php if (!empty($_SESSION['reader_username'])): ?>
+    <?php if (!empty($_SESSION['reader_username'])):
+        $navUser = getUserById($_SESSION['reader_id']);
+        $navAvatar = $navUser['avatar_url'] ?? null;
+    ?>
         <div class="user-nav">
-            <button class="user-nav-toggle" onclick="document.getElementById('userMenu').classList.toggle('open')"><?= e($_SESSION['reader_username']) ?> &#9662;</button>
+            <button class="user-nav-toggle" onclick="document.getElementById('userMenu').classList.toggle('open')">
+                <?php if ($navAvatar): ?>
+                    <img src="<?= e($navAvatar) ?>" alt="" class="user-nav-avatar">
+                <?php else: ?>
+                    <span class="user-nav-avatar user-nav-avatar-placeholder"><?= e(mb_strtoupper(mb_substr($_SESSION['reader_username'], 0, 1))) ?></span>
+                <?php endif; ?>
+                <?= e($_SESSION['reader_username']) ?> &#9662;
+            </button>
             <div id="userMenu" class="user-nav-menu">
                 <a href="/@<?= e($_SESSION['reader_username']) ?>">Profile</a>
+                <a href="/settings.php">Settings</a>
                 <?php if (!empty($_SESSION['is_admin'])): ?>
                 <a href="/admin/">Admin</a>
                 <?php endif; ?>

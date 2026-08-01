@@ -1,0 +1,134 @@
+<?php
+require_once __DIR__ . '/functions.php';
+sendNoCacheHeaders();
+startSession();
+
+if (empty($_SESSION['reader_id'])) {
+    header('Location: /login');
+    exit;
+}
+
+$user = getUserById($_SESSION['reader_id']);
+if (!$user) {
+    header('Location: /login');
+    exit;
+}
+
+$message = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrf();
+    $action = $_POST['action'] ?? '';
+
+    if ($action === 'toggle_dark_mode') {
+        $enabled = !empty($_POST['dark_mode']);
+        setDarkModePreference($user['id'], $enabled);
+        $_SESSION['dark_mode'] = $enabled ? 1 : 0;
+        $user['dark_mode'] = $enabled ? 1 : 0;
+        $message = 'Theme preference saved.';
+    } elseif ($action === 'resend_verification' && empty($user['email_verified'])) {
+        $token = issueVerificationToken($user['id']);
+        sendVerificationEmail($user['email'], $user['username'], $token);
+        $message = 'Verification email sent. Check your inbox.';
+    }
+}
+
+$activeTab = $_GET['tab'] ?? 'general';
+if (!in_array($activeTab, ['general', 'appearance', 'security'], true)) $activeTab = 'general';
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<title>Settings - <?= e(SITE_NAME) ?></title>
+<link rel="stylesheet" href="/assets/style.css?v=10">
+<style>
+.settings-layout { display: flex; gap: 2rem; align-items: flex-start; flex-wrap: wrap; }
+.settings-tabs { display: flex; flex-direction: column; gap: 0.5rem; min-width: 180px; }
+.settings-tab { display: block; padding: 0.7rem 1rem; border-radius: 6px; text-decoration: none; color: inherit; border: 1px solid rgba(128,128,128,0.3); font-weight: 600; }
+.settings-tab.active { background: #e8a33d; color: #2a2a2a; border-color: #e8a33d; }
+.settings-panel { flex: 1; min-width: 280px; }
+.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 0; border-bottom: 1px solid rgba(128,128,128,0.2); }
+.settings-row:last-child { border-bottom: none; }
+.settings-label { font-weight: 600; }
+.settings-sub { font-size: 0.85rem; opacity: 0.75; margin-top: 0.2rem; }
+.verified-badge { color: #2a8a4a; font-weight: 600; }
+.unverified-badge { color: #a33; font-weight: 600; }
+</style>
+</head>
+<body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
+<script>if(document.body.hasAttribute('data-theme-auto')&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.body.classList.add('dark');}</script>
+<?php include __DIR__ . '/includes/header.php'; ?>
+<main>
+    <h2>Settings</h2>
+    <?php if ($message): ?><div class="alert success"><?= e($message) ?></div><?php endif; ?>
+    <div class="settings-layout">
+        <div class="settings-tabs">
+            <a href="/settings.php?tab=general" class="settings-tab <?= $activeTab === 'general' ? 'active' : '' ?>">General</a>
+            <a href="/settings.php?tab=appearance" class="settings-tab <?= $activeTab === 'appearance' ? 'active' : '' ?>">Appearance</a>
+            <a href="/settings.php?tab=security" class="settings-tab <?= $activeTab === 'security' ? 'active' : '' ?>">Security</a>
+        </div>
+
+        <div class="settings-panel">
+            <?php if ($activeTab === 'general'): ?>
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">@<?= e($user['username']) ?></div>
+                        <div class="settings-sub"><?= e($user['email']) ?></div>
+                    </div>
+                    <a href="/@<?= e($user['username']) ?>" class="btn secondary">View Profile</a>
+                </div>
+                <p class="settings-sub" style="margin-top:1rem;">More general settings are coming soon.</p>
+
+            <?php elseif ($activeTab === 'appearance'): ?>
+                <form method="post" class="settings-row" style="border:none;">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="action" value="toggle_dark_mode">
+                    <div>
+                        <div class="settings-label">Dark Mode</div>
+                        <div class="settings-sub">Switch between light and dark theme.</div>
+                    </div>
+                    <button type="submit" name="dark_mode" value="<?= !empty($user['dark_mode']) ? '0' : '1' ?>" class="btn secondary">
+                        <?= !empty($user['dark_mode']) ? 'Turn Off' : 'Turn On' ?>
+                    </button>
+                </form>
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">Avatar, Banner &amp; Bio</div>
+                        <div class="settings-sub">Manage your profile customization from your profile page.</div>
+                    </div>
+                    <a href="/@<?= e($user['username']) ?>" class="btn secondary">Go to Profile</a>
+                </div>
+
+            <?php elseif ($activeTab === 'security'): ?>
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">Email Verification</div>
+                        <div class="settings-sub"><?= e($user['email']) ?></div>
+                    </div>
+                    <?php if (!empty($user['email_verified'])): ?>
+                        <span class="verified-badge">&#128274; Verified</span>
+                    <?php else: ?>
+                        <form method="post">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="action" value="resend_verification">
+                            <button type="submit" class="btn secondary">Resend Verification Email</button>
+                        </form>
+                    <?php endif; ?>
+                </div>
+                <p class="settings-sub" style="margin-top:1rem;">More security settings are coming soon.</p>
+            <?php endif; ?>
+        </div>
+    </div>
+</main>
+<?php include __DIR__ . '/includes/footer.php'; ?>
+<script>
+document.addEventListener('click', function(e) {
+    var menu = document.getElementById('userMenu');
+    if (menu && !e.target.closest('.user-nav')) menu.classList.remove('open');
+});
+</script>
+</body>
+</html>
