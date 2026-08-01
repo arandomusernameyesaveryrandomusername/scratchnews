@@ -924,7 +924,7 @@ function isUserBanned($userId) {
 
 function getAllUsers() {
     $db = getDB();
-    $result = $db->query("SELECT id, username, email, is_admin, is_banned, email_verified, created_at FROM users ORDER BY created_at DESC");
+    $result = $db->query("SELECT id, username, email, is_admin, is_banned, email_verified, created_at, ip_address FROM users ORDER BY created_at DESC");
     $rows = [];
     while ($row = $result->fetch_assoc()) {
         $rows[] = $row;

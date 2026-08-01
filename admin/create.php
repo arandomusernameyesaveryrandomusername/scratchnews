@@ -155,7 +155,7 @@ quill.getModule('toolbar').addHandler('image', function() {
 });
 document.getElementById('copyContentBtn').addEventListener('click', function() {
     var btn = this;
-    navigator.clipboard.writeText(quill.root.innerHTML).then(function() {
+    navigator.clipboard.writeText(quill.root.innerText).then(function() {
         var original = btn.textContent;
         btn.textContent = 'Copied!';
         setTimeout(function() { btn.textContent = original; }, 1200);
