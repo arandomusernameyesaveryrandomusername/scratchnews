@@ -16,6 +16,7 @@ startSession();
 <?php include __DIR__ . '/includes/empty-header.php'; ?>
 <main>
     <h2>Changelog</h2>
+    <p>[Aug1] v0.16 - SUPER MASSIVE UPDATE! Profile pics, banners, descriptions, new account signup page, signin and login with Google, settings page, copy article content to clipboard (so that the content is saved even if there's an error while saving), donation page, refreshed profile pages, and PROFILE COMMENTS!!! This is a great update.</p>
     <p>[Jul30] v0.15.2 - Added Fallback API</p>
     <p>v0.15.1 - Session tracking for "Time On Site", exclude/delete/flag sessions</p>
     <p>[Jul29] v0.15 - Changed API IP Allow to API Key Allow, everyone gets free 30 a minute API requests. Added views and article-to-user tying for admins.</p>
