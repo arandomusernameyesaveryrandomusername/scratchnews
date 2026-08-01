@@ -29,6 +29,7 @@
             </button>
             <div id="userMenu" class="user-nav-menu">
                 <a href="/@<?= e($_SESSION['reader_username']) ?>">Profile</a>
+                <a href="/my-articles.php">My Articles</a>
                 <?php if (!empty($_SESSION['is_admin'])): ?>
                 <a href="/admin/">Admin</a>
                 <?php endif; ?>

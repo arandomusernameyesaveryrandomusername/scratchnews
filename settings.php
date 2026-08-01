@@ -30,11 +30,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $token = issueVerificationToken($user['id']);
         sendVerificationEmail($user['email'], $user['username'], $token);
         $message = 'Verification email sent. Check your inbox.';
+    } elseif ($action === 'change_username') {
+        $result = changeUsername($user['id'], trim($_POST['new_username'] ?? ''));
+        if ($result === 'ok') {
+            $user = getUserById($user['id']);
+            $_SESSION['reader_username'] = $user['username'];
+            $message = 'Username updated.';
+        } elseif ($result === 'duplicate') {
+            $message = 'That username is already taken.';
+        } elseif ($result === 'too_soon') {
+            $message = 'You can only change your username once every 7 days.';
+        } elseif ($result === 'unchanged') {
+            $message = 'That\'s already your username.';
+        } else {
+            $message = 'Usernames must be 3-20 characters (letters, numbers, underscores only).';
+        }
     }
 }
 
 $activeTab = $_GET['tab'] ?? 'general';
-if (!in_array($activeTab, ['general', 'appearance', 'security'], true)) $activeTab = 'general';
+if ($activeTab === 'appearance') $activeTab = 'customization';
+if (!in_array($activeTab, ['general', 'customization', 'security'], true)) $activeTab = 'general';
+$usernameCooldown = canChangeUsername($user);
 define('HIDE_SUBSCRIBE_WIDGET', true);
 ?>
 <!DOCTYPE html>
@@ -59,6 +76,11 @@ define('HIDE_SUBSCRIBE_WIDGET', true);
 .unverified-badge { color: #a33; font-weight: 600; }
 .settings-row .btn { margin-top: 0; width: auto; height: auto; padding: 0.55rem 1.2rem; background: #ff8c1a; }
 .lock-icon { width: 16px; height: 16px; flex-shrink: 0; }
+.settings-row .btn, .settings-tab, button { -webkit-tap-highlight-color: transparent; }
+.settings-row .btn:focus, .settings-tab:focus { outline: 2px solid #e8a33d; outline-offset: 2px; }
+.username-form-row { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+.username-form-row input[type=text] { flex: 1; min-width: 160px; }
+.username-cooldown-note { font-size: 0.8rem; opacity: 0.7; margin-top: 0.4rem; }
 </style>
 </head>
 <body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
@@ -70,7 +92,7 @@ define('HIDE_SUBSCRIBE_WIDGET', true);
     <div class="settings-layout">
         <div class="settings-tabs">
             <a href="/settings.php?tab=general" class="settings-tab <?= $activeTab === 'general' ? 'active' : '' ?>">General</a>
-            <a href="/settings.php?tab=appearance" class="settings-tab <?= $activeTab === 'appearance' ? 'active' : '' ?>">Appearance</a>
+            <a href="/settings.php?tab=customization" class="settings-tab <?= $activeTab === 'customization' ? 'active' : '' ?>">Customization</a>
             <a href="/settings.php?tab=security" class="settings-tab <?= $activeTab === 'security' ? 'active' : '' ?>">Security</a>
         </div>
 
@@ -88,7 +110,7 @@ define('HIDE_SUBSCRIBE_WIDGET', true);
                     <?php require __DIR__ . '/includes/subscribe-widget.php'; ?>
                 </div>
 
-            <?php elseif ($activeTab === 'appearance'): ?>
+            <?php elseif ($activeTab === 'customization'): ?>
                 <form method="post" class="settings-row" style="border:none;">
                     <?= csrfField() ?>
                     <input type="hidden" name="action" value="toggle_dark_mode">
@@ -100,6 +122,21 @@ define('HIDE_SUBSCRIBE_WIDGET', true);
                         <?= !empty($user['dark_mode']) ? 'Turn Off' : 'Turn On' ?>
                     </button>
                 </form>
+                <div class="settings-row" style="display:block;">
+                    <div>
+                        <div class="settings-label">Username</div>
+                        <div class="settings-sub">Change your @username. Limited to once every 7 days.</div>
+                    </div>
+                    <form method="post" class="username-form-row" style="margin-top:0.6rem;">
+                        <?= csrfField() ?>
+                        <input type="hidden" name="action" value="change_username">
+                        <input type="text" name="new_username" value="<?= e($user['username']) ?>" minlength="3" maxlength="20" pattern="[A-Za-z0-9_]+" <?= $usernameCooldown['allowed'] ? '' : 'disabled' ?> required>
+                        <button type="submit" class="btn" <?= $usernameCooldown['allowed'] ? '' : 'disabled' ?>>Change Username</button>
+                    </form>
+                    <?php if (!$usernameCooldown['allowed']): ?>
+                        <div class="username-cooldown-note">You can change your username again on <?= e($usernameCooldown['next_at']) ?>.</div>
+                    <?php endif; ?>
+                </div>
                 <div class="settings-row">
                     <div>
                         <div class="settings-label">Avatar, Banner &amp; Bio</div>

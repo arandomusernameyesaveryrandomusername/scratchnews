@@ -30,6 +30,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $article && !empty($_SESSION['reade
         header('Location: /article/' . $article['id']);
         exit;
     }
+    if (($_POST['action'] ?? '') === 'toggle_save') {
+        if (isArticleSaved($article['id'], $_SESSION['reader_id'])) {
+            unsaveArticleForUser($article['id'], $_SESSION['reader_id']);
+        } else {
+            saveArticleForUser($article['id'], $_SESSION['reader_id']);
+        }
+        header('Location: /article/' . $article['id']);
+        exit;
+    }
     if (($_POST['action'] ?? '') === 'comment' && !$isBanned) {
         $content = trim($_POST['content'] ?? '');
         $parentId = !empty($_POST['parent_id']) ? (int)$_POST['parent_id'] : null;
@@ -51,6 +60,7 @@ $likeCount = $article ? getLikeCount($article['id']) : 0;
 $liked = ($article && !empty($_SESSION['reader_id'])) ? hasUserLiked($article['id'], $_SESSION['reader_id']) : false;
 $dislikeCount = $article ? getDislikeCount($article['id']) : 0;
 $disliked = ($article && !empty($_SESSION['reader_id'])) ? hasUserDisliked($article['id'], $_SESSION['reader_id']) : false;
+$isSaved = ($article && !empty($_SESSION['reader_id'])) ? isArticleSaved($article['id'], $_SESSION['reader_id']) : false;
 
 if (!$article) {
     http_response_code(404);
@@ -133,7 +143,15 @@ if (!$article) {
                         <img src="/assets/icons/<?= $disliked ? 'dislike' : 'undislike' ?>.svg" alt="Dislike" class="icon-svg">
                         <span class="icon-count"><?= $dislikeCount ?></span>
                     </button>
-    </form><a href="#comments" class="icon-btn" title="Jump to comments" style="text-decoration:none;">
+    </form>
+                <form method="post">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="action" value="toggle_save">
+                    <button class="icon-btn save-btn <?= $isSaved ? 'active' : '' ?>" type="submit" <?= empty($_SESSION['reader_id']) ? 'disabled' : '' ?> title="<?= $isSaved ? 'Remove from Saved' : 'Save for later' ?>">
+                        <img src="/assets/icons/save.svg" alt="Save" class="icon-svg">
+                    </button>
+                </form>
+                <a href="#comments" class="icon-btn" title="Jump to comments" style="text-decoration:none;">
                     <img src="/assets/icons/comment.svg" alt="Comments" class="icon-svg">
                     <span class="icon-count"><?= count($comments) ?></span>
                 </a>

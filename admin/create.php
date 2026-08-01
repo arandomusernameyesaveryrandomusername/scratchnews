@@ -47,9 +47,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <link rel="stylesheet" href="/assets/style.css?v=2">
 <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
 <style>
-.editor-toprow { display:flex; justify-content:flex-end; margin-bottom:0.35rem; }
-.editor-copy-btn { background:transparent; border:1px solid currentColor; color:inherit; opacity:0.75; padding:0.2rem 0.7rem; border-radius:4px; font-size:0.85rem; white-space:nowrap; cursor:pointer; }
-.editor-copy-btn:hover { opacity:1; }
+.editor-copy-icon-btn { background:transparent; border:none; color:#444; opacity:0.75; padding:3px 5px; cursor:pointer; display:inline-flex; align-items:center; }
+.editor-copy-icon-btn:hover { opacity:1; }
+.editor-copy-icon-btn svg { width:16px; height:16px; }
+body.dark .editor-copy-icon-btn { color:#ccc; }
 </style>
 </head>
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
@@ -90,9 +91,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <label for="content">Full Article Content</label>
-<div class="editor-toprow">
-    <button type="button" id="copyContentBtn" class="editor-copy-btn" title="Copy full article content to clipboard">Copy Content</button>
-</div>
 <div id="editorWrap">
 <div id="toolbar">
     <button class="ql-bold" title="Bold (Ctrl+B)"><b>B</b></button>
@@ -111,10 +109,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <option selected value="">Normal</option>
         <option value="large">Large</option>
         <option value="huge">Huge</option>
-    </select>    
+    </select>
     <button class="ql-link" title="Insert link">🔗</button>
     <button class="ql-image" title="Insert image">🖼️</button>
-    <span style="float:right;"><button type="button" id="toggleToolbarPos" title="Move formatting bar to bottom">⇕</button></span>
+    <span style="float:right;">
+        <button type="button" id="copyContentBtn" class="editor-copy-icon-btn" title="Copy full article content to clipboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"/></svg>
+        </button>
+        <button type="button" id="toggleToolbarPos" title="Move formatting bar to bottom">⇕</button>
+    </span>
 </div>
 <div id="editor-container"><?= $_POST['content'] ?? '' ?></div>
 </div>
@@ -156,9 +159,10 @@ quill.getModule('toolbar').addHandler('image', function() {
 document.getElementById('copyContentBtn').addEventListener('click', function() {
     var btn = this;
     navigator.clipboard.writeText(quill.root.innerText).then(function() {
-        var original = btn.textContent;
-        btn.textContent = 'Copied!';
-        setTimeout(function() { btn.textContent = original; }, 1200);
+        var original = btn.title;
+        btn.title = 'Copied!';
+        btn.style.opacity = '1';
+        setTimeout(function() { btn.title = original; }, 1200);
     }).catch(function() {
         alert('Could not copy. Select the editor text manually instead.');
     });

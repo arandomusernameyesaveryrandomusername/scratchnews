@@ -65,14 +65,11 @@ $bioHasMore = $bioRaw !== '' && strpos($bioRaw, "\n") !== false;
 .profile-icon-controls { display:flex; gap:0.5rem; align-items:center; }
 .profile-icon-btn { width:40px; height:40px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; border:1px solid #666; background:transparent; cursor:pointer; padding:0; color:inherit; }
 .profile-icon-btn svg { width:20px; height:20px; fill:currentColor; }
-details.customize-details { display:inline-block; }
-details.customize-details summary { list-style:none; }
-details.customize-details summary::-webkit-details-marker { display:none; }
-.customize-panel { border:1px solid #ddd; border-radius:8px; padding:0.75rem 1rem; margin:0.5rem 0; max-width:420px; }
 .customize-panel label { display:block; margin-top:0.6rem; font-size:0.85rem; }
 .customize-panel textarea { width:100%; box-sizing:border-box; }
 .profile-comment-box { display:flex; gap:0.5rem; margin:0.75rem 0; }
 .profile-comment-box textarea { flex:1; }
+.stat-link.active { color: var(--brand-bright); font-weight: 700; }
 </style>
 </head>
 <body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
@@ -142,33 +139,37 @@ details.customize-details summary::-webkit-details-marker { display:none; }
                     <?php endif; ?>
                 </button>
             </form>
-            <details class="customize-details">
-                <summary class="profile-icon-btn" title="Customize profile" aria-label="Customize profile">
-                    <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.3-.5-.8-.5-1.2 0-1.1.9-2 2-2h2.3A5.2 5.2 0 0022 10.5C22 5.8 17.5 2 12 2zM6.5 12a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3-4a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3 4a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/></svg>
-                </summary>
-                <div class="customize-panel">
-                    <form method="post" action="/update-profile.php" enctype="multipart/form-data">
-                        <?= csrfField() ?>
-                        <label>Profile picture
-                            <input type="file" name="avatar" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml">
-                        </label>
-                        <label>Banner
-                            <input type="file" name="banner" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml">
-                        </label>
-                        <label>Bio
-                            <textarea name="bio" rows="3" maxlength="500"><?= e($user['bio'] ?? '') ?></textarea>
-                        </label>
-                        <button type="submit" class="btn" style="margin-top:0.6rem;">Save changes</button>
-                    </form>
-                </div>
-            </details>
+            <button type="button" class="profile-icon-btn" title="Customize profile" aria-label="Customize profile" data-modal-target="customize-modal-<?= (int)$user['id'] ?>">
+                <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.3-.5-.8-.5-1.2 0-1.1.9-2 2-2h2.3A5.2 5.2 0 0022 10.5C22 5.8 17.5 2 12 2zM6.5 12a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3-4a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3 4a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/></svg>
+            </button>
+        </div>
+    </div>
+    <div class="bio-modal-backdrop" id="customize-modal-<?= (int)$user['id'] ?>" hidden>
+        <div class="bio-modal-card">
+            <button type="button" class="bio-modal-close" aria-label="Close">&times;</button>
+            <h3 style="margin-top:0;">Customize Profile</h3>
+            <div class="customize-panel">
+                <form method="post" action="/update-profile.php" enctype="multipart/form-data">
+                    <?= csrfField() ?>
+                    <label>Profile picture
+                        <input type="file" name="avatar" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml">
+                    </label>
+                    <label>Banner
+                        <input type="file" name="banner" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml">
+                    </label>
+                    <label>Bio
+                        <textarea name="bio" rows="3" maxlength="500"><?= e($user['bio'] ?? '') ?></textarea>
+                    </label>
+                    <button type="submit" class="btn" style="margin-top:0.6rem;">Save changes</button>
+                </form>
+            </div>
         </div>
     </div>
     <?php endif; ?>
     <div class="profile-stats-row">
-        <h3><a href="/@<?= urlencode($user['username']) ?>?view=articles" class="stat-link"><?= (int)$articleCount ?> Articles</a></h3>
-        <h3><a href="/@<?= urlencode($user['username']) ?>" class="stat-link">Comments (<?= count($comments) ?>)</a></h3>
-        <h3><a href="/@<?= urlencode($user['username']) ?>?view=profile_comments" class="stat-link">Profile Comments (<?= (int)$profileCommentCount ?>)</a></h3>
+        <h3><a href="/@<?= urlencode($user['username']) ?>?view=articles" class="stat-link <?= $view === 'articles' ? 'active' : '' ?>"><?= (int)$articleCount ?> Articles</a></h3>
+        <h3><a href="/@<?= urlencode($user['username']) ?>" class="stat-link <?= $view === 'comments' ? 'active' : '' ?>">Comments (<?= count($comments) ?>)</a></h3>
+        <h3><a href="/@<?= urlencode($user['username']) ?>?view=profile_comments" class="stat-link <?= $view === 'profile_comments' ? 'active' : '' ?>">Profile Comments (<?= (int)$profileCommentCount ?>)</a></h3>
     </div>
     <?php if ($view === 'articles'): ?>
         <?php if (empty($userArticles)): ?>
@@ -217,12 +218,9 @@ details.customize-details summary::-webkit-details-marker { display:none; }
         <?php if (empty($profileComments)): ?>
             <p>No profile comments yet.</p>
         <?php else: ?>
-            <?php foreach ($profileComments as $pc): ?>
-                <div class="comment">
-                    <a href="/@<?= urlencode($pc['author_username']) ?>"><strong>@<?= e($pc['author_username']) ?></strong></a>
-                    <span class="meta"><?= date('M j, Y g:i A', strtotime($pc['created_at'])) ?></span>
-                    <p><?= e($pc['content']) ?></p>
-                </div>
+            <?php $profileCommentTree = buildCommentTree($profileComments); ?>
+            <?php foreach ($profileCommentTree as $pc): ?>
+                <?= renderProfileCommentThread($pc, !empty($_SESSION['reader_id']), $user['id']) ?>
             <?php endforeach; ?>
         <?php endif; ?>
     <?php else: ?>
@@ -247,7 +245,7 @@ document.querySelectorAll('time.local-date, time.local-datetime').forEach(functi
         el.textContent = d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
     }
 });
-document.querySelectorAll('.bio-readmore-btn').forEach(function(btn) {
+document.querySelectorAll('[data-modal-target]').forEach(function(btn) {
     btn.addEventListener('click', function() {
         var modal = document.getElementById(btn.getAttribute('data-modal-target'));
         if (modal) modal.hidden = false;

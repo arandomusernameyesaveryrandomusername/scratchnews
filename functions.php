@@ -1725,14 +1725,123 @@ function getProfileComments(int $userId): array {
     return $rows;
 }
 
-function addProfileComment(int $profileUserId, int $authorId, string $content): int {
+function addProfileComment(int $profileUserId, int $authorId, string $content, ?int $parentId = null): int {
     $db = getDB();
-    $stmt = $db->prepare("INSERT INTO profile_comments (profile_user_id, author_id, content) VALUES (?, ?, ?)");
-    $stmt->bind_param('iis', $profileUserId, $authorId, $content);
+    if ($parentId === null) {
+        $stmt = $db->prepare("INSERT INTO profile_comments (profile_user_id, author_id, content) VALUES (?, ?, ?)");
+        $stmt->bind_param('iis', $profileUserId, $authorId, $content);
+    } else {
+        $stmt = $db->prepare("INSERT INTO profile_comments (profile_user_id, author_id, content, parent_comment_id) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param('iisi', $profileUserId, $authorId, $content, $parentId);
+    }
     $stmt->execute();
     $id = $stmt->insert_id;
     $stmt->close();
     return $id;
+}
+
+function renderProfileCommentThread(array $comment, bool $canReply, int $profileUserId, int $depth = 0): string {
+    $indent = min($depth * 24, 96);
+    $avatar = $comment['author_avatar'] ?? null;
+    $html = '<div class="comment" style="margin-left: ' . $indent . 'px;">';
+    $html .= '<a href="/@' . e($comment['author_username']) . '"><strong>@' . e($comment['author_username']) . '</strong></a>';
+    $html .= ' <span class="meta">' . date('M j, Y g:i A', strtotime($comment['created_at'])) . '</span>';
+    $html .= '<p>' . e($comment['content']) . '</p>';
+
+    if ($canReply) {
+        $formId = 'pc-reply-form-' . (int)$comment['id'];
+        $html .= '<button type="button" class="reply-toggle" title="Reply" onclick="document.getElementById(\'' . $formId . '\').classList.toggle(\'open\')"><img src="/assets/icons/reply.svg" class="icon-svg-sm" alt=""> Reply</button>';
+        $html .= '<form method="post" action="/profile-comment.php" class="reply-form" id="' . $formId . '">';
+        $html .= csrfField();
+        $html .= '<input type="hidden" name="profile_user_id" value="' . (int)$profileUserId . '">';
+        $html .= '<input type="hidden" name="parent_id" value="' . (int)$comment['id'] . '">';
+        $html .= '<textarea name="content" maxlength="1000" placeholder="Write a reply..." required></textarea>';
+        $html .= '<button class="btn" type="submit">Post Reply</button>';
+        $html .= '</form>';
+    }
+
+    foreach ($comment['replies'] as $reply) {
+        $html .= renderProfileCommentThread($reply, $canReply, $profileUserId, $depth + 1);
+    }
+
+    $html .= '</div>';
+    return $html;
+}
+
+// ---- Username changes ----
+function canChangeUsername(array $user): array {
+    $last = $user['last_username_change'] ?? null;
+    if (!$last) return ['allowed' => true, 'next_at' => null];
+    $nextAt = strtotime($last) + 7 * 86400;
+    if (time() >= $nextAt) return ['allowed' => true, 'next_at' => null];
+    return ['allowed' => false, 'next_at' => date('M j, Y', $nextAt)];
+}
+
+function changeUsername(int $userId, string $newUsername): string {
+    $newUsername = trim($newUsername);
+    if (!preg_match('/^[A-Za-z0-9_]{3,20}$/', $newUsername)) return 'invalid';
+
+    $user = getUserById($userId);
+    if (!$user) return 'invalid';
+    if (strcasecmp($user['username'], $newUsername) === 0) return 'unchanged';
+
+    $check = canChangeUsername($user);
+    if (!$check['allowed']) return 'too_soon';
+
+    $db = getDB();
+    try {
+        $stmt = $db->prepare("UPDATE users SET username = ?, last_username_change = NOW() WHERE id = ?");
+        $stmt->bind_param('si', $newUsername, $userId);
+        $stmt->execute();
+        $stmt->close();
+        return 'ok';
+    } catch (mysqli_sql_exception $e) {
+        if (str_contains($e->getMessage(), 'Duplicate')) return 'duplicate';
+        throw $e;
+    }
+}
+
+// ---- Saved articles ----
+function isArticleSaved(int $articleId, int $userId): bool {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT 1 FROM saved_articles WHERE article_id = ? AND user_id = ?");
+    $stmt->bind_param('ii', $articleId, $userId);
+    $stmt->execute();
+    $stmt->store_result();
+    $exists = $stmt->num_rows > 0;
+    $stmt->close();
+    return $exists;
+}
+
+function saveArticleForUser(int $articleId, int $userId): void {
+    $db = getDB();
+    $stmt = $db->prepare("INSERT IGNORE INTO saved_articles (user_id, article_id) VALUES (?, ?)");
+    $stmt->bind_param('ii', $userId, $articleId);
+    $stmt->execute();
+    $stmt->close();
+}
+
+function unsaveArticleForUser(int $articleId, int $userId): void {
+    $db = getDB();
+    $stmt = $db->prepare("DELETE FROM saved_articles WHERE user_id = ? AND article_id = ?");
+    $stmt->bind_param('ii', $userId, $articleId);
+    $stmt->execute();
+    $stmt->close();
+}
+
+function getSavedArticlesByUser(int $userId): array {
+    $db = getDB();
+    $stmt = $db->prepare(
+        "SELECT articles.* FROM saved_articles
+         JOIN articles ON articles.id = saved_articles.article_id
+         WHERE saved_articles.user_id = ?
+         ORDER BY saved_articles.created_at DESC"
+    );
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $rows;
 }
 
 function updateUserProfile(int $userId, ?string $avatarUrl, ?string $bannerUrl, ?string $bio): void {
