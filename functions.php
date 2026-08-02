@@ -2057,9 +2057,31 @@ function renderNotificationText(array $n): string {
         default: return 'New notification';
     }
 }
-// ---- Comment Moderation (OpenAI Moderation API) ----
-// Requires OPENAI_API_KEY defined in config.php (not in chat/repo). Add:
-//   define('OPENAI_API_KEY', 'sk-...');
+// ---- Comment Moderation (local keyword/pattern filter) ----
+// Modeled on Scratch's actual Community Guidelines: no swearing/rude language,
+// no bullying/insults, no NFE content (gore/violence/sexual/self-harm), no
+// personal info sharing, no spam/scam links. Edit the arrays below to tune it.
+
+const MODERATION_PROFANITY = [
+    'fuck', 'shit', 'bitch', 'asshole', 'cunt', 'dick', 'pussy', 'bastard',
+    'nigger', 'nigga', 'faggot', 'retard', 'whore', 'slut',
+];
+
+const MODERATION_SEXUAL = [
+    'porn', 'nsfw', 'nude', 'sex tape', 'send nudes',
+];
+
+const MODERATION_VIOLENCE_SELFHARM = [
+    'kill yourself', 'kys', 'i wanna kms', 'wanna kms', 'i wana kms',
+    'gonna kms', 'kms', 'cut myself', 'self harm', 'suicide',
+];
+
+// Simple patterns (not exact words): emails, phone numbers, common scam link bait
+const MODERATION_PATTERNS = [
+    '/\b[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\b/i',          // email addresses
+    '/\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/',                     // phone numbers
+    '/\b(free\s?robux|free\s?nitro|steam\s?gift)\b/i',        // common scam bait
+];
 
 const MODERATION_LOCK_TIERS = [
     1 => 3600,        // 1 hour
@@ -2071,42 +2093,27 @@ const MODERATION_LOCK_TIERS = [
 const MODERATION_BAN_STRIKE = 6;
 
 function moderateText(string $text): array {
-    $ch = curl_init('https://api.openai.com/v1/moderations');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 8);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: application/json',
-        'Authorization: Bearer ' . OPENAI_API_KEY,
-    ]);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
-        'model' => 'omni-moderation-latest',
-        'input' => $text,
-    ]));
-    $response = curl_exec($ch);
-    $err = curl_errno($ch);
-    $errMsg = curl_error($ch);
-    curl_close($ch);
-
-    if ($err || !$response) {
-        error_log('ScratchNews moderation curl error: ' . $errMsg . ' (errno ' . $err . ')');
-        // Fail open: if the moderation API is unreachable, don't block comments.
-        return ['flagged' => false, 'categories' => [], 'error' => true];
-    }
-
-    $data = json_decode($response, true);
-    $result = $data['results'][0] ?? null;
-    if (!$result) {
-        error_log('ScratchNews moderation unexpected response: ' . $response);
-        return ['flagged' => false, 'categories' => [], 'error' => true];
-    }
-
+    $normalized = strtolower($text);
     $flaggedCategories = [];
-    foreach ($result['categories'] ?? [] as $category => $isFlagged) {
-        if ($isFlagged) $flaggedCategories[] = $category;
+
+    foreach (['profanity' => MODERATION_PROFANITY, 'sexual' => MODERATION_SEXUAL, 'violence_selfharm' => MODERATION_VIOLENCE_SELFHARM] as $category => $words) {
+        foreach ($words as $word) {
+            if (str_contains($normalized, $word)) {
+                $flaggedCategories[] = $category;
+                break;
+            }
+        }
     }
 
-    return ['flagged' => (bool)($result['flagged'] ?? false), 'categories' => $flaggedCategories, 'error' => false];
+    foreach (MODERATION_PATTERNS as $pattern) {
+        if (preg_match($pattern, $text)) {
+            $flaggedCategories[] = 'personal_info_or_spam';
+            break;
+        }
+    }
+
+    $flaggedCategories = array_unique($flaggedCategories);
+    return ['flagged' => !empty($flaggedCategories), 'categories' => $flaggedCategories];
 }
 
 function getCommentLockStatus(int $userId): array {
