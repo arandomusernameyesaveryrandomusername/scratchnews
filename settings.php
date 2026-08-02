@@ -69,6 +69,7 @@ define('HIDE_SUBSCRIBE_WIDGET', true);
 .settings-tab.active { background: #e8a33d; color: #2a2a2a; border-color: #e8a33d; }
 .settings-panel { flex: 1; min-width: 280px; }
 .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 0; border-bottom: 1px solid rgba(128,128,128,0.2); }
+form.settings-row { background: transparent; padding: 0.9rem 0; border-radius: 0; box-shadow: none; max-width: none; }
 .settings-row:last-child { border-bottom: none; }
 .settings-label { font-weight: 600; }
 .settings-sub { font-size: 0.85rem; opacity: 0.75; margin-top: 0.2rem; }
