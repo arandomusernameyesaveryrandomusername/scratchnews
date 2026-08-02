@@ -7,6 +7,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         addModerationWord($_POST['category'] ?? '', $_POST['word'] ?? '');
     } elseif ($action === 'remove') {
         removeModerationWord((int)($_POST['id'] ?? 0));
+    } elseif ($action === 'reset_strikes') {
+        $target = getUserByUsername(trim($_POST['username'] ?? ''));
+        if ($target) resetModerationStrikes((int)$target['id']);
     }
     header('Location: /admin/moderation-words.php');
     exit;
@@ -75,6 +78,17 @@ $categoryLabels = [
     <?php endforeach; ?>
 
     <p style="opacity:0.7;font-size:0.85rem;">Email/phone/scam-link detection is handled separately by fixed patterns and isn't editable here.</p>
+
+    <div class="mod-category">
+        <h3>Reset a User's Timeout</h3>
+        <p>Clears strikes and lifts any active comment lock for the given username. Use this if someone got flagged unfairly, e.g. during testing.</p>
+        <form method="post" class="mod-add-row">
+            <?= csrfField() ?>
+            <input type="hidden" name="action" value="reset_strikes">
+            <input type="text" name="username" placeholder="Username" required>
+            <button type="submit" class="btn">Reset</button>
+        </form>
+    </div>
 </main>
 </body>
 </html>

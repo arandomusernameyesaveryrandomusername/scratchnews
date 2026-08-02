@@ -2115,6 +2115,14 @@ function removeModerationWord(int $id): void {
     $stmt->close();
 }
 
+function resetModerationStrikes(int $userId): void {
+    $db = getDB();
+    $stmt = $db->prepare("UPDATE users SET moderation_strikes = 0, comment_locked_until = NULL WHERE id = ?");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $stmt->close();
+}
+
 function moderateText(string $text): array {
     static $wordsByCategory = null;
     if ($wordsByCategory === null) {
