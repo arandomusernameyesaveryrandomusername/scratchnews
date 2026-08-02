@@ -46,9 +46,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $article && !empty($_SESSION['reade
     if (($_POST['action'] ?? '') === 'comment' && !$isBanned) {
         $content = trim($_POST['content'] ?? '');
         $parentId = !empty($_POST['parent_id']) ? (int)$_POST['parent_id'] : null;
-        if ($content !== '') addComment($article['id'], $_SESSION['reader_id'], $content, $parentId);
-        header('Location: /article/' . $article['id']);
-        exit;
+        if ($content !== '') {
+            $modCheck = checkAndModerateComment($_SESSION['reader_id'], $content);
+            if ($modCheck['allowed']) {
+                addComment($article['id'], $_SESSION['reader_id'], $content, $parentId);
+                header('Location: /article/' . $article['id']);
+                exit;
+            }
+            $commentError = $modCheck['reason'];
+        } else {
+            header('Location: /article/' . $article['id']);
+            exit;
+        }
     }
     if (($_POST['action'] ?? '') === 'report') {
         $commentId = (int)($_POST['comment_id'] ?? 0);
@@ -181,6 +190,9 @@ if (!$article) {
             <div class="content"><?= $article['content'] ?></div>
             <div class="comments-section" id="comments">
     <h3>Comments (<?= count($comments) ?>)</h3>
+    <?php if (!empty($commentError)): ?>
+        <div class="alert error moderation-banner"><?= e($commentError) ?></div>
+    <?php endif; ?>
     <?php if (!empty($_SESSION['reader_id']) && !$isBanned): ?>
         <form method="post">
             <?= csrfField() ?>
