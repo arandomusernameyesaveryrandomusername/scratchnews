@@ -39,6 +39,11 @@ function createArticle(string $title, string $summary, string $content, string $
     $stmt->bind_param('issssssi', $id, $title, $summary, $content, $author, $imageUrl, $status, $userId);
     $stmt->execute();
     $stmt->close();
+    if ($status === 'published' && $userId !== null) {
+        foreach (getFollowerIds($userId) as $followerId) {
+            createNotification($followerId, 'followed_user_article', $userId, '/article.php?id=' . $id, $title);
+        }
+    }
     syncToGithub();
     return $id;
 }
@@ -206,6 +211,7 @@ function createUser(string $username, string $email, string $password) {
         $stmt->execute();
         $id = $db->insert_id;
         $stmt->close();
+        notifyAdmins('admin_new_account', $id, '/@' . $username);
         return $id;
     } catch (mysqli_sql_exception $e) {
         if (str_contains($e->getMessage(), 'Duplicate')) return 'duplicate';
@@ -388,6 +394,25 @@ function addComment(int $articleId, int $userId, string $content, ?int $parentId
     }
     $ok = $stmt->execute();
     $stmt->close();
+
+    if ($ok) {
+        $article = getArticleById($articleId);
+        $link = '/article.php?id=' . $articleId;
+        if ($parentId !== null) {
+            $pstmt = $db->prepare("SELECT user_id FROM comments WHERE id = ?");
+            $pstmt->bind_param('i', $parentId);
+            $pstmt->execute();
+            $parentOwner = $pstmt->get_result()->fetch_assoc();
+            $pstmt->close();
+            if ($parentOwner && (int)$parentOwner['user_id'] !== $userId) {
+                createNotification((int)$parentOwner['user_id'], 'comment_reply', $userId, $link, $content);
+            }
+        } elseif ($article && !empty($article['user_id']) && (int)$article['user_id'] !== $userId) {
+            createNotification((int)$article['user_id'], 'article_comment', $userId, $link, $content);
+        }
+        notifyAdmins('admin_new_comment', $userId, $link, $content);
+    }
+
     return $ok;
 }
 
@@ -499,6 +524,11 @@ function toggleLike(int $articleId, int $userId): bool {
         $del->bind_param('ii', $articleId, $userId);
         $del->execute();
         $del->close();
+
+        $article = getArticleById($articleId);
+        if ($article && !empty($article['user_id']) && (int)$article['user_id'] !== $userId) {
+            createNotification((int)$article['user_id'], 'article_liked', $userId, '/article.php?id=' . $articleId);
+        }
         return true;
     }
 }
@@ -541,6 +571,11 @@ function toggleDislike(int $articleId, int $userId): bool {
         $del->bind_param('ii', $articleId, $userId);
         $del->execute();
         $del->close();
+
+        $article = getArticleById($articleId);
+        if ($article && !empty($article['user_id']) && (int)$article['user_id'] !== $userId) {
+            createNotification((int)$article['user_id'], 'article_disliked', $userId, '/article.php?id=' . $articleId);
+        }
         return true;
     }
 }
@@ -704,6 +739,7 @@ function createSubmission($userId, $title, $summary, $content) {
     $stmt->execute();
     $id = $db->insert_id;
     $stmt->close();
+    notifyAdmins('admin_new_submission', $userId, '/admin/', $title);
     return $id;
 }
 
@@ -757,6 +793,12 @@ function approveSubmission($id) {
     $stmt->execute();
     $stmt->close();
 
+    $articleLink = '/article.php?id=' . $articleId;
+    createNotification((int)$submission['user_id'], 'article_approved', null, $articleLink, $submission['title']);
+    foreach (getFollowerIds((int)$submission['user_id']) as $followerId) {
+        createNotification($followerId, 'followed_user_article', (int)$submission['user_id'], $articleLink, $submission['title']);
+    }
+
     sendSubmissionDecisionEmail($submission['email'], $submission['username'], $submission['title'], true);
     syncToGithub();
     return true;
@@ -773,6 +815,8 @@ function rejectSubmission($id) {
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $stmt->close();
+
+    createNotification((int)$submission['user_id'], 'article_rejected', null, null, $submission['title']);
 
     sendSubmissionDecisionEmail($submission['email'], $submission['username'], $submission['title'], false);
     return true;
@@ -823,6 +867,7 @@ function submitFeedback($userId, $message) {
     $stmt->bind_param("is", $userId, $message);
     $stmt->execute();
     $stmt->close();
+    notifyAdmins('admin_new_feedback', $userId, '/admin/', $message);
 }
 
 function getAllFeedback() {
@@ -857,6 +902,7 @@ function reportComment($commentId, $reporterId) {
     $stmt->bind_param("ii", $commentId, $reporterId);
     $stmt->execute();
     $stmt->close();
+    notifyAdmins('admin_new_report', $reporterId, '/admin/');
 }
 
 function getPendingReports() {
@@ -890,10 +936,27 @@ function resolveReport($reportId) {
 
 function adminDeleteComment($commentId) {
     $db = getDB();
+
+    $stmt = $db->prepare("SELECT user_id FROM comments WHERE id = ?");
+    $stmt->bind_param("i", $commentId);
+    $stmt->execute();
+    $comment = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    $stmt = $db->prepare("SELECT 1 FROM comment_reports WHERE comment_id = ?");
+    $stmt->bind_param("i", $commentId);
+    $stmt->execute();
+    $wasReported = $stmt->get_result()->fetch_assoc() !== null;
+    $stmt->close();
+
     $stmt = $db->prepare("DELETE FROM comments WHERE id = ?");
     $stmt->bind_param("i", $commentId);
     $stmt->execute();
     $stmt->close();
+
+    if ($comment && $wasReported) {
+        createNotification((int)$comment['user_id'], 'comment_deleted');
+    }
 }
 
 function banUser($userId) {
@@ -902,6 +965,7 @@ function banUser($userId) {
     $stmt->bind_param("i", $userId);
     $stmt->execute();
     $stmt->close();
+    createNotification($userId, 'account_banned');
 }
 
 function unbanUser($userId) {
@@ -1677,6 +1741,17 @@ function followUser(int $followerId, int $followedId): void {
     $stmt->bind_param('ii', $followerId, $followedId);
     $stmt->execute();
     $stmt->close();
+    createNotification($followedId, 'follow', $followerId, '/@' . getUserById($followerId)['username']);
+}
+
+function getFollowerIds(int $userId): array {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT follower_id FROM follows WHERE followed_id = ?");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return array_map(fn($r) => (int)$r['follower_id'], $rows);
 }
 
 function unfollowUser(int $followerId, int $followedId): void {
@@ -1737,6 +1812,22 @@ function addProfileComment(int $profileUserId, int $authorId, string $content, ?
     $stmt->execute();
     $id = $stmt->insert_id;
     $stmt->close();
+
+    $link = '/@' . getUserById($profileUserId)['username'];
+    if ($parentId !== null) {
+        $pstmt = $db->prepare("SELECT author_id FROM profile_comments WHERE id = ?");
+        $pstmt->bind_param('i', $parentId);
+        $pstmt->execute();
+        $parentOwner = $pstmt->get_result()->fetch_assoc();
+        $pstmt->close();
+        if ($parentOwner && (int)$parentOwner['author_id'] !== $authorId) {
+            createNotification((int)$parentOwner['author_id'], 'comment_reply', $authorId, $link, $content);
+        }
+    } elseif ($profileUserId !== $authorId) {
+        createNotification($profileUserId, 'profile_comment', $authorId, $link, $content);
+    }
+    notifyAdmins('admin_new_comment', $authorId, $link, $content);
+
     return $id;
 }
 
@@ -1819,6 +1910,11 @@ function saveArticleForUser(int $articleId, int $userId): void {
     $stmt->bind_param('ii', $userId, $articleId);
     $stmt->execute();
     $stmt->close();
+
+    $article = getArticleById($articleId);
+    if ($article && !empty($article['user_id']) && (int)$article['user_id'] !== $userId) {
+        createNotification((int)$article['user_id'], 'article_saved', $userId, '/article.php?id=' . $articleId);
+    }
 }
 
 function unsaveArticleForUser(int $articleId, int $userId): void {
@@ -1859,4 +1955,105 @@ function updateUserLocation(int $userId, ?float $lat, ?float $lng, ?string $coun
     $stmt->bind_param('ddssii', $lat, $lng, $countryCode, $regionName, $shared, $userId);
     $stmt->execute();
     $stmt->close();
+}
+
+// ---- Notifications ----
+// NOTE: icon filenames below are placed based on the new icons provided this session
+// (follow, new_article, article_inbox, article_approved, article_rejected, comment_delete, ban)
+// plus reuse of existing icons (reply.svg, report.svg, save.svg confirmed in code;
+// like.svg/dislike.svg assumed to exist from the v0.12 Dislikes feature - adjust below if wrong).
+const NOTIFICATION_ICONS = [
+    'follow'                 => '/assets/icons/follow.svg',
+    'article_comment'        => '/assets/icons/reply.svg',
+    'profile_comment'        => '/assets/icons/reply.svg',
+    'comment_reply'          => '/assets/icons/reply.svg',
+    'article_liked'          => '/assets/icons/like.svg',
+    'article_disliked'       => '/assets/icons/dislike.svg',
+    'article_saved'          => '/assets/icons/save.svg',
+    'article_approved'       => '/assets/icons/article_approved.svg',
+    'article_rejected'       => '/assets/icons/article_rejected.svg',
+    'followed_user_article'  => '/assets/icons/new_article.svg',
+    'account_banned'         => '/assets/icons/ban.svg',
+    'comment_deleted'        => '/assets/icons/comment_delete.svg',
+    'admin_new_account'      => '/assets/icons/message.svg',
+    'admin_new_comment'      => '/assets/icons/reply.svg',
+    'admin_new_report'       => '/assets/icons/report.svg',
+    'admin_new_submission'   => '/assets/icons/message.svg',
+    'admin_new_feedback'     => '/assets/icons/message.svg',
+];
+
+function createNotification(int $userId, string $type, ?int $actorId = null, ?string $link = null, ?string $message = null): void {
+    $db = getDB();
+    $stmt = $db->prepare("INSERT INTO notifications (user_id, type, actor_id, link, message) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param('isiss', $userId, $type, $actorId, $link, $message);
+    $stmt->execute();
+    $stmt->close();
+}
+
+function notifyAdmins(string $type, ?int $actorId = null, ?string $link = null, ?string $message = null): void {
+    $db = getDB();
+    $result = $db->query("SELECT id FROM users WHERE is_admin = 1");
+    while ($row = $result->fetch_assoc()) {
+        if ($actorId !== null && (int)$row['id'] === $actorId) continue;
+        createNotification((int)$row['id'], $type, $actorId, $link, $message);
+    }
+}
+
+function getNotificationsForUser(int $userId, int $limit = 50): array {
+    $db = getDB();
+    $stmt = $db->prepare(
+        "SELECT n.*, u.username AS actor_username, u.avatar_url AS actor_avatar
+         FROM notifications n
+         LEFT JOIN users u ON u.id = n.actor_id
+         WHERE n.user_id = ?
+         ORDER BY n.created_at DESC
+         LIMIT ?"
+    );
+    $stmt->bind_param('ii', $userId, $limit);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $rows;
+}
+
+function getUnreadNotificationCount(int $userId): int {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT COUNT(*) AS cnt FROM notifications WHERE user_id = ? AND is_read = 0");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $count = $stmt->get_result()->fetch_assoc()['cnt'];
+    $stmt->close();
+    return (int)$count;
+}
+
+function markAllNotificationsRead(int $userId): void {
+    $db = getDB();
+    $stmt = $db->prepare("UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $stmt->close();
+}
+
+function renderNotificationText(array $n): string {
+    $actor = !empty($n['actor_username']) ? '<a href="/@' . e($n['actor_username']) . '"><strong>' . e($n['actor_username']) . '</strong></a>' : 'ScratchNews';
+    switch ($n['type']) {
+        case 'follow': return $actor . ' followed you';
+        case 'article_comment': return $actor . ' commented on your article';
+        case 'profile_comment': return $actor . ' commented on your profile';
+        case 'comment_reply': return $actor . ' replied to your comment';
+        case 'article_liked': return $actor . ' liked your article';
+        case 'article_disliked': return $actor . ' disliked your article';
+        case 'article_saved': return $actor . ' saved your article';
+        case 'article_approved': return 'Your article was approved';
+        case 'article_rejected': return 'Your article was rejected';
+        case 'followed_user_article': return $actor . ' published a new article';
+        case 'account_banned': return 'Your account was banned';
+        case 'comment_deleted': return 'Your comment was removed for violating community guidelines';
+        case 'admin_new_account': return 'New account ' . $actor . ' was created';
+        case 'admin_new_comment': return 'New comment was made by ' . $actor;
+        case 'admin_new_report': return 'New comment report submitted';
+        case 'admin_new_submission': return 'New article submission from ' . $actor;
+        case 'admin_new_feedback': return 'New feedback submitted';
+        default: return 'New notification';
+    }
 }

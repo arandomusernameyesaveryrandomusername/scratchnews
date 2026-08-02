@@ -17,7 +17,14 @@
     <?php if (!empty($_SESSION['reader_username'])):
         $navUser = getUserById($_SESSION['reader_id']);
         $navAvatar = $navUser['avatar_url'] ?? null;
+        $unreadCount = getUnreadNotificationCount($_SESSION['reader_id']);
     ?>
+        <a href="/messages.php" class="nav-messages-link" title="Messages">
+            <img src="/assets/icons/message.svg" class="icon-svg" alt="Messages">
+            <?php if ($unreadCount > 0): ?>
+                <span class="nav-messages-badge"><?= $unreadCount > 99 ? '99+' : $unreadCount ?></span>
+            <?php endif; ?>
+        </a>
         <div class="user-nav">
             <button class="user-nav-toggle" onclick="document.getElementById('userMenu').classList.toggle('open')">
                 <?php if ($navAvatar): ?>
@@ -42,4 +49,15 @@
         <a href="/register">Sign Up</a>
     <?php endif; ?>
 </nav>
+<style>
+.nav-messages-link { position: relative; display: inline-flex; align-items: center; margin: 0 0.75rem; }
+.nav-messages-link .icon-svg { width: 22px; height: 22px; }
+.nav-messages-badge {
+    position: absolute; top: -6px; right: -8px;
+    background: #ff9c2b; color: #fff;
+    font-size: 0.65rem; font-weight: 700;
+    line-height: 1; padding: 2px 5px;
+    border-radius: 999px; min-width: 16px; text-align: center;
+}
+</style>
 </header>
