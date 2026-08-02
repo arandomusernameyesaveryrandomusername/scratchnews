@@ -16,6 +16,7 @@ startSession();
 <?php include __DIR__ . '/includes/empty-header.php'; ?>
 <main>
     <h2>Changelog</h2>
+    <p>[Aug2] v0.17 - Pretty good update! Messages, Moderation Filter</p>
     <p>v0.16.1 - Username changing (Settings > Customization), fixed dark mode footer staying dark on light mode, copy button turned to simple icon, added article saving, "My Articles" page (your articles plus the saved ones)</p>
     <p>[Aug1] v0.16 - SUPER MASSIVE UPDATE! Profile pics, banners, descriptions, new account signup page, signin and login with Google, settings page, copy article content to clipboard (so that the content is saved even if there's an error while saving), donation page, refreshed profile pages, and PROFILE COMMENTS!!! This is a great update.</p>
     <p>[Jul30] v0.15.2 - Added Fallback API</p>
