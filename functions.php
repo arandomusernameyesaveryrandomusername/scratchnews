@@ -2085,9 +2085,11 @@ function moderateText(string $text): array {
     ]));
     $response = curl_exec($ch);
     $err = curl_errno($ch);
+    $errMsg = curl_error($ch);
     curl_close($ch);
 
     if ($err || !$response) {
+        error_log('ScratchNews moderation curl error: ' . $errMsg . ' (errno ' . $err . ')');
         // Fail open: if the moderation API is unreachable, don't block comments.
         return ['flagged' => false, 'categories' => [], 'error' => true];
     }
@@ -2095,6 +2097,7 @@ function moderateText(string $text): array {
     $data = json_decode($response, true);
     $result = $data['results'][0] ?? null;
     if (!$result) {
+        error_log('ScratchNews moderation unexpected response: ' . $response);
         return ['flagged' => false, 'categories' => [], 'error' => true];
     }
 
