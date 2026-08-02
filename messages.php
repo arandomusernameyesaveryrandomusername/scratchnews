@@ -32,9 +32,10 @@ define('HIDE_SUBSCRIBE_WIDGET', true);
 .message-row {
     display: flex; align-items: flex-start; gap: 0.75rem;
     padding: 0.9rem; border-radius: 8px;
-    text-decoration: none; color: inherit;
+    text-decoration: none; color: inherit; cursor: pointer;
     border: 1px solid rgba(128,128,128,0.2); margin-bottom: 0.5rem;
 }
+.message-row a { position: relative; z-index: 1; }
 .message-row-icon { width: 28px; height: 28px; flex-shrink: 0; margin-top: 2px; }
 .message-row-snippet { opacity: 0.7; font-size: 0.85rem; margin-top: 2px; }
 .message-row-time { opacity: 0.55; font-size: 0.75rem; margin-top: 4px; }
@@ -54,7 +55,7 @@ define('HIDE_SUBSCRIBE_WIDGET', true);
                     $icon = NOTIFICATION_ICONS[$n['type']] ?? '/assets/icons/message.svg';
                     $link = $n['link'] ?: '#';
                 ?>
-                <a href="<?= e($link) ?>" class="message-row">
+                <div class="message-row" onclick="location.href='<?= e($link) ?>'">
                     <img src="<?= e($icon) ?>" class="message-row-icon" alt="">
                     <div>
                         <div><?= renderNotificationText($n) ?></div>
@@ -63,7 +64,7 @@ define('HIDE_SUBSCRIBE_WIDGET', true);
                         <?php endif; ?>
                         <div class="message-row-time"><?= utcTimeTag($n['created_at'], 'datetime') ?></div>
                     </div>
-                </a>
+                </div>
             <?php endforeach; ?>
         <?php endif; ?>
     </div>
