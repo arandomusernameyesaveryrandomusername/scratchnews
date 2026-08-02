@@ -69,7 +69,7 @@ define('HIDE_SUBSCRIBE_WIDGET', true);
 .settings-tab.active { background: #e8a33d; color: #2a2a2a; border-color: #e8a33d; }
 .settings-panel { flex: 1; min-width: 280px; }
 .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 0; border-bottom: 1px solid rgba(128,128,128,0.2); }
-form.settings-row { background: transparent; padding: 0.9rem 0; border-radius: 0; box-shadow: none; max-width: none; }
+form.settings-row { background: transparent !important; padding: 0.9rem 0 !important; border-radius: 0 !important; box-shadow: none !important; max-width: none !important; margin: 0 !important; }
 .settings-row:last-child { border-bottom: none; }
 .settings-label { font-weight: 600; }
 .settings-sub { font-size: 0.85rem; opacity: 0.75; margin-top: 0.2rem; }
@@ -143,7 +143,7 @@ form.settings-row { background: transparent; padding: 0.9rem 0; border-radius: 0
                         <div class="settings-label">Avatar, Banner &amp; Bio</div>
                         <div class="settings-sub">Manage your profile customization from your profile page.</div>
                     </div>
-                    <a href="/@<?= e($user['username']) ?>" class="btn secondary">Go to Profile</a>
+                    <a href="/@<?= e($user['username']) ?>" class="btn secondary">Profile</a>
                 </div>
 
             <?php elseif ($activeTab === 'security'): ?>
