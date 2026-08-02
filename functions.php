@@ -2057,3 +2057,111 @@ function renderNotificationText(array $n): string {
         default: return 'New notification';
     }
 }
+// ---- Comment Moderation (OpenAI Moderation API) ----
+// Requires OPENAI_API_KEY defined in config.php (not in chat/repo). Add:
+//   define('OPENAI_API_KEY', 'sk-...');
+
+const MODERATION_LOCK_TIERS = [
+    1 => 3600,        // 1 hour
+    2 => 14400,       // 4 hours
+    3 => 43200,       // 12 hours
+    4 => 86400,       // 1 day
+    5 => 259200,      // 3 days
+];
+const MODERATION_BAN_STRIKE = 6;
+
+function moderateText(string $text): array {
+    $ch = curl_init('https://api.openai.com/v1/moderations');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . OPENAI_API_KEY,
+    ]);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+        'model' => 'omni-moderation-latest',
+        'input' => $text,
+    ]));
+    $response = curl_exec($ch);
+    $err = curl_errno($ch);
+    curl_close($ch);
+
+    if ($err || !$response) {
+        // Fail open: if the moderation API is unreachable, don't block comments.
+        return ['flagged' => false, 'categories' => [], 'error' => true];
+    }
+
+    $data = json_decode($response, true);
+    $result = $data['results'][0] ?? null;
+    if (!$result) {
+        return ['flagged' => false, 'categories' => [], 'error' => true];
+    }
+
+    $flaggedCategories = [];
+    foreach ($result['categories'] ?? [] as $category => $isFlagged) {
+        if ($isFlagged) $flaggedCategories[] = $category;
+    }
+
+    return ['flagged' => (bool)($result['flagged'] ?? false), 'categories' => $flaggedCategories, 'error' => false];
+}
+
+function getCommentLockStatus(int $userId): array {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT comment_locked_until FROM users WHERE id = ?");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    $until = $row['comment_locked_until'] ?? null;
+    if ($until && strtotime($until) > time()) {
+        return ['locked' => true, 'until' => $until];
+    }
+    return ['locked' => false, 'until' => null];
+}
+
+function recordModerationStrike(int $userId): string {
+    $db = getDB();
+    $stmt = $db->prepare("UPDATE users SET moderation_strikes = moderation_strikes + 1 WHERE id = ?");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $stmt->close();
+
+    $stmt = $db->prepare("SELECT moderation_strikes FROM users WHERE id = ?");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $strikes = (int)($stmt->get_result()->fetch_assoc()['moderation_strikes'] ?? 1);
+    $stmt->close();
+
+    if ($strikes >= MODERATION_BAN_STRIKE) {
+        banUser($userId);
+        return 'Your account has been banned for repeated community guideline violations.';
+    }
+
+    $seconds = MODERATION_LOCK_TIERS[$strikes] ?? end(MODERATION_LOCK_TIERS);
+    $until = date('Y-m-d H:i:s', time() + $seconds);
+    $stmt = $db->prepare("UPDATE users SET comment_locked_until = ? WHERE id = ?");
+    $stmt->bind_param('si', $until, $userId);
+    $stmt->execute();
+    $stmt->close();
+
+    return "Your comment violates ScratchNews's community guidelines. You can comment again after " . $until . '.';
+}
+
+// Call this BEFORE addComment()/addProfileComment(). If ['allowed'=>false], show
+// $result['reason'] to the user instead of inserting the comment.
+function checkAndModerateComment(int $userId, string $text): array {
+    $lock = getCommentLockStatus($userId);
+    if ($lock['locked']) {
+        return ['allowed' => false, 'reason' => 'You are temporarily blocked from commenting until ' . $lock['until'] . '.'];
+    }
+
+    $mod = moderateText($text);
+    if ($mod['flagged']) {
+        $reason = recordModerationStrike($userId);
+        return ['allowed' => false, 'reason' => $reason];
+    }
+
+    return ['allowed' => true, 'reason' => null];
+}

@@ -16,6 +16,7 @@ define('GITHUB_TOKEN', 'github_pat_11B4S5JKY0MqMMJOEpdJAY_cb8SKvNMmdtP265Hoyfnox
 define('GITHUB_REPO', 'xTODB/scratchnews-data');
 define('GITHUB_BRANCH', 'main');
 define('GOOGLE_CLIENT_ID', '926088564769-se27dq865srapskopjuknjbqrf7qbm72.apps.googleusercontent.com');
+define('OPENAI_API_KEY', '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');
 
 function getDB(): mysqli {
     static $conn = null;

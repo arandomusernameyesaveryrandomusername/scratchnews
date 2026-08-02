@@ -170,7 +170,7 @@ if (!$article) {
                     <div class="share-menu" id="shareMenu">
                         <button type="button" class="share-option" data-share="copy">Copy Link</button>
                         <button type="button" class="share-option" data-share="text">Copy Article Text</button>
-                        <button type="button" class="share-option" data-share="discord">Share to Scratch/Discord</button>
+                        <button type="button" class="share-option" data-share="discord">Share to Scratch</button>
                         <button type="button" class="share-option" data-share="more" id="shareMoreBtn" style="display:none;">More...</button>
                     </div>
                 </div>
