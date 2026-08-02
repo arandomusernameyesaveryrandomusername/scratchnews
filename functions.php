@@ -2060,23 +2060,12 @@ function renderNotificationText(array $n): string {
 // ---- Comment Moderation (local keyword/pattern filter) ----
 // Modeled on Scratch's actual Community Guidelines: no swearing/rude language,
 // no bullying/insults, no NFE content (gore/violence/sexual/self-harm), no
-// personal info sharing, no spam/scam links. Edit the arrays below to tune it.
+// personal info sharing, no spam/scam links. Words live in the
+// `moderation_words` table, managed from /admin/moderation-words.php.
+// Regex patterns stay hardcoded (too technical for a simple word-list UI).
 
-const MODERATION_PROFANITY = [
-    'fuck', 'shit', 'bitch', 'asshole', 'cunt', 'dick', 'pussy', 'bastard',
-    'nigger', 'nigga', 'faggot', 'retard', 'whore', 'slut',
-];
+const MODERATION_CATEGORIES = ['profanity', 'sexual', 'violence_selfharm'];
 
-const MODERATION_SEXUAL = [
-    'porn', 'nsfw', 'nude', 'sex tape', 'send nudes',
-];
-
-const MODERATION_VIOLENCE_SELFHARM = [
-    'kill yourself', 'kys', 'i wanna kms', 'wanna kms', 'i wana kms',
-    'gonna kms', 'kms', 'cut myself', 'self harm', 'suicide',
-];
-
-// Simple patterns (not exact words): emails, phone numbers, common scam link bait
 const MODERATION_PATTERNS = [
     '/\b[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\b/i',          // email addresses
     '/\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/',                     // phone numbers
@@ -2092,11 +2081,53 @@ const MODERATION_LOCK_TIERS = [
 ];
 const MODERATION_BAN_STRIKE = 6;
 
+function getModerationWords(?string $category = null): array {
+    $db = getDB();
+    if ($category !== null) {
+        $stmt = $db->prepare("SELECT id, category, word FROM moderation_words WHERE category = ? ORDER BY word ASC");
+        $stmt->bind_param('s', $category);
+    } else {
+        $stmt = $db->prepare("SELECT id, category, word FROM moderation_words ORDER BY category ASC, word ASC");
+    }
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $rows;
+}
+
+function addModerationWord(string $category, string $word): bool {
+    if (!in_array($category, MODERATION_CATEGORIES, true)) return false;
+    $word = strtolower(trim($word));
+    if ($word === '') return false;
+    $db = getDB();
+    $stmt = $db->prepare("INSERT IGNORE INTO moderation_words (category, word) VALUES (?, ?)");
+    $stmt->bind_param('ss', $category, $word);
+    $ok = $stmt->execute();
+    $stmt->close();
+    return $ok;
+}
+
+function removeModerationWord(int $id): void {
+    $db = getDB();
+    $stmt = $db->prepare("DELETE FROM moderation_words WHERE id = ?");
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $stmt->close();
+}
+
 function moderateText(string $text): array {
+    static $wordsByCategory = null;
+    if ($wordsByCategory === null) {
+        $wordsByCategory = [];
+        foreach (getModerationWords() as $row) {
+            $wordsByCategory[$row['category']][] = $row['word'];
+        }
+    }
+
     $normalized = strtolower($text);
     $flaggedCategories = [];
 
-    foreach (['profanity' => MODERATION_PROFANITY, 'sexual' => MODERATION_SEXUAL, 'violence_selfharm' => MODERATION_VIOLENCE_SELFHARM] as $category => $words) {
+    foreach ($wordsByCategory as $category => $words) {
         foreach ($words as $word) {
             if (str_contains($normalized, $word)) {
                 $flaggedCategories[] = $category;
