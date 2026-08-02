@@ -8,9 +8,9 @@
             <a href="/admin">Dashboard</a>
             <a href="/admin/users.php">Users</a>
             <a href="/admin/visits.php">Visitor Log</a>
-            <a href="/admin/submissions.php">Submissions<?php $c = getPendingSubmissionsCount(); if ($c > 0): ?><span class="admin-nav-badge"><?= $c ?></span><?php endif; ?></a>
-            <a href="/admin/feedback.php">Feedback<?php $c = getPendingFeedbackCount(); if ($c > 0): ?><span class="admin-nav-badge"><?= $c ?></span><?php endif; ?></a>
-            <a href="/admin/reports.php">Reports<?php $c = getPendingReportsCount(); if ($c > 0): ?><span class="admin-nav-badge"><?= $c ?></span><?php endif; ?></a>
+            <a href="/admin/submissions.php">Submissions</a>
+            <a href="/admin/feedback.php">Feedback</a>
+            <a href="/admin/reports.php">Reports</a>
             <a href="/admin/move.php">Move Content</a>
             <a href="/admin/moderation-words.php">Moderation Words</a>
             <a href="/admin/stats.php">Stats</a>
@@ -18,12 +18,3 @@
         </div>
     </nav>
 </header>
-<style>
-.admin-nav-menu a { position: relative; }
-.admin-nav-badge {
-    display: inline-flex; align-items: center; justify-content: center;
-    background: #ff9c2b; color: #fff; font-size: 0.7rem; font-weight: 700;
-    min-width: 18px; height: 18px; border-radius: 999px; padding: 0 5px;
-    margin-left: 0.4rem; vertical-align: middle;
-}
-</style>
