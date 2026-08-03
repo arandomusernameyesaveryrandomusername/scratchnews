@@ -2218,7 +2218,7 @@ function checkAndModerateComment(int $userId, string $text): array {
 // ---- Admin nav badge counts ----
 function getPendingReportsCount(): int {
     $db = getDB();
-    $result = $db->query("SELECT COUNT(*) AS cnt FROM comment_reports");
+    $result = $db->query("SELECT COUNT(*) AS cnt FROM comment_reports cr JOIN comments c ON c.id = cr.comment_id");
     return (int)($result->fetch_assoc()['cnt'] ?? 0);
 }
 
@@ -2230,6 +2230,27 @@ function getPendingSubmissionsCount(): int {
 
 function getPendingFeedbackCount(): int {
     $db = getDB();
-    $result = $db->query("SELECT COUNT(*) AS cnt FROM feedback");
+    $result = $db->query("SELECT COUNT(*) AS cnt FROM feedback WHERE is_read = 0");
     return (int)($result->fetch_assoc()['cnt'] ?? 0);
+}
+
+function getAllFeedback(): array {
+    $db = getDB();
+    $result = $db->query(
+        "SELECT f.*, u.username FROM feedback f LEFT JOIN users u ON u.id = f.user_id ORDER BY f.created_at DESC"
+    );
+    return $result->fetch_all(MYSQLI_ASSOC);
+}
+
+function markAllFeedbackRead(): void {
+    $db = getDB();
+    $db->query("UPDATE feedback SET is_read = 1 WHERE is_read = 0");
+}
+
+function deleteFeedback(int $id): void {
+    $db = getDB();
+    $stmt = $db->prepare("DELETE FROM feedback WHERE id = ?");
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $stmt->close();
 }
