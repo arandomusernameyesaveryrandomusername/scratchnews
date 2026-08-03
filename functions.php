@@ -2234,14 +2234,6 @@ function getPendingFeedbackCount(): int {
     return (int)($result->fetch_assoc()['cnt'] ?? 0);
 }
 
-function getAllFeedback(): array {
-    $db = getDB();
-    $result = $db->query(
-        "SELECT f.*, u.username FROM feedback f LEFT JOIN users u ON u.id = f.user_id ORDER BY f.created_at DESC"
-    );
-    return $result->fetch_all(MYSQLI_ASSOC);
-}
-
 function markAllFeedbackRead(): void {
     $db = getDB();
     $db->query("UPDATE feedback SET is_read = 1 WHERE is_read = 0");
