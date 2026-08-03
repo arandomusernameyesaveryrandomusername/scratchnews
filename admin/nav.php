@@ -13,6 +13,7 @@
             <a href="/admin/reports.php">Reports<?php $c = getPendingReportsCount(); if ($c > 0): ?><span class="admin-nav-badge"><?= $c ?></span><?php endif; ?></a>
             <a href="/admin/move.php">Move Content</a>
             <a href="/admin/moderation-words.php">Moderation Words</a>
+            <a href="/admin/banners.php">Banners</a>
             <a href="/admin/stats.php">Stats</a>
             <a href="/logout">Log Out</a>
         </div>

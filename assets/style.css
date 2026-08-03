@@ -743,3 +743,16 @@ body.dark .footer-copyright { border-top: 1px solid rgba(255,255,255,0.1); color
     overflow-x: auto;
     white-space: pre;
 }
+/* v0.18 banners */
+#promoBanners { display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem 1.5rem 0; }
+.promo-banner { position: relative; border-radius: 8px; overflow: hidden; }
+.promo-banner-link { display: block; text-decoration: none; color: inherit; }
+.promo-banner-img { width: 100%; max-height: 220px; object-fit: cover; display: block; }
+.promo-banner-text { padding: 0.6rem 1rem; background: rgba(0,0,0,0.6); color: #fff; position: absolute; bottom: 0; left: 0; right: 0; }
+.promo-banner-close {
+    position: absolute; top: 0.5rem; right: 0.5rem; z-index: 2;
+    width: 26px; height: 26px; border-radius: 50%; border: none;
+    background: rgba(0,0,0,0.55); color: #fff; font-size: 1.1rem; line-height: 1;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.promo-banner-close:hover { background: rgba(0,0,0,0.8); }

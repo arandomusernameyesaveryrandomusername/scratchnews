@@ -2313,3 +2313,51 @@ function deleteFeedback(int $id): void {
     $stmt->execute();
     $stmt->close();
 }
+function getActiveBanners(): array {
+    $db = getDB();
+    return $db->query("SELECT * FROM banners WHERE is_active = 1 ORDER BY sort_order ASC, id ASC")->fetch_all(MYSQLI_ASSOC);
+}
+
+function getAllBanners(): array {
+    $db = getDB();
+    return $db->query("SELECT * FROM banners ORDER BY sort_order ASC, id ASC")->fetch_all(MYSQLI_ASSOC);
+}
+
+function getBannerById(int $id): ?array {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT * FROM banners WHERE id = ?");
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $row ?: null;
+}
+
+function createBanner(string $imageUrl, ?string $text, string $link, int $sortOrder = 0): int {
+    $db = getDB();
+    $stmt = $db->prepare("INSERT INTO banners (image_url, text, link, sort_order) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param('sssi', $imageUrl, $text, $link, $sortOrder);
+    $stmt->execute();
+    $id = $db->insert_id;
+    $stmt->close();
+    return $id;
+}
+
+function updateBanner(int $id, string $imageUrl, ?string $text, string $link, int $sortOrder, bool $isActive): bool {
+    $db = getDB();
+    $stmt = $db->prepare("UPDATE banners SET image_url = ?, text = ?, link = ?, sort_order = ?, is_active = ? WHERE id = ?");
+    $active = $isActive ? 1 : 0;
+    $stmt->bind_param('sssiii', $imageUrl, $text, $link, $sortOrder, $active, $id);
+    $ok = $stmt->execute();
+    $stmt->close();
+    return $ok;
+}
+
+function deleteBanner(int $id): bool {
+    $db = getDB();
+    $stmt = $db->prepare("DELETE FROM banners WHERE id = ?");
+    $stmt->bind_param('i', $id);
+    $ok = $stmt->execute();
+    $stmt->close();
+    return $ok;
+}

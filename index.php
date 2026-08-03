@@ -34,6 +34,34 @@ $popular = getPopularArticles(4);
     You aren't email verified! Check your inbox to get access to likes, dislikes, and comments.
 </div>
 <?php endif; endif; ?>
+<?php $banners = getActiveBanners(); if (!empty($banners)): ?>
+<div id="promoBanners">
+    <?php foreach ($banners as $b): ?>
+        <div class="promo-banner" data-banner-id="<?= (int)$b['id'] ?>">
+            <button type="button" class="promo-banner-close" aria-label="Close">&times;</button>
+            <a href="<?= e($b['link']) ?>" class="promo-banner-link">
+                <img src="<?= e($b['image_url']) ?>" alt="" class="promo-banner-img">
+                <?php if (!empty($b['text'])): ?><div class="promo-banner-text"><?= e($b['text']) ?></div><?php endif; ?>
+            </a>
+        </div>
+    <?php endforeach; ?>
+</div>
+<script>
+(function() {
+    var dismissed = [];
+    try { dismissed = JSON.parse(localStorage.getItem('dismissedBanners') || '[]'); } catch (e) {}
+    document.querySelectorAll('.promo-banner').forEach(function(el) {
+        var id = el.getAttribute('data-banner-id');
+        if (dismissed.indexOf(id) !== -1) { el.remove(); return; }
+        el.querySelector('.promo-banner-close').addEventListener('click', function() {
+            dismissed.push(id);
+            try { localStorage.setItem('dismissedBanners', JSON.stringify(dismissed)); } catch (e) {}
+            el.remove();
+        });
+    });
+})();
+</script>
+<?php endif; ?>
 <main class="home-main">
     <?php if (empty($articles)): ?>
         <p>No articles yet. Log in to the <a href="/admin/">login panel</a> to publish the first one.</p>
