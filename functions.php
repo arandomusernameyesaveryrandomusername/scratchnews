@@ -2214,3 +2214,22 @@ function checkAndModerateComment(int $userId, string $text): array {
 
     return ['allowed' => true, 'reason' => null];
 }
+
+// ---- Admin nav badge counts ----
+function getPendingReportsCount(): int {
+    $db = getDB();
+    $result = $db->query("SELECT COUNT(*) AS cnt FROM comment_reports");
+    return (int)($result->fetch_assoc()['cnt'] ?? 0);
+}
+
+function getPendingSubmissionsCount(): int {
+    $db = getDB();
+    $result = $db->query("SELECT COUNT(*) AS cnt FROM submissions WHERE status = 'pending'");
+    return (int)($result->fetch_assoc()['cnt'] ?? 0);
+}
+
+function getPendingFeedbackCount(): int {
+    $db = getDB();
+    $result = $db->query("SELECT COUNT(*) AS cnt FROM feedback");
+    return (int)($result->fetch_assoc()['cnt'] ?? 0);
+}
