@@ -732,15 +732,80 @@ function sendVerificationEmail($toEmail, $toUsername, $token) {
     return $httpCode >= 200 && $httpCode < 300;
 }
 
-function createSubmission($userId, $title, $summary, $content) {
+function createSubmission($userId, $title, $summary, $content, ?string $imageUrl = null, array $categoryIds = [], string $status = 'pending') {
     $db = getDB();
-    $stmt = $db->prepare("INSERT INTO submissions (user_id, title, summary, content) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("isss", $userId, $title, $summary, $content);
+    $stmt = $db->prepare("INSERT INTO submissions (user_id, title, summary, content, image_url, status) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("isssss", $userId, $title, $summary, $content, $imageUrl, $status);
     $stmt->execute();
     $id = $db->insert_id;
     $stmt->close();
-    notifyAdmins('admin_new_submission', $userId, '/admin/', $title);
+    setSubmissionCategories($id, $categoryIds);
+    if ($status === 'pending') {
+        notifyAdmins('admin_new_submission', $userId, '/admin/', $title);
+    }
     return $id;
+}
+
+function updateSubmission(int $id, string $title, string $summary, string $content, ?string $imageUrl, array $categoryIds, string $status = 'pending'): bool {
+    $db = getDB();
+    $stmt = $db->prepare("UPDATE submissions SET title = ?, summary = ?, content = ?, image_url = ?, status = ? WHERE id = ?");
+    $stmt->bind_param("sssssi", $title, $summary, $content, $imageUrl, $status, $id);
+    $ok = $stmt->execute();
+    $stmt->close();
+    setSubmissionCategories($id, $categoryIds);
+    if ($status === 'pending') {
+        $submission = getSubmissionById($id);
+        if ($submission) {
+            notifyAdmins('admin_new_submission', (int)$submission['user_id'], '/admin/', $title);
+        }
+    }
+    return $ok;
+}
+
+function getSubmissionCategoryIds(int $submissionId): array {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT category_id FROM submission_categories WHERE submission_id = ?");
+    $stmt->bind_param('i', $submissionId);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return array_map('intval', array_column($rows, 'category_id'));
+}
+
+function setSubmissionCategories(int $submissionId, array $categoryIds): void {
+    $categoryIds = array_slice(array_unique(array_map('intval', $categoryIds)), 0, 3);
+    $db = getDB();
+    $stmt = $db->prepare("DELETE FROM submission_categories WHERE submission_id = ?");
+    $stmt->bind_param('i', $submissionId);
+    $stmt->execute();
+    $stmt->close();
+    if (empty($categoryIds)) return;
+    $stmt = $db->prepare("INSERT INTO submission_categories (submission_id, category_id) VALUES (?, ?)");
+    foreach ($categoryIds as $catId) {
+        $stmt->bind_param('ii', $submissionId, $catId);
+        $stmt->execute();
+    }
+    $stmt->close();
+}
+
+function getDraftsByUser(int $userId): array {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT * FROM submissions WHERE user_id = ? AND status = 'draft' ORDER BY created_at DESC");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $rows;
+}
+
+function getUserSubmissionById(int $id, int $userId): ?array {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT * FROM submissions WHERE id = ? AND user_id = ?");
+    $stmt->bind_param('ii', $id, $userId);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $row ?: null;
 }
 
 function getPendingSubmissions() {
@@ -783,10 +848,12 @@ function approveSubmission($id) {
     }
 
     $articleId = getNextArticleId();
-    $stmt = $db->prepare("INSERT INTO articles (id, title, summary, content, author, user_id) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("issssi", $articleId, $submission['title'], $submission['summary'], $submission['content'], $submission['username'], $submission['user_id']);
+    $stmt = $db->prepare("INSERT INTO articles (id, title, summary, content, author, image_url, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("isssssi", $articleId, $submission['title'], $submission['summary'], $submission['content'], $submission['username'], $submission['image_url'], $submission['user_id']);
     $stmt->execute();
     $stmt->close();
+
+    setArticleCategories($articleId, getSubmissionCategoryIds($id));
 
     $stmt = $db->prepare("UPDATE submissions SET status = 'approved', reviewed_at = NOW() WHERE id = ?");
     $stmt->bind_param("i", $id);

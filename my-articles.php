@@ -17,11 +17,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'unsav
 }
 
 $view = $_GET['view'] ?? 'saved';
-if (!in_array($view, ['saved', 'mine'], true)) $view = 'saved';
+if (!in_array($view, ['saved', 'mine', 'drafts'], true)) $view = 'saved';
 
-$articles = $view === 'saved'
-    ? getSavedArticlesByUser($_SESSION['reader_id'])
-    : getArticlesByUser($_SESSION['reader_id']);
+$drafts = [];
+$articles = [];
+if ($view === 'drafts') {
+    $drafts = getDraftsByUser($_SESSION['reader_id']);
+} elseif ($view === 'saved') {
+    $articles = getSavedArticlesByUser($_SESSION['reader_id']);
+} else {
+    $articles = getArticlesByUser($_SESSION['reader_id']);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -48,8 +54,38 @@ $articles = $view === 'saved'
     <div class="my-articles-tabs">
         <a href="/my-articles.php?view=saved" class="my-articles-tab <?= $view === 'saved' ? 'active' : '' ?>">Saved Articles</a>
         <a href="/my-articles.php?view=mine" class="my-articles-tab <?= $view === 'mine' ? 'active' : '' ?>">My Articles</a>
+        <a href="/my-articles.php?view=drafts" class="my-articles-tab <?= $view === 'drafts' ? 'active' : '' ?>">Drafts</a>
     </div>
-    <?php if (empty($articles)): ?>
+    <?php if ($view === 'drafts'): ?>
+        <?php if (empty($drafts)): ?>
+            <p>No drafts yet. <a href="/submit.php">Start a new article</a> and save it as a draft any time.</p>
+        <?php else: ?>
+            <div class="search-results-list">
+                <?php foreach ($drafts as $i => $d): ?>
+                    <?php
+                        $desc = $d['summary'] ?? '';
+                        if (mb_strlen($desc) > 140) $desc = mb_substr($desc, 0, 140) . '...';
+                    ?>
+                    <div class="search-result <?= $i === 0 ? 'search-result-first' : '' ?>" style="flex-direction:column;">
+                        <a href="/submit.php?draft_id=<?= (int)$d['id'] ?>" style="display:flex; gap:1rem; text-decoration:none; color:inherit;">
+                            <?php if (!empty($d['image_url'])): ?>
+                                <img src="<?= e($d['image_url']) ?>" alt="" class="search-result-thumb">
+                            <?php else: ?>
+                                <div class="search-result-thumb search-result-thumb-placeholder"></div>
+                            <?php endif; ?>
+                            <div class="search-result-body">
+                                <div>
+                                    <div class="search-result-title"><?= e($d['title']) ?: '(untitled draft)' ?></div>
+                                    <div class="meta">Last saved <?= utcTimeTag($d['created_at']) ?></div>
+                                    <?php if ($desc !== ''): ?><div class="search-result-desc"><?= e($desc) ?></div><?php endif; ?>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    <?php elseif (empty($articles)): ?>
         <p><?= $view === 'saved' ? 'No saved articles yet.' : 'No articles published yet.' ?></p>
     <?php else: ?>
         <div class="search-results-list">
