@@ -50,7 +50,7 @@
     <?php endif; ?>
 </nav>
 <style>
-.nav-messages-link { position: relative; display: inline-flex; align-items: center; align-self: center; margin: 0 1.5rem 0 0.75rem; }
+.nav-messages-link { position: relative; display: inline-flex; align-items: center; align-self: center; vertical-align: middle; margin: 0 1.5rem 0 0.75rem; }
 .nav-messages-link .icon-svg { width: 30px; height: 30px; vertical-align: middle; }
 .nav-messages-badge {
     position: absolute; top: -6px; right: -8px;
