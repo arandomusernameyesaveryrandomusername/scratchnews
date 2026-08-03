@@ -2218,7 +2218,7 @@ function checkAndModerateComment(int $userId, string $text): array {
 // ---- Admin nav badge counts ----
 function getPendingReportsCount(): int {
     $db = getDB();
-    $result = $db->query("SELECT COUNT(*) AS cnt FROM comment_reports cr JOIN comments c ON c.id = cr.comment_id");
+    $result = $db->query("SELECT COUNT(*) AS cnt FROM comment_reports WHERE status = 'pending'");
     return (int)($result->fetch_assoc()['cnt'] ?? 0);
 }
 
