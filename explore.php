@@ -33,6 +33,34 @@ function exploreTabLink(string $cat, string $sort, string $author, string $from,
 <body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
 <script>if(document.body.hasAttribute('data-theme-auto')&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.body.classList.add('dark');}</script>
 <?php include __DIR__ . '/includes/header.php'; ?>
+<?php $banners = getActiveBanners(); if (!empty($banners)): ?>
+<div id="promoBanners">
+    <?php foreach ($banners as $b): ?>
+        <div class="promo-banner" data-banner-id="<?= (int)$b['id'] ?>">
+            <button type="button" class="promo-banner-close" aria-label="Close">&times;</button>
+            <a href="<?= e($b['link']) ?>" class="promo-banner-link">
+                <img src="<?= e($b['image_url']) ?>" alt="" class="promo-banner-img">
+                <?php if (!empty($b['text'])): ?><div class="promo-banner-text"><?= e($b['text']) ?></div><?php endif; ?>
+            </a>
+        </div>
+    <?php endforeach; ?>
+</div>
+<script>
+(function() {
+    var dismissed = [];
+    try { dismissed = JSON.parse(localStorage.getItem('dismissedBanners') || '[]'); } catch (e) {}
+    document.querySelectorAll('.promo-banner').forEach(function(el) {
+        var id = el.getAttribute('data-banner-id');
+        if (dismissed.indexOf(id) !== -1) { el.remove(); return; }
+        el.querySelector('.promo-banner-close').addEventListener('click', function() {
+            dismissed.push(id);
+            try { localStorage.setItem('dismissedBanners', JSON.stringify(dismissed)); } catch (e) {}
+            el.remove();
+        });
+    });
+})();
+</script>
+<?php endif; ?>
 <main class="home-main">
     <h2 class="explore-title">Explore</h2>
     <div class="explore-tabs">
