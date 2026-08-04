@@ -138,57 +138,43 @@ function recordHeartbeat(string $sessionKey, ?string $source = null, ?int $userI
     $row = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
+    $add = HEARTBEAT_INTERVAL_SECONDS;
+
     if ($row) {
         $secondsSinceLast = time() - strtotime($row['last_seen']);
         if ($secondsSinceLast < HEARTBEAT_INTERVAL_SECONDS - 5) return;
-        $add = HEARTBEAT_INTERVAL_SECONDS;
         $stmt = $db->prepare("UPDATE site_sessions SET seconds_active = seconds_active + ?, last_seen = NOW(), user_id = ? WHERE session_key = ?");
         $stmt->bind_param('iis', $add, $userId, $sessionKey);
         $stmt->execute();
         $stmt->close();
     } else {
-        $initialSeconds = HEARTBEAT_INTERVAL_SECONDS;
         $stmt = $db->prepare("INSERT INTO site_sessions (session_key, seconds_active, first_seen, last_seen, source, user_id) VALUES (?, ?, NOW(), NOW(), ?, ?)");
-        $stmt->bind_param('sisi', $sessionKey, $initialSeconds, $source, $userId);
+        $stmt->bind_param('sisi', $sessionKey, $add, $source, $userId);
         $stmt->execute();
         $stmt->close();
     }
 
-    $db->query("DELETE FROM site_sessions WHERE last_seen < DATE_SUB(NOW(), INTERVAL 90 DAY)");
-}
-
-function getRecentSessions(int $days = 30): array {
-    $db = getDB();
-    $stmt = $db->prepare("SELECT s.session_key, s.seconds_active, s.source, s.first_seen, s.last_seen, s.excluded, u.username
-        FROM site_sessions s LEFT JOIN users u ON u.id = s.user_id
-        WHERE s.last_seen >= DATE_SUB(NOW(), INTERVAL ? DAY)
-        ORDER BY s.last_seen DESC");
-    $stmt->bind_param('i', $days);
-    $stmt->execute();
-    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    $stmt->close();
-    return $rows;
-}
-
-function setSessionExcluded(string $sessionKey, bool $excluded): void {
-    $db = getDB();
-    $val = $excluded ? 1 : 0;
-    $stmt = $db->prepare("UPDATE site_sessions SET excluded = ? WHERE session_key = ?");
-    $stmt->bind_param('is', $val, $sessionKey);
+    $stmt = $db->prepare("INSERT INTO time_totals_daily (visit_date, total_seconds) VALUES (CURDATE(), ?) ON DUPLICATE KEY UPDATE total_seconds = total_seconds + ?");
+    $stmt->bind_param('ii', $add, $add);
     $stmt->execute();
     $stmt->close();
+
+    $db->query("DELETE FROM site_sessions WHERE last_seen < DATE_SUB(NOW(), INTERVAL 7 DAY)");
 }
 
-function deleteSession(string $sessionKey): void {
+function getCollectiveTimeStats(): array {
     $db = getDB();
-    $stmt = $db->prepare("DELETE FROM site_sessions WHERE session_key = ?");
-    $stmt->bind_param('s', $sessionKey);
-    $stmt->execute();
-    $stmt->close();
+    $allTime = $db->query("SELECT COALESCE(SUM(total_seconds), 0) AS s FROM time_totals_daily")->fetch_assoc()['s'];
+    $today = $db->query("SELECT COALESCE(total_seconds, 0) AS s FROM time_totals_daily WHERE visit_date = CURDATE()")->fetch_assoc()['s'] ?? 0;
+    return [
+        'all_time_hours' => round($allTime / 3600, 1),
+        'today_hours' => round($today / 3600, 1),
+    ];
 }
-function getTimeOnSiteStats(int $days = 30): array {
+
+function getTimeOnSiteStats(int $days = 7): array {
     $db = getDB();
-    $stmt = $db->prepare("SELECT seconds_active FROM site_sessions WHERE last_seen >= DATE_SUB(NOW(), INTERVAL ? DAY) AND seconds_active > 0 AND excluded = 0");
+    $stmt = $db->prepare("SELECT seconds_active FROM site_sessions WHERE last_seen >= DATE_SUB(NOW(), INTERVAL ? DAY) AND seconds_active > 0");
     $stmt->bind_param('i', $days);
     $stmt->execute();
     $values = array_column($stmt->get_result()->fetch_all(MYSQLI_ASSOC), 'seconds_active');
