@@ -84,7 +84,6 @@ $banners = getAllBanners();
                     <label>Replace image (optional)</label>
                     <input type="file" name="image" accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml">
                     <label>Text (optional)</label>
-                    <input type="text" name="text" value="<?= e($b['text'] ?? '') ?>">
                     <label>Link</label>
                     <input type="text" name="link" value="<?= e($b['link']) ?>" required>
                     <label>Sort order (lower shows first)</label>
@@ -110,7 +109,6 @@ $banners = getAllBanners();
         <label>Image</label>
         <input type="file" name="image" accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml" required>
         <label>Text (optional)</label>
-        <input type="text" name="text">
         <label>Link (internal path or full URL)</label>
         <input type="text" name="link" placeholder="/register or https://scratch.mit.edu/users/ScratchNews" required>
         <label>Sort order (lower shows first)</label>

@@ -41,7 +41,6 @@ $popular = getPopularArticles(4);
             <button type="button" class="promo-banner-close" aria-label="Close">&times;</button>
             <a href="<?= e($b['link']) ?>" class="promo-banner-link">
                 <img src="<?= e($b['image_url']) ?>" alt="" class="promo-banner-img">
-                <?php if (!empty($b['text'])): ?><div class="promo-banner-text"><?= e($b['text']) ?></div><?php endif; ?>
             </a>
         </div>
     <?php endforeach; ?>
