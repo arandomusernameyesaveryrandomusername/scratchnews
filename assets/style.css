@@ -744,7 +744,7 @@ body.dark .footer-copyright { border-top: 1px solid rgba(255,255,255,0.1); color
     white-space: pre;
 }
 /* v0.18 banners */
-#promoBanners { display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem 1.5rem 0; max-width: 780px; margin: 0 auto; box-sizing: border-box; }
+#promoBanners { display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem 1.5rem 0; max-width: 1080px; margin: 0 auto; box-sizing: border-box; }
 .promo-banner { position: relative; border-radius: 8px; overflow: hidden; }
 .promo-banner-link { display: block; text-decoration: none; color: inherit; }
 .promo-banner-img { width: 100%; height: auto; object-fit: contain; display: block; }
