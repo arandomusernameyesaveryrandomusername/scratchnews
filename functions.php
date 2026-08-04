@@ -727,7 +727,7 @@ function createSubmission($userId, $title, $summary, $content, ?string $imageUrl
     $stmt->close();
     setSubmissionCategories($id, $categoryIds);
     if ($status === 'pending') {
-        notifyAdmins('admin_new_submission', $userId, '/admin/', $title);
+        notifyAdmins('admin_new_submission', $userId, '/admin/submissions.php', $title);
     }
     return $id;
 }
@@ -742,7 +742,7 @@ function updateSubmission(int $id, string $title, string $summary, string $conte
     if ($status === 'pending') {
         $submission = getSubmissionById($id);
         if ($submission) {
-            notifyAdmins('admin_new_submission', (int)$submission['user_id'], '/admin/', $title);
+            notifyAdmins('admin_new_submission', (int)$submission['user_id'], '/admin/submissions.php', $title);
         }
     }
     return $ok;
@@ -920,7 +920,7 @@ function submitFeedback($userId, $message) {
     $stmt->bind_param("is", $userId, $message);
     $stmt->execute();
     $stmt->close();
-    notifyAdmins('admin_new_feedback', $userId, '/admin/', $message);
+    notifyAdmins('admin_new_feedback', $userId, '/admin/feedback.php', $message);
 }
 
 function getAllFeedback() {

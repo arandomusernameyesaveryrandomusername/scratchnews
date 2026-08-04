@@ -207,6 +207,9 @@ $bioHasMore = $bioRaw !== '' && strpos($bioRaw, "\n") !== false;
             </div>
         <?php endif; ?>
     <?php elseif ($view === 'profile_comments'): ?>
+        <?php if (!empty($_GET['modError'])): ?>
+            <div class="alert error moderation-banner"><?= e($_GET['modError']) ?></div>
+        <?php endif; ?>
         <?php if (!empty($_SESSION['reader_id'])): ?>
         <form method="post" action="/profile-comment.php" class="profile-comment-box">
             <?= csrfField() ?>
