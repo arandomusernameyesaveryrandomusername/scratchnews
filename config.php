@@ -1,4 +1,5 @@
 <?php
+// in footer <a href="https://discord.com/oauth2/authorize?client_id=1531385304978817166">Discord Bot</a>
 date_default_timezone_set('UTC');
 define('DB_HOST', 'sql206.infinityfree.com');      
 define('DB_NAME', 'if0_41416197_scratchnews'); 

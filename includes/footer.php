@@ -15,7 +15,6 @@
                 <h4>Developers</h4>
                 <a href="/stats.php">Stats</a>
                 <a href="/api.php">API</a>
-                <a href="https://discord.com/oauth2/authorize?client_id=1531385304978817166">Discord Bot</a>
             </div>
             <div class="footer-col">
                 <h4>Account</h4>
