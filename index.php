@@ -13,7 +13,7 @@ $popular = getPopularArticles(4);
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <title><?= e(SITE_NAME) ?></title>
 <meta name="description" content="ScratchNews is a community-run news site covering updates, features, and stories from the Scratch programming community.">
-<link rel="stylesheet" href="/assets/style.css?v=11">
+<link rel="stylesheet" href="/assets/style.css?v=12">
 </head>
 <body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
 <script>if(document.body.hasAttribute('data-theme-auto')&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.body.classList.add('dark');}</script>
