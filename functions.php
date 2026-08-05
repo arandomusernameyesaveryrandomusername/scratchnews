@@ -225,7 +225,6 @@ function updateUserIp(int $userId, string $ip): void {
 
 // ---- Google Sign-In ----
 // TODO: paste your real Client ID from console.cloud.google.com (OAuth consent screen -> Credentials)
-define('GOOGLE_CLIENT_ID', '926088564769-se27dq865srapskopjuknjbqrf7qbm72.apps.googleusercontent.com');
 
 function verifyGoogleIdToken(string $idToken): ?array {
     $ch = curl_init('https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($idToken));
