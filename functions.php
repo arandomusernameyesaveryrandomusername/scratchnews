@@ -1909,13 +1909,21 @@ function renderProfileCommentThread(array $comment, bool $canReply, int $profile
         $html .= csrfField();
         $html .= '<input type="hidden" name="action" value="admin_delete">';
         $html .= '<input type="hidden" name="comment_id" value="' . (int)$comment['id'] . '">';
-        $html .= '<button type="submit" class="reply-toggle" title="Delete">Delete</button>';
+        $html .= '<button type="submit" class="reply-toggle" title="Delete"><img src="/assets/icons/comment_delete.svg" class="icon-svg-sm" alt=""> Delete</button>';
         $html .= '</form>';
     }
 
     if ($canReply) {
         $formId = 'pc-reply-form-' . (int)$comment['id'];
         $html .= '<button type="button" class="reply-toggle" title="Reply" onclick="document.getElementById(\'' . $formId . '\').classList.toggle(\'open\')"><img src="/assets/icons/reply.svg" class="icon-svg-sm" alt=""> Reply</button>';
+        if (!empty($_SESSION['is_admin'])) {
+            $html .= '<form method="post" class="report-form" onsubmit="return confirm(\'Delete this comment?\');">';
+            $html .= csrfField();
+            $html .= '<input type="hidden" name="action" value="admin_delete">';
+            $html .= '<input type="hidden" name="comment_id" value="' . (int)$comment['id'] . '">';
+            $html .= '<button type="submit" class="reply-toggle" title="Delete"><img src="/assets/icons/comment_delete.svg" class="icon-svg-sm" alt=""> Delete</button>';
+            $html .= '</form>';
+        }
         $html .= '<form method="post" action="/profile-comment.php" class="reply-form" id="' . $formId . '">';
         $html .= csrfField();
         $html .= '<input type="hidden" name="profile_user_id" value="' . (int)$profileUserId . '">';
@@ -2033,7 +2041,7 @@ function updateUserLocation(int $userId, ?float $lat, ?float $lng, ?string $coun
 
 // ---- Notifications ----
 // NOTE: icon filenames below are placed based on the new icons provided this session
-// (follow, new_article, article_inbox, article_approved, article_rejected, comment_delete, ban)
+// (follow, new_article, article_approved, article_rejected, comment_delete, ban)
 // plus reuse of existing icons (reply.svg, report.svg, save.svg confirmed in code;
 // like.svg/dislike.svg assumed to exist from the v0.12 Dislikes feature - adjust below if wrong).
 const NOTIFICATION_ICONS = [

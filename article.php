@@ -65,6 +65,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $article && !empty($_SESSION['reade
         header('Location: /article/' . $article['id']);
         exit;
     }
+    if (($_POST['action'] ?? '') === 'admin_delete') {
+        if (!empty($_SESSION['is_admin'])) {
+            adminDeleteComment((int)($_POST['comment_id'] ?? 0));
+        }
+        header('Location: /article/' . $article['id']);
+        exit;
+    }
 }
 
 $comments = $article ? getCommentsForArticle($article['id']) : [];

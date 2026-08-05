@@ -215,7 +215,7 @@ $bioHasMore = $bioRaw !== '' && strpos($bioRaw, "\n") !== false;
             <?= csrfField() ?>
             <input type="hidden" name="profile_user_id" value="<?= (int)$user['id'] ?>">
             <textarea name="content" rows="2" maxlength="1000" placeholder="Write something..." required></textarea>
-            <button type="submit" class="btn"><img src="/assets/icons/comment.svg" alt="" class="icon-svg-sm btn-icon"> Comment</button>
+            <button type="submit" class="btn btn-comment"><img src="/assets/icons/comment.svg" alt="" class="icon-svg-sm btn-icon"> Comment</button>
         </form>
         <?php endif; ?>
         <?php if (empty($profileComments)): ?>
