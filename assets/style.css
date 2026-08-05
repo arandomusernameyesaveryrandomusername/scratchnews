@@ -29,6 +29,7 @@ header.shrink { padding: 1.2rem 1.5rem; }
 header.shrink .logo-svg { height: 27px; transition: height 0.4s ease; }
 .logo-svg { transition: height 0.25s ease; }
 header nav a { transition: font-size 0.25s ease; }
+nav { display: flex; align-items: center; }
 header.shrink nav a { font-size: 0.85rem; }
 header a { text-decoration: none; color: #fff; }
 header h1 { margin: 0; font-size: 1.6rem; color: #fff; }

@@ -68,7 +68,7 @@ $bioHasMore = $bioRaw !== '' && strpos($bioRaw, "\n") !== false;
 .customize-panel label { display:block; margin-top:0.6rem; font-size:0.85rem; }
 .customize-panel textarea { width:100%; box-sizing:border-box; }
 .profile-comment-box { display:flex; gap:0.5rem; margin:0.75rem 0; }
-.profile-comment-box textarea { flex:1; }
+.profile-comment-box textarea { flex:1; min-height:80px; resize:vertical; }
 .stat-link.active { color: var(--brand-bright); font-weight: 700; }
 </style>
 </head>
@@ -215,7 +215,7 @@ $bioHasMore = $bioRaw !== '' && strpos($bioRaw, "\n") !== false;
             <?= csrfField() ?>
             <input type="hidden" name="profile_user_id" value="<?= (int)$user['id'] ?>">
             <textarea name="content" rows="2" maxlength="1000" placeholder="Write something..." required></textarea>
-            <button type="submit" class="btn">Comment</button>
+            <button type="submit" class="btn"><img src="/assets/icons/comment.svg" alt="" class="icon-svg-sm btn-icon"> Comment</button>
         </form>
         <?php endif; ?>
         <?php if (empty($profileComments)): ?>

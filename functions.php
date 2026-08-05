@@ -426,12 +426,16 @@ function buildCommentTree(array $comments): array {
     return $topLevel;
 }
 
+function linkifyMentions(string $escapedText): string {
+    return preg_replace('/@([A-Za-z0-9_]{3,20})\b/', '<a href="/@$1">@$1</a>', $escapedText);
+}
+
 function renderCommentThread(array $comment, bool $canReply, int $depth = 0, bool $canReport = false): string {
     $indent = min($depth * 24, 96); // cap indentation so deep threads don't run off-screen
     $html = '<div class="comment" style="margin-left: ' . $indent . 'px;">';
     $html .= '<strong><a href="/@' . e($comment['username']) . '">' . e($comment['username']) . '</a></strong>';
     $html .= ' <span class="meta">' . utcTimeTag($comment['created_at'], 'datetime') . '</span>';
-    $html .= '<p>' . e($comment['content']) . '</p>';
+    $html .= '<p>' . linkifyMentions(e($comment['content'])) . '</p>';
 
     if ($canReply) {
         $formId = 'reply-form-' . (int)$comment['id'];
@@ -1010,6 +1014,14 @@ function adminDeleteComment($commentId) {
     if ($comment && $wasReported) {
         createNotification((int)$comment['user_id'], 'comment_deleted');
     }
+}
+
+function adminDeleteProfileComment(int $commentId): void {
+    $db = getDB();
+    $stmt = $db->prepare("DELETE FROM profile_comments WHERE id = ?");
+    $stmt->bind_param('i', $commentId);
+    $stmt->execute();
+    $stmt->close();
 }
 
 function banUser($userId) {
@@ -1890,7 +1902,16 @@ function renderProfileCommentThread(array $comment, bool $canReply, int $profile
     $html = '<div class="comment" style="margin-left: ' . $indent . 'px;">';
     $html .= '<a href="/@' . e($comment['author_username']) . '"><strong>@' . e($comment['author_username']) . '</strong></a>';
     $html .= ' <span class="meta">' . date('M j, Y g:i A', strtotime($comment['created_at'])) . '</span>';
-    $html .= '<p>' . e($comment['content']) . '</p>';
+    $html .= '<p>' . linkifyMentions(e($comment['content'])) . '</p>';
+
+    if (!empty($_SESSION['is_admin'])) {
+        $html .= '<form method="post" action="/profile-comment.php" class="report-form" onsubmit="return confirm(\'Delete this comment?\');">';
+        $html .= csrfField();
+        $html .= '<input type="hidden" name="action" value="admin_delete">';
+        $html .= '<input type="hidden" name="comment_id" value="' . (int)$comment['id'] . '">';
+        $html .= '<button type="submit" class="reply-toggle" title="Delete">Delete</button>';
+        $html .= '</form>';
+    }
 
     if ($canReply) {
         $formId = 'pc-reply-form-' . (int)$comment['id'];

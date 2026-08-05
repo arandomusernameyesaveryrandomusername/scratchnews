@@ -8,6 +8,14 @@ if (empty($_SESSION['reader_id'])) {
 }
 requireCsrf();
 
+if (($_POST['action'] ?? '') === 'admin_delete') {
+    if (!empty($_SESSION['is_admin'])) {
+        adminDeleteProfileComment((int)($_POST['comment_id'] ?? 0));
+    }
+    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/'));
+    exit;
+}
+
 $profileUserId = (int)($_POST['profile_user_id'] ?? 0);
 $content = trim($_POST['content'] ?? '');
 $parentId = !empty($_POST['parent_id']) ? (int)$_POST['parent_id'] : null;
