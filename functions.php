@@ -449,6 +449,15 @@ function renderCommentThread(array $comment, bool $canReply, int $depth = 0, boo
         $html .= '</form>';
     }
 
+    if (!empty($_SESSION['is_admin'])) {
+        $html .= ' <form method="post" class="report-form" onsubmit="return confirm(\'Delete this comment?\');">';
+        $html .= csrfField();
+        $html .= '<input type="hidden" name="action" value="admin_delete">';
+        $html .= '<input type="hidden" name="comment_id" value="' . (int)$comment['id'] . '">';
+        $html .= '<button type="submit" class="reply-toggle" title="Delete"><img src="/assets/icons/comment_delete.svg" class="icon-svg-sm" alt=""> Delete</button>';
+        $html .= '</form>';
+    }
+
     if ($canReport) {
         $html .= ' <form method="post" class="report-form" onsubmit="return confirm(\'Report this comment for review?\');">';
         $html .= csrfField();
@@ -1916,14 +1925,6 @@ function renderProfileCommentThread(array $comment, bool $canReply, int $profile
     if ($canReply) {
         $formId = 'pc-reply-form-' . (int)$comment['id'];
         $html .= '<button type="button" class="reply-toggle" title="Reply" onclick="document.getElementById(\'' . $formId . '\').classList.toggle(\'open\')"><img src="/assets/icons/reply.svg" class="icon-svg-sm" alt=""> Reply</button>';
-        if (!empty($_SESSION['is_admin'])) {
-            $html .= '<form method="post" class="report-form" onsubmit="return confirm(\'Delete this comment?\');">';
-            $html .= csrfField();
-            $html .= '<input type="hidden" name="action" value="admin_delete">';
-            $html .= '<input type="hidden" name="comment_id" value="' . (int)$comment['id'] . '">';
-            $html .= '<button type="submit" class="reply-toggle" title="Delete"><img src="/assets/icons/comment_delete.svg" class="icon-svg-sm" alt=""> Delete</button>';
-            $html .= '</form>';
-        }
         $html .= '<form method="post" action="/profile-comment.php" class="reply-form" id="' . $formId . '">';
         $html .= csrfField();
         $html .= '<input type="hidden" name="profile_user_id" value="' . (int)$profileUserId . '">';
