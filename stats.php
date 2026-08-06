@@ -22,7 +22,7 @@ $conversionRate = $totalUniqueIps > 0 ? round(($totalSignups / $totalUniqueIps) 
 <?php require_once __DIR__ . '/nav.php'; ?>
 <main>
     <h2>Stats (Admin)</h2>
-    <p><a href="/stats">View public stats page &rarr;</a></p>
+    <p><a href="/stats.php">View public stats page &rarr;</a></p>
 
     <p><strong>Overall conversion rate:</strong> <?= e($conversionRate) ?>%
         (<?= (int)$totalSignups ?> unique-IP signups / <?= (int)$totalUniqueIps ?> unique visitor IPs, all-time within retention window)</p>
