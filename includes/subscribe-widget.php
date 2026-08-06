@@ -20,7 +20,7 @@ $cleanRedirect = $uriParts[0] . (!empty($redirectQuery) ? '?' . http_build_query
     <?php if (($_GET['subscribe_error'] ?? '') === '1'): ?>
     <div class="subscribe-popup subscribe-popup-error">Please enter a valid email address.</div>
     <?php endif; ?>
-    <form method="post" action="/subscribe.php" class="subscribe-form">
+    <form method="post" action="/subscribe" class="subscribe-form">
         <?= csrfField() ?>
         <input type="hidden" name="redirect" value="<?= e($cleanRedirect) ?>">
         <div class="subscribe-categories">

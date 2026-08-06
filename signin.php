@@ -130,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 function handleGoogleCredential(response) {
-    fetch('/google-auth.php', {
+    fetch('/google-auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'credential=' + encodeURIComponent(response.credential)
