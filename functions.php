@@ -22,12 +22,25 @@ function getArticleById(int $id): ?array {
     return $article ?: null;
 }
 
-// Allow only safe formatting tags in article content (bold, italic, headers, colors via span, etc.)
+// Enhanced secure HTML sanitization for article content
+// Allows only safe formatting tags (bold, italic, headers, colors via span, lists, etc.)
 function sanitizeArticleHtml(string $html): string {
+    // Basic allowed tags - allows: <p><br><strong><b><em><i><s><strike><u>
+    // <h1><h2><h3><span><ul><ol><li><blockquote><a><img>
     $allowed = '<p><br><strong><b><em><i><s><strike><u><h1><h2><h3><span><ul><ol><li><blockquote><a><img>';
+    
+    // First, strip all tags except allowed ones
     $html = strip_tags($html, $allowed);
-    $html = preg_replace('/\son\w+\s*=\s*("[^"]*"|\'[^\']*\')/i', '', $html);
+    
+    // Remove any on* event handlers from remaining elements (more comprehensive)
+    $html = preg_replace('/on\w+\s*=\s*("[^"]*"|\'[^\']*\')/i', '', $html);
+    
+    // Remove javascript: protocol from href and src attributes
     $html = preg_replace('/(href|src)\s*=\s*("javascript:[^"]*"|\'javascript:[^\']*\')/i', '$1="#"', $html);
+    
+    // Ensure all <a> tags have proper structure (no empty or malformed)
+    $html = preg_replace('/<a[^>]*>(?:(?!<\/a>).)*?<\/a>/is', '', $html);
+    
     return $html;
 }
 

@@ -1,5 +1,7 @@
 <?php
+require_once __DIR__ . '/../functions.php';
 require_once __DIR__ . '/auth.php';
+startSession();
 header('Content-Type: application/json');
 
 if (empty($_FILES['image'])) {
@@ -7,6 +9,9 @@ if (empty($_FILES['image'])) {
     echo json_encode(['error' => 'No file uploaded.']);
     exit;
 }
+
+// Prevent CSRF attacks on image uploads
+requireCsrf();
 
 try {
     $url = saveUploadedImage($_FILES['image']);

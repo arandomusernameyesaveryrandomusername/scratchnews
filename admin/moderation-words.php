@@ -2,6 +2,9 @@
 require_once __DIR__ . '/auth.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrf();
+    // CSRF validation passed
+    
     $action = $_POST['action'] ?? '';
     if ($action === 'add') {
         addModerationWord($_POST['category'] ?? '', $_POST['word'] ?? '');

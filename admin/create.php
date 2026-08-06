@@ -3,6 +3,7 @@ require_once __DIR__ . '/auth.php';
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrf();
     $title = trim($_POST['title'] ?? '');
     $summary = trim($_POST['summary'] ?? '');
     $content = trim($_POST['content'] ?? '');
@@ -70,7 +71,11 @@ body.dark .editor-copy-icon-btn { color:#ccc; }
         <input type="text" id="author" name="author" value="<?= e($_POST['author'] ?? 'ScratchNews Staff') ?>">
 
         <label for="user_id">Attribute to User</label>
-        <?php $db = getDB(); $userList = $db->query("SELECT id, username FROM users ORDER BY id ASC")->fetch_all(MYSQLI_ASSOC); $selectedUserId = (int)($_POST['user_id'] ?? $_SESSION['reader_id'] ?? 0); ?>
+        <?php
+            $db = getDB();
+            $userList = $db->query("SELECT id, username FROM users ORDER BY id ASC")->fetch_all(MYSQLI_ASSOC);
+            $selectedUserId = (int)($_POST['user_id'] ?? $_SESSION['reader_id'] ?? 0);
+        ?>
         <select id="user_id" name="user_id">
             <?php foreach ($userList as $u): ?>
                 <option value="<?= (int)$u['id'] ?>" <?= (int)$u['id'] === $selectedUserId ? 'selected' : '' ?>><?= e($u['username']) ?> (#<?= (int)$u['id'] ?>)</option>

@@ -11,6 +11,7 @@ if ($id <= 0) {
 $db = getDB();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrf();
     // Delete dependents first to avoid foreign key errors
     $stmt = $db->prepare("DELETE FROM comments WHERE article_id = ?");
     $stmt->bind_param("i", $id);

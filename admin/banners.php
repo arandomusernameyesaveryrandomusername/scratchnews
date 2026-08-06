@@ -1,8 +1,11 @@
 <?php
+require_once __DIR__ . '/functions.php';
 require_once __DIR__ . '/auth.php';
+startSession();
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrf();
     $action = $_POST['action'] ?? '';
 
     if ($action === 'create') {

@@ -11,6 +11,7 @@ if (!$article) {
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrf();
     $title = trim($_POST['title'] ?? '');
     $summary = trim($_POST['summary'] ?? '');
     $content = trim($_POST['content'] ?? '');
