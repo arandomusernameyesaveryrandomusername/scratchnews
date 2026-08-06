@@ -42,7 +42,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             logSignupAttempt($ip, true);
             $token = issueVerificationToken($result);
-            sendVerificationEmail($email, $username, $token);
+
+            if (tooManyVerificationRequests($email, $_SERVER['REMOTE_ADDR'] ?? '')) {
+                $error = 'Too many verification emails. Please try again later.';
+                logSignupAttempt($ip, false);
+            } else {
+                logVerificationRequest($email, $_SERVER['REMOTE_ADDR'] ?? '');
+                sendVerificationEmail($email, $username, $token);
+            }
 
             $avatarUrl = null;
             $bannerUrl = null;

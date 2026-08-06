@@ -8,30 +8,65 @@ if (!empty($_SESSION['reader_id'])) {
 }
 
 $error = '';
+
+$clientIP = $_SERVER['REMOTE_ADDR'] ?? '';
+
+// Enhanced rate limiting: 1 password attempt every 2 seconds (~30 attempts per minute)
+$maxAllowedFailedAttempts = 3; // Much stricter than original 5/hour
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
+
+    // Get user first before any validation
     $user = getUserByUsername($username);
 
+    // Check if IP is locked out
+    if (isIPLocked($clientIP)) {
+        $error = 'Too many failed attempts. Account temporarily locked.';
+    }
+
+    if (empty($error) && tooManyFailedLogin($username, $clientIP)) {
+        lockIP($clientIP);
+        $error = 'Rate limit exceeded. Please wait before trying again.';
+    }
+
+    // Log failed attempts only
+    if (!$user || !$password) {
+        logLoginAttempt(($user ?? '')['username'] ?? '', $clientIP, false); // failure
+    }
+
     if ($user && password_verify($password, $user['password_hash'])) {
-    updateUserIp($user['id'], $_SERVER['REMOTE_ADDR'] ?? '');
-    $_SESSION['reader_id'] = $user['id'];
-    $_SESSION['reader_username'] = $user['username'];
-    $_SESSION['is_admin'] = !empty($user['is_admin']);
-    $_SESSION['dark_mode'] = $user['dark_mode'];
-    $token = setRememberToken($user['id']);
-    setcookie('remember_me', $user['id'] . ':' . $token, [
-        'expires' => time() + 60 * 60 * 24 * 30,
-        'path' => '/',
-        'secure' => true,
-        'httponly' => true,
-        'samesite' => 'Lax',
-    ]);
-    header('Location: ' . ($_SESSION['is_admin'] ? '/admin/' : '/'));
-    exit;
-} else {
-    $error = 'Incorrect username or password.';
-}
+        // Email verification check
+        if (empty($error) && !$user['email_verified']) {
+            $error = 'Please verify your email address before logging in.';
+        }
+
+        if (empty($error)) {
+            session_regenerate_id(true); // ← NEW: prevent fixation
+            updateUserIp($user['id'], $_SERVER['REMOTE_ADDR'] ?? '');
+            logLoginAttempt($username, $clientIP, true); // success
+
+            $_SESSION['reader_id'] = $user['id'];
+            $_SESSION['reader_username'] = $user['username'];
+            $_SESSION['is_admin'] = !empty($user['is_admin']);
+            $_SESSION['dark_mode'] = $user['dark_mode'];
+
+            $token = setRememberToken($user['id']);
+            setcookie('remember_me', $user['id'] . ':' . $token, [
+                'expires' => time() + 60 * 60 * 24 * 30,
+                'path' => '/',
+                'secure' => true,
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+
+            header('Location: ' . ($_SESSION['is_admin'] ? '/admin/' : '/'));
+            exit;
+        } else {
+            $error = 'Incorrect username or password.';
+        }
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -46,9 +81,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
 <header>
     <a href="/" class="logo-link">
-<svg viewBox="0,0,136.90609,31.33279" class="logo-svg" xmlns="http://www.w3.org/2000/svg"><g transform="translate(-172.33195,-164.3336)"><g stroke-miterlimit="10"><text transform="translate(217.16808,185.69599) scale(0.5,0.5)" font-size="40" fill="#ffffff" stroke="#ffaa33" stroke-width="3" font-family="Scratch" font-weight="normal" text-anchor="start"><tspan x="0" dy="0">ScratchNews</tspan></text><text transform="translate(217.16808,185.69599) scale(0.5,0.5)" font-size="40" fill="#ffffff" stroke="none" stroke-width="1" font-family="Scratch" font-weight="normal" text-anchor="start"><tspan x="0" dy="0">ScratchNews</tspan></text><path d="M181.04509,195.64879h-8.71313v-10.6397h8.71313z" fill="#cc8829" stroke="none"/><path d="M176.88045,195.6664v-20.46677l3.90302,-0.07587l0.09189,-5.0222h6.64479v20.71239l-3.91923,0.16783l-0.04923,4.68462z" fill="#ffaa33" stroke="none"/><path d="M201.40189,164.35122h8.71313v10.6397h-8.71313z" fill="#cc8829" stroke="none"/><path d="M205.56653,164.33361v20.46677l-3.90302,0.07587l-0.09189,5.0222h-6.64479v-20.71239l3.91923,-0.16783l0.04923,-4.68462z" fill="#ffaa33" stroke="none"/><path d="M190.06459,189.91166l-0.03808,-3.62362l-3.03158,-0.12982v-16.02128h5.13983l0.07108,3.88473l3.01904,0.05869v15.8313z" fill="#ffaa33" stroke="none"/></g></g></svg>
+<svg viewBox="0 0,136.90609,31.33279" class="logo-svg" xmlns="http://www.w3.org/2000/svg"><g transform="translate(-172.33195,-164.3336)"><g stroke-miterlimit="10"><text transform="translate(217.16808,185.69599) scale(0.5,0.5)" font-size="40" fill="#ffffff" stroke="#ffaa33" stroke-width="3" font-family="Scratch" font-weight="normal" text-anchor="start"><tspan x="0" dy="0">ScratchNews</tspan></text><text transform="translate(217.16808,185.69599) scale(0.5,0.5)" font-size="40" fill="#ffffff" stroke="none" stroke-width="1" font-family="Scratch" font-weight="normal" text-anchor="start"><tspan x="0" dy="0">ScratchNews</tspan></text><path d="M181.04509,195.64879h-8.71313v-10.6397 h8.71313z" fill="#cc8829" stroke="none"/><path d="M176.88045,195.6664 v-20.46677 l3.90302,-0.07587 l0.09189,-5.0222 h6.64479 v20.71239 l-3.91923,0.16783 l-0.04923,4.68462 z" fill="#ffaa33" stroke="none"/><path d="M201.40189,164.35122 h8.71313 v10.6397 h-8.71313z" fill="#cc8829" stroke="none"/><path d="M205.56653,164.33361 v20.46677 l-3.90302,0.07587 l-0.09189,5.0222 h-6.64479 v-20.71239 l3.91923,-0.16783 l0.04923,-4.68462 z" fill="#ffaa33" stroke="none"/><path d="M190.06459,189.91166 l-0.03808,-3.62362 l-3.03158,-0.12982 v-16.02128 h5.13983 l0.07108,3.88473 l3.01904,0.05869 v15.8313 z" fill="#ffaa33" stroke="none"/></g></g></svg>
+    <a href="/" class="logo-link">
+        <svg viewBox="0 0,136.90609,31.33279" class="logo-svg" xmlns="http://www.w3.org/2000/svg">
+            <g transform="translate(-172.33195,-164.3336)">
+                <g stroke-miterlimit="10">
+                    <text transform="translate(217.16808,185.69599) scale(0.5,0.5)" font-size="40" fill="#ffffff" stroke="#ffaa33" stroke-width="3" font-family="Scratch" font-weight="normal" text-anchor="start">
+                        <tspan x="0" dy="0">ScratchNews</tspan>
+                    </text>
+                    <text transform="translate(217.16808,185.69599) scale(0.5,0.5)" font-size="40" fill="#ffffff" stroke="none" stroke-width="1" font-family="Scratch" font-weight="normal" text-anchor="start">
+                        <tspan x="0" dy="0">ScratchNews</tspan>
+                    </text>
+                    <path d="M181.04509,195.64879h-8.71313v-10.6397 h8.71313z" fill="#cc8829" stroke="none"/>
+                    <path d="M176.88045,195.6664 v-20.46677 l3.90302,-0.07587 l0.09189,-5.0222 h6.64479 v20.71239 l-3.91923,0.16783 l-0.04923,4.68462 z" fill="#ffaa33" stroke="none"/>
+                    <path d="M201.40189,164.35122 h8.71313 v10.6397 h-8.71313z" fill="#cc8829" stroke="none"/>
+                    <path d="M205.56653,164.33361 v20.46677 l-3.90302,0.07587 l-0.09189,5.0222 h-6.64479 v-20.71239 l3.91923,-0.16783 l0.04923,-4.68462 z" fill="#ffaa33" stroke="none"/>
+                    <path d="M190.06459,189.91166 l-0.03808,-3.62362 l-3.03158,-0.12982 v-16.02128 h5.13983 l0.07108,3.88473 l3.01904,0.05869 v15.8313 z" fill="#ffaa33" stroke="none"/>
+                </g>
+            </g>
+        </svg>
     </a>
-    <nav><a href="/register">Sign Up</a></nav>
+    <nav>
+        <a href="/register">Sign Up</a>
+    </nav>
 </header>
 <main>
     <h2>Log In</h2>
@@ -57,11 +112,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div id="g_id_onload"
              data-client_id="<?= e(GOOGLE_CLIENT_ID) ?>"
              data-callback="handleGoogleCredential"
-             data-auto_prompt="false"></div>
+             data-auto_prompt="false">
+        </div>
         <div class="g_id_signin" data-type="standard" data-size="large" data-width="300"></div>
     </div>
     <p style="text-align:center;color:#888;font-size:0.85rem;margin:0.75rem 0;">— or log in with a username and password —</p>
     <form method="post">
+        <?= csrfField(); ?>
         <label for="username">Username</label>
         <input type="text" id="username" name="username" required>
         <label for="password">Password</label>

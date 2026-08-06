@@ -368,6 +368,97 @@ function getCommentsForArticle(int $articleId): array {
     return $rows;
 }
 
+// ---- Rate Limiting / Lockout ----
+function logLoginAttempt(string $username, string $ip, bool $success): void {
+    $file = __DIR__ . '/data/login_attempts.json';
+    $data = [];
+    if (is_file($file)) {
+        $data = json_decode(file_get_contents($file), true) ?: [];
+    }
+    // prune old entries (older than 1 hour)
+    $now = time();
+    $data = array_filter($data, fn($r) => ($now - $r['ts']) < 3600);
+    $data[] = [
+        'username' => $username,
+        'ip'       => $ip,
+        'success'  => (int)$success,
+        'ts'       => $now
+    ];
+    file_put_contents($file, json_encode($data));
+}
+
+function tooManyFailedLogin(string $username, string $ip): bool {
+    $file = __DIR__ . '/data/login_attempts.json';
+    if (!is_file($file)) return false;
+    $data = json_decode(file_get_contents($file), true) ?: [];
+    $now = time();
+    $failedCount = 0;\n    foreach ($data as $r) {
+        if (($now - $r['ts']) < 3600 && !$r['success'] && $r['username'] === $username) {
+            ++$failedCount;
+        }
+    }
+    return $failedCount >= 5; // lock after ≥5 failures
+}
+
+function isIPLocked(string $ip): bool {
+    $file = __DIR__ . '/data/lockouts.json';
+    if (!is_file($file)) return false;
+    $data = json_decode(file_get_contents($file), true) ?: [];
+    $now = time();
+    foreach ($data as $l) {
+        if ($l['ip'] === $ip && $l['lock_until'] > $now) return true;
+    }
+    return false;
+}
+
+function lockIP(string $ip, int $minutes = 30): void {
+    $file = __DIR__ . '/data/lockouts.json';
+    $data = [];
+    if (is_file($file)) {
+        $data = json_decode(file_get_contents($file), true) ?: [];
+    }
+    // Remove expired entries
+    $now = time();
+    $data = array_filter($data, fn($r) => ($now - $r['ts']) < 3600);
+    $data[] = [
+        'ip'       => $ip,
+        'lock_until' => $now + $minutes * 60
+    ];
+    file_put_contents($file, json_encode($data));
+}
+
+function logVerificationRequest(string $email, string $ip): void {
+    $file = __DIR__ . '/data/verification_requests.json';
+    $data = [];
+    if (is_file($file)) {
+        $data = json_decode(file_get_contents($file), true) ?: [];
+    }
+    // keep only entries from last hour
+    $now = time();
+    $data = array_filter($data, fn($r) => ($now - $r['ts']) < 3600);
+    $data[] = [
+        'email' => $email,
+        'ip'    => $ip,
+        'ts'    => $now
+    ];
+    file_put_contents($file, json_encode($data));
+}
+
+function tooManyVerificationRequests(string $email, string $ip): bool {
+    $file = __DIR__ . '/data/verification_requests.json';
+    if (!is_file($file)) return false;
+    $data = json_decode(file_get_contents($file), true) ?: [];
+    $now = time();
+    // Count requests for this email or IP in the last hour
+    $count = 0;
+    foreach ($data as $r) {
+        if (($now - $r['ts']) < 3600 && ($r['email'] === $email || $r['ip'] === $ip)) {
+            ++$count;
+        }
+    }
+    return $count >= 3; // limit to ≤2 requests per email/IP per hour
+}
+
 function addComment(int $articleId, int $userId, string $content, ?int $parentId = null): bool {
     $db = getDB();
     if ($parentId === null) {

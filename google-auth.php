@@ -3,6 +3,9 @@ require_once __DIR__ . '/functions.php';
 startSession();
 header('Content-Type: application/json');
 
+/* ----- CSRF PROTECTION (Google OAuth POST) ----- */
+requireCsrf();   // ← NEW
+
 $idToken = $_POST['credential'] ?? '';
 if ($idToken === '') {
     http_response_code(400);
@@ -35,6 +38,8 @@ if (isUserBanned($user['id'])) {
 }
 
 updateUserIp($user['id'], $_SERVER['REMOTE_ADDR'] ?? '');
+
+session_regenerate_id(true); // ← NEW: prevent fixation
 
 $_SESSION['reader_id'] = $user['id'];
 $_SESSION['reader_username'] = $user['username'];
