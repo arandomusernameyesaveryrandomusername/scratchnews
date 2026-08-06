@@ -18,9 +18,12 @@ RewriteRule ^explore/?$ explore.php [L,QSA]
 # Clean URLs: strip .php extension (top-level pages only, for now).
 # /foo -> foo.php, but only if /foo isn't a real directory (avoids
 # colliding with admin/ and api/) and foo.php actually exists.
+# (Uses REQUEST_FILENAME, not DOCUMENT_ROOT — InfinityFree's proxy
+# setup reports a DOCUMENT_ROOT that doesn't match the real htdocs
+# path, which broke the -f check and caused 500s.)
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{DOCUMENT_ROOT}/$1.php -f
+RewriteCond %{REQUEST_FILENAME}.php -f
 RewriteRule ^([a-zA-Z0-9_-]+)/?$ $1.php [L,QSA]
 
 <FilesMatch "\.(css|js|php)$">
