@@ -98,7 +98,7 @@ $bioHasMore = $bioRaw !== '' && strpos($bioRaw, "\n") !== false;
                 &middot; <?= (int)$followerCount ?> follower<?= $followerCount === 1 ? '' : 's' ?>
             </p>
             <?php if (!$isOwnProfile && !empty($_SESSION['reader_id'])): ?>
-                <form method="post" action="/follow.php" class="profile-follow-form">
+                <form method="post" action="/follow" class="profile-follow-form">
                     <?= csrfField() ?>
                     <input type="hidden" name="user_id" value="<?= (int)$user['id'] ?>">
                     <button type="submit" class="profile-follow-btn <?= $viewerFollowing ? 'following' : 'not-following' ?>">
@@ -149,7 +149,7 @@ $bioHasMore = $bioRaw !== '' && strpos($bioRaw, "\n") !== false;
             <button type="button" class="bio-modal-close" aria-label="Close">&times;</button>
             <h3 style="margin-top:0;">Customize Profile</h3>
             <div class="customize-panel">
-                <form method="post" action="/update-profile.php" enctype="multipart/form-data">
+                <form method="post" action="/update-profile" enctype="multipart/form-data">
                     <?= csrfField() ?>
                     <label>Profile picture
                         <input type="file" name="avatar" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml">
@@ -211,7 +211,7 @@ $bioHasMore = $bioRaw !== '' && strpos($bioRaw, "\n") !== false;
             <div class="alert error moderation-banner"><?= e($_GET['modError']) ?></div>
         <?php endif; ?>
         <?php if (!empty($_SESSION['reader_id'])): ?>
-        <form method="post" action="/profile-comment.php" class="profile-comment-box">
+        <form method="post" action="/profile-comment" class="profile-comment-box">
             <?= csrfField() ?>
             <input type="hidden" name="profile_user_id" value="<?= (int)$user['id'] ?>">
             <textarea name="content" rows="2" maxlength="1000" placeholder="Write something..." required></textarea>

@@ -14,6 +14,15 @@ RewriteRule ^users/([A-Za-z0-9_]+)/?$ profile.php?username=$1 [L,QSA]
 RewriteRule ^@([A-Za-z0-9_]+)/?$ profile.php?username=$1 [L,QSA]
 RewriteRule ^search$ search.php [L]
 RewriteRule ^explore/?$ explore.php [L,QSA]
+
+# Clean URLs: strip .php extension (top-level pages only, for now).
+# /foo -> foo.php, but only if /foo isn't a real directory (avoids
+# colliding with admin/ and api/) and foo.php actually exists.
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{DOCUMENT_ROOT}/$1.php -f
+RewriteRule ^([a-zA-Z0-9_-]+)/?$ $1.php [L,QSA]
+
 <FilesMatch "\.(css|js|php)$">
     Header set Cache-Control "no-cache, must-revalidate"
 </FilesMatch>

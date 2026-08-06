@@ -1,14 +1,13 @@
 <?php
-require_once __DIR__ . '/functions.php';
-startSession();
-logVisit('/stats');
+require_once __DIR__ . '/../functions.php';
+require_once __DIR__ . '/auth.php';
 
 $db = getDB();
-$totalUsers = $db->query("SELECT COUNT(*) AS c FROM users WHERE id < 1000000")->fetch_assoc()['c'];
-$totalArticles = $db->query("SELECT COUNT(*) AS c FROM articles WHERE status = 'published'")->fetch_assoc()['c'];
-$totalViews = $db->query("SELECT SUM(views) AS c FROM articles WHERE status = 'published'")->fetch_assoc()['c'];
-$totalVisits = $db->query("SELECT COUNT(DISTINCT ip_address) AS c FROM daily_unique_visitors")->fetch_assoc()['c'];
-$topArticles = $db->query("SELECT id, title, views, (SELECT COUNT(*) FROM likes WHERE article_id = articles.id) AS likes FROM articles WHERE status = 'published' ORDER BY views DESC LIMIT 10")->fetch_all(MYSQLI_ASSOC);
+$daily = $db->query("SELECT visit_date, COUNT(*) AS unique_visitors FROM daily_unique_visitors GROUP BY visit_date ORDER BY visit_date DESC LIMIT 30")->fetch_all(MYSQLI_ASSOC);
+
+$totalUniqueIps = $db->query("SELECT COUNT(DISTINCT ip_address) AS c FROM daily_unique_visitors")->fetch_assoc()['c'];
+$totalSignups = $db->query("SELECT COUNT(DISTINCT ip) AS c FROM signup_attempts WHERE successful = 1")->fetch_assoc()['c'];
+$conversionRate = $totalUniqueIps > 0 ? round(($totalSignups / $totalUniqueIps) * 100, 2) : 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -17,23 +16,43 @@ $topArticles = $db->query("SELECT id, title, views, (SELECT COUNT(*) FROM likes 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <title>Stats - <?= e(SITE_NAME) ?></title>
-<link rel="stylesheet" href="/assets/style.css?v=15">
+<link rel="stylesheet" href="/assets/style.css?v=9">
 </head>
-<body <?php include __DIR__ . '/includes/theme-body.php'; ?>>
-<script>if(document.body.hasAttribute('data-theme-auto')&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.body.classList.add('dark');}</script>
-<?php include __DIR__ . '/includes/header.php'; ?>
+<body class="<?= !empty($_SESSION['dark_mode']) ? 'dark' : '' ?>">
+<?php require_once __DIR__ . '/nav.php'; ?>
 <main>
-    <h2>ScratchNews Stats</h2>
-    <p><?= (int)$totalUsers ?> users &middot; <?= (int)$totalArticles ?> articles &middot; <?= (int)$totalViews ?> total article views &middot; <?= (int)$totalVisits ?> unique visitors (all-time)</p>
+    <h2>Stats (Admin)</h2>
+    <p><a href="/stats">View public stats page &rarr;</a></p>
 
-    <h3 style="margin-top:2rem;">Top Articles</h3>
+    <p><strong>Overall conversion rate:</strong> <?= e($conversionRate) ?>%
+        (<?= (int)$totalSignups ?> unique-IP signups / <?= (int)$totalUniqueIps ?> unique visitor IPs, all-time within retention window)</p>
+
+    <h3 style="margin-top:2rem;">Visitor Map (last 90 days)</h3>
+    <div id="visitorMap" style="height:400px; background:#222; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#888;">
+        Map rendering — needs a follow-up session to wire up (Leaflet/simple SVG world map + click-into-region), have the lat/long data now.
+    </div>
+
+<h3 style="margin-top:2rem;">Collective Time</h3>
+    <?php $ct = getCollectiveTimeStats(); ?>
+    <p>All-time: <strong><?= number_format($ct['all_time_hours'], 1) ?> hours</strong>
+        &nbsp;|&nbsp; Today: <strong><?= number_format($ct['today_hours'], 1) ?> hours</strong></p>
+
+    <h3 style="margin-top:2rem;">Time on Site (last 7 days)</h3>
+    <?php $tos = getTimeOnSiteStats(7); ?>
+    <?php if ($tos['count'] > 0): ?>
+        <p>Average: <?= (int)floor($tos['avg_seconds'] / 60) ?>m <?= (int)($tos['avg_seconds'] % 60) ?>s
+            &nbsp;|&nbsp; Median: <?= (int)floor($tos['median_seconds'] / 60) ?>m <?= (int)($tos['median_seconds'] % 60) ?>s
+            &nbsp;|&nbsp; Sessions counted: <?= (int)$tos['count'] ?></p>
+    <?php else: ?>
+        <p style="color:#888;">No session data yet — will populate as visitors browse with the heartbeat script live.</p>
+    <?php endif; ?>
+    <h3 style="margin-top:2rem;">Daily Unique Visitors (last 30 days)</h3>
     <table>
-        <tr><th>Title</th><th>Views</th><th>Likes</th></tr>
-        <?php foreach ($topArticles as $a): ?>
-            <tr><td><a href="/article/<?= (int)$a['id'] ?>"><?= e($a['title']) ?></a></td><td><?= (int)$a['views'] ?></td><td><?= (int)$a['likes'] ?></td></tr>
+        <tr><th>Date</th><th>Unique Visitors</th></tr>
+        <?php foreach ($daily as $d): ?>
+            <tr><td><?= e($d['visit_date']) ?></td><td><?= (int)$d['unique_visitors'] ?></td></tr>
         <?php endforeach; ?>
     </table>
 </main>
-<?php include __DIR__ . '/includes/footer.php'; ?>
 </body>
 </html>

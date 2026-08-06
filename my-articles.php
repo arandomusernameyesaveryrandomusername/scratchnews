@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'unsav
     requireCsrf();
     $articleId = (int)($_POST['article_id'] ?? 0);
     if ($articleId > 0) unsaveArticleForUser($articleId, (int)$_SESSION['reader_id']);
-    header('Location: /my-articles.php?view=saved');
+    header('Location: /my-articles?view=saved');
     exit;
 }
 
@@ -52,13 +52,13 @@ if ($view === 'drafts') {
 <main>
     <h2>My Articles</h2>
     <div class="my-articles-tabs">
-        <a href="/my-articles.php?view=saved" class="my-articles-tab <?= $view === 'saved' ? 'active' : '' ?>">Saved Articles</a>
-        <a href="/my-articles.php?view=mine" class="my-articles-tab <?= $view === 'mine' ? 'active' : '' ?>">My Articles</a>
-        <a href="/my-articles.php?view=drafts" class="my-articles-tab <?= $view === 'drafts' ? 'active' : '' ?>">Drafts</a>
+        <a href="/my-articles?view=saved" class="my-articles-tab <?= $view === 'saved' ? 'active' : '' ?>">Saved Articles</a>
+        <a href="/my-articles?view=mine" class="my-articles-tab <?= $view === 'mine' ? 'active' : '' ?>">My Articles</a>
+        <a href="/my-articles?view=drafts" class="my-articles-tab <?= $view === 'drafts' ? 'active' : '' ?>">Drafts</a>
     </div>
     <?php if ($view === 'drafts'): ?>
         <?php if (empty($drafts)): ?>
-            <p>No drafts yet. <a href="/submit.php">Start a new article</a> and save it as a draft any time.</p>
+            <p>No drafts yet. <a href="/submit">Start a new article</a> and save it as a draft any time.</p>
         <?php else: ?>
             <div class="search-results-list">
                 <?php foreach ($drafts as $i => $d): ?>
@@ -67,7 +67,7 @@ if ($view === 'drafts') {
                         if (mb_strlen($desc) > 140) $desc = mb_substr($desc, 0, 140) . '...';
                     ?>
                     <div class="search-result <?= $i === 0 ? 'search-result-first' : '' ?>" style="flex-direction:column;">
-                        <a href="/submit.php?draft_id=<?= (int)$d['id'] ?>" style="display:flex; gap:1rem; text-decoration:none; color:inherit;">
+                        <a href="/submit?draft_id=<?= (int)$d['id'] ?>" style="display:flex; gap:1rem; text-decoration:none; color:inherit;">
                             <?php if (!empty($d['image_url'])): ?>
                                 <img src="<?= e($d['image_url']) ?>" alt="" class="search-result-thumb">
                             <?php else: ?>

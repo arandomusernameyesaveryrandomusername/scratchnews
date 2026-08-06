@@ -41,7 +41,7 @@ function createArticle(string $title, string $summary, string $content, string $
     $stmt->close();
     if ($status === 'published' && $userId !== null) {
         foreach (getFollowerIds($userId) as $followerId) {
-            createNotification($followerId, 'followed_user_article', $userId, '/article.php?id=' . $id, $title);
+            createNotification($followerId, 'followed_user_article', $userId, '/article/' . $id, $title);
         }
     }
     syncToGithub();
@@ -223,9 +223,6 @@ function updateUserIp(int $userId, string $ip): void {
     $stmt->close();
 }
 
-// ---- Google Sign-In ----
-// TODO: paste your real Client ID from console.cloud.google.com (OAuth consent screen -> Credentials)
-
 function verifyGoogleIdToken(string $idToken): ?array {
     $ch = curl_init('https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($idToken));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -382,7 +379,7 @@ function addComment(int $articleId, int $userId, string $content, ?int $parentId
 
     if ($ok) {
         $article = getArticleById($articleId);
-        $link = '/article.php?id=' . $articleId;
+        $link = '/article/' . $articleId;
         if ($parentId !== null) {
             $pstmt = $db->prepare("SELECT user_id FROM comments WHERE id = ?");
             $pstmt->bind_param('i', $parentId);
@@ -525,7 +522,7 @@ function toggleLike(int $articleId, int $userId): bool {
 
         $article = getArticleById($articleId);
         if ($article && !empty($article['user_id']) && (int)$article['user_id'] !== $userId) {
-            createNotification((int)$article['user_id'], 'article_liked', $userId, '/article.php?id=' . $articleId);
+            createNotification((int)$article['user_id'], 'article_liked', $userId, '/article/' . $articleId);
         }
         return true;
     }
@@ -572,7 +569,7 @@ function toggleDislike(int $articleId, int $userId): bool {
 
         $article = getArticleById($articleId);
         if ($article && !empty($article['user_id']) && (int)$article['user_id'] !== $userId) {
-            createNotification((int)$article['user_id'], 'article_disliked', $userId, '/article.php?id=' . $articleId);
+            createNotification((int)$article['user_id'], 'article_disliked', $userId, '/article/' . $articleId);
         }
         return true;
     }
@@ -858,7 +855,7 @@ function approveSubmission($id) {
     $stmt->execute();
     $stmt->close();
 
-    $articleLink = '/article.php?id=' . $articleId;
+    $articleLink = '/article/' . $articleId;
     createNotification((int)$submission['user_id'], 'article_approved', null, $articleLink, $submission['title']);
     foreach (getFollowerIds((int)$submission['user_id']) as $followerId) {
         createNotification($followerId, 'followed_user_article', (int)$submission['user_id'], $articleLink, $submission['title']);
@@ -1913,7 +1910,7 @@ function renderProfileCommentThread(array $comment, bool $canReply, int $profile
     $html .= '<p>' . linkifyMentions(e($comment['content'])) . '</p>';
 
     if (!empty($_SESSION['is_admin'])) {
-        $html .= '<form method="post" action="/profile-comment.php" class="report-form" onsubmit="return confirm(\'Delete this comment?\');">';
+        $html .= '<form method="post" action="/profile-comment" class="report-form" onsubmit="return confirm(\'Delete this comment?\');">';
         $html .= csrfField();
         $html .= '<input type="hidden" name="action" value="admin_delete">';
         $html .= '<input type="hidden" name="comment_id" value="' . (int)$comment['id'] . '">';
@@ -1924,7 +1921,7 @@ function renderProfileCommentThread(array $comment, bool $canReply, int $profile
     if ($canReply) {
         $formId = 'pc-reply-form-' . (int)$comment['id'];
         $html .= '<button type="button" class="reply-toggle" title="Reply" onclick="document.getElementById(\'' . $formId . '\').classList.toggle(\'open\')"><img src="/assets/icons/reply.svg" class="icon-svg-sm" alt=""> Reply</button>';
-        $html .= '<form method="post" action="/profile-comment.php" class="reply-form" id="' . $formId . '">';
+        $html .= '<form method="post" action="/profile-comment" class="reply-form" id="' . $formId . '">';
         $html .= csrfField();
         $html .= '<input type="hidden" name="profile_user_id" value="' . (int)$profileUserId . '">';
         $html .= '<input type="hidden" name="parent_id" value="' . (int)$comment['id'] . '">';
@@ -1995,7 +1992,7 @@ function saveArticleForUser(int $articleId, int $userId): void {
 
     $article = getArticleById($articleId);
     if ($article && !empty($article['user_id']) && (int)$article['user_id'] !== $userId) {
-        createNotification((int)$article['user_id'], 'article_saved', $userId, '/article.php?id=' . $articleId);
+        createNotification((int)$article['user_id'], 'article_saved', $userId, '/article/' . $articleId);
     }
 }
 

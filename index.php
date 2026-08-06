@@ -21,7 +21,7 @@ $popular = getPopularArticles(4);
 <?php if (!empty($_SESSION['impersonator_admin_username'])): ?>
 <div class="impersonation-banner">
     Viewing as <strong><?= e($_SESSION['reader_username']) ?></strong> (impersonating)
-    <form method="post" action="/stop-impersonating.php" class="impersonation-form">
+    <form method="post" action="/stop-impersonating" class="impersonation-form">
         <?= csrfField() ?>
         <button type="submit" class="text-action">Return to Admin</button>
     </form>

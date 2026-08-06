@@ -92,9 +92,9 @@ form.settings-row { background: transparent !important; padding: 0.9rem 0 !impor
     <?php if ($message): ?><div class="alert success"><?= e($message) ?></div><?php endif; ?>
     <div class="settings-layout">
         <div class="settings-tabs">
-            <a href="/settings.php?tab=general" class="settings-tab <?= $activeTab === 'general' ? 'active' : '' ?>">General</a>
-            <a href="/settings.php?tab=customization" class="settings-tab <?= $activeTab === 'customization' ? 'active' : '' ?>">Customization</a>
-            <a href="/settings.php?tab=security" class="settings-tab <?= $activeTab === 'security' ? 'active' : '' ?>">Security</a>
+            <a href="/settings?tab=general" class="settings-tab <?= $activeTab === 'general' ? 'active' : '' ?>">General</a>
+            <a href="/settings?tab=customization" class="settings-tab <?= $activeTab === 'customization' ? 'active' : '' ?>">Customization</a>
+            <a href="/settings?tab=security" class="settings-tab <?= $activeTab === 'security' ? 'active' : '' ?>">Security</a>
         </div>
 
         <div class="settings-panel">

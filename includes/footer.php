@@ -7,23 +7,23 @@
         <div class="footer-columns">
             <div class="footer-col">
                 <h4>Info</h4>
-                <a href="/about.php">About</a>
-                <a href="/changelog.php">Changelog</a>
-                <a href="/community-guidelines.php">Community Guidelines</a>
+                <a href="/about">About</a>
+                <a href="/changelog">Changelog</a>
+                <a href="/community-guidelines">Community Guidelines</a>
             </div>
             <div class="footer-col">
                 <h4>Developers</h4>
-                <a href="/stats.php">Stats</a>
+                <a href="/stats">Stats</a>
                 <a href="/api.php">API</a>
             </div>
             <div class="footer-col">
                 <h4>Account</h4>
-                <a href="/feedback.php">Feedback</a>
+                <a href="/feedback">Feedback</a>
                 <?php if (!empty($_SESSION['reader_username'])): ?><a href="/delete-account">Delete Account</a><?php endif; ?>
             </div>
             <div class="footer-col">
                 <h4>More</h4>
-                <a href="/random-article.php">Random Article</a>
+                <a href="/random-article">Random Article</a>
                 <a href="https://ko-fi.com/scratchnews">Donate</a>
             </div>
         </div>
@@ -62,9 +62,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (document.hidden) return;
         var data = new URLSearchParams({ session_key: key, source: source });
         if (navigator.sendBeacon) {
-            navigator.sendBeacon('/heartbeat.php', data);
+            navigator.sendBeacon('/heartbeat', data);
         } else {
-            fetch('/heartbeat.php', { method: 'POST', body: data, keepalive: true });
+            fetch('/heartbeat', { method: 'POST', body: data, keepalive: true });
         }
     }
     setInterval(ping, INTERVAL_MS);

@@ -26,7 +26,7 @@ $draftCategoryIds = [];
 if ($draftId > 0) {
     $draft = getUserSubmissionById($draftId, $readerId);
     if (!$draft || $draft['status'] !== 'draft') {
-        header('Location: /my-articles.php?view=drafts');
+        header('Location: /my-articles?view=drafts');
         exit;
     }
     $draftCategoryIds = getSubmissionCategoryIds($draftId);
@@ -150,7 +150,7 @@ body.dark .editor-copy-icon-btn { color:#ccc; }
         </div>
     <?php else: ?>
         <?php if ($error): ?><div class="alert error"><?= e($error) ?></div><?php endif; ?>
-        <?php if ($savedDraft): ?><div class="draft-saved-note">Draft saved. You can keep editing or find it later under <a href="/my-articles.php?view=drafts">My Articles &rarr; Drafts</a>.</div><?php endif; ?>
+        <?php if ($savedDraft): ?><div class="draft-saved-note">Draft saved. You can keep editing or find it later under <a href="/my-articles?view=drafts">My Articles &rarr; Drafts</a>.</div><?php endif; ?>
         <form method="post" id="submitForm" enctype="multipart/form-data">
             <?= csrfField() ?>
             <input type="hidden" name="draft_id" value="<?= $formDraftId ?>">
@@ -213,7 +213,7 @@ body.dark .editor-copy-icon-btn { color:#ccc; }
 
             <button class="btn" type="submit" name="submit_action" value="submit">Submit for Review</button>
             <button class="btn secondary" type="submit" name="submit_action" value="draft">Save as Draft</button>
-            <a href="/my-articles.php?view=drafts" class="btn secondary">Cancel</a>
+            <a href="/my-articles?view=drafts" class="btn secondary">Cancel</a>
         </form>
     <?php endif; ?>
 </main>
@@ -238,7 +238,7 @@ quill.getModule('toolbar').addHandler('image', function() {
         if (!file) return;
         var formData = new FormData();
         formData.append('image', file);
-        fetch('/upload-image.php', { method: 'POST', body: formData })
+        fetch('/upload-image', { method: 'POST', body: formData })
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (data.url) {
