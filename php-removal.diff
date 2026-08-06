@@ -1,0 +1,395 @@
+diff --git a/.htaccess b/.htaccess
+index f49eca3..4e87d8d 100644
+--- a/.htaccess
++++ b/.htaccess
+@@ -14,6 +14,15 @@ RewriteRule ^users/([A-Za-z0-9_]+)/?$ profile.php?username=$1 [L,QSA]
+ RewriteRule ^@([A-Za-z0-9_]+)/?$ profile.php?username=$1 [L,QSA]
+ RewriteRule ^search$ search.php [L]
+ RewriteRule ^explore/?$ explore.php [L,QSA]
++
++# Clean URLs: strip .php extension (top-level pages only, for now).
++# /foo -> foo.php, but only if /foo isn't a real directory (avoids
++# colliding with admin/ and api/) and foo.php actually exists.
++RewriteCond %{REQUEST_FILENAME} !-d
++RewriteCond %{REQUEST_FILENAME} !-f
++RewriteCond %{DOCUMENT_ROOT}/$1.php -f
++RewriteRule ^([a-zA-Z0-9_-]+)/?$ $1.php [L,QSA]
++
+ <FilesMatch "\.(css|js|php)$">
+     Header set Cache-Control "no-cache, must-revalidate"
+ </FilesMatch>
+\ No newline at end of file
+diff --git a/admin/stats.php b/admin/stats.php
+index 31134fb..a889381 100644
+--- a/admin/stats.php
++++ b/admin/stats.php
+@@ -22,7 +22,7 @@ $conversionRate = $totalUniqueIps > 0 ? round(($totalSignups / $totalUniqueIps)
+ <?php require_once __DIR__ . '/nav.php'; ?>
+ <main>
+     <h2>Stats (Admin)</h2>
+-    <p><a href="/stats.php">View public stats page &rarr;</a></p>
++    <p><a href="/stats">View public stats page &rarr;</a></p>
+ 
+     <p><strong>Overall conversion rate:</strong> <?= e($conversionRate) ?>%
+         (<?= (int)$totalSignups ?> unique-IP signups / <?= (int)$totalUniqueIps ?> unique visitor IPs, all-time within retention window)</p>
+diff --git a/article.php b/article.php
+index 191c2ab..6688d8f 100644
+--- a/article.php
++++ b/article.php
+@@ -141,7 +141,7 @@ if (!$article) {
+ <?php if (!empty($_SESSION['impersonator_admin_username'])): ?>
+ <div class="impersonation-banner">
+     Viewing as <strong><?= e($_SESSION['reader_username']) ?></strong> (impersonating)
+-    <form method="post" action="/stop-impersonating.php" class="impersonation-form">
++    <form method="post" action="/stop-impersonating" class="impersonation-form">
+         <?= csrfField() ?>
+         <button type="submit" class="text-action">Return to Admin</button>
+     </form>
+diff --git a/functions.php b/functions.php
+index c9c8b8a..d44ea6d 100644
+--- a/functions.php
++++ b/functions.php
+@@ -41,7 +41,7 @@ function createArticle(string $title, string $summary, string $content, string $
+     $stmt->close();
+     if ($status === 'published' && $userId !== null) {
+         foreach (getFollowerIds($userId) as $followerId) {
+-            createNotification($followerId, 'followed_user_article', $userId, '/article.php?id=' . $id, $title);
++            createNotification($followerId, 'followed_user_article', $userId, '/article/' . $id, $title);
+         }
+     }
+     syncToGithub();
+@@ -383,7 +383,7 @@ function addComment(int $articleId, int $userId, string $content, ?int $parentId
+ 
+     if ($ok) {
+         $article = getArticleById($articleId);
+-        $link = '/article.php?id=' . $articleId;
++        $link = '/article/' . $articleId;
+         if ($parentId !== null) {
+             $pstmt = $db->prepare("SELECT user_id FROM comments WHERE id = ?");
+             $pstmt->bind_param('i', $parentId);
+@@ -526,7 +526,7 @@ function toggleLike(int $articleId, int $userId): bool {
+ 
+         $article = getArticleById($articleId);
+         if ($article && !empty($article['user_id']) && (int)$article['user_id'] !== $userId) {
+-            createNotification((int)$article['user_id'], 'article_liked', $userId, '/article.php?id=' . $articleId);
++            createNotification((int)$article['user_id'], 'article_liked', $userId, '/article/' . $articleId);
+         }
+         return true;
+     }
+@@ -573,7 +573,7 @@ function toggleDislike(int $articleId, int $userId): bool {
+ 
+         $article = getArticleById($articleId);
+         if ($article && !empty($article['user_id']) && (int)$article['user_id'] !== $userId) {
+-            createNotification((int)$article['user_id'], 'article_disliked', $userId, '/article.php?id=' . $articleId);
++            createNotification((int)$article['user_id'], 'article_disliked', $userId, '/article/' . $articleId);
+         }
+         return true;
+     }
+@@ -859,7 +859,7 @@ function approveSubmission($id) {
+     $stmt->execute();
+     $stmt->close();
+ 
+-    $articleLink = '/article.php?id=' . $articleId;
++    $articleLink = '/article/' . $articleId;
+     createNotification((int)$submission['user_id'], 'article_approved', null, $articleLink, $submission['title']);
+     foreach (getFollowerIds((int)$submission['user_id']) as $followerId) {
+         createNotification($followerId, 'followed_user_article', (int)$submission['user_id'], $articleLink, $submission['title']);
+@@ -1914,7 +1914,7 @@ function renderProfileCommentThread(array $comment, bool $canReply, int $profile
+     $html .= '<p>' . linkifyMentions(e($comment['content'])) . '</p>';
+ 
+     if (!empty($_SESSION['is_admin'])) {
+-        $html .= '<form method="post" action="/profile-comment.php" class="report-form" onsubmit="return confirm(\'Delete this comment?\');">';
++        $html .= '<form method="post" action="/profile-comment" class="report-form" onsubmit="return confirm(\'Delete this comment?\');">';
+         $html .= csrfField();
+         $html .= '<input type="hidden" name="action" value="admin_delete">';
+         $html .= '<input type="hidden" name="comment_id" value="' . (int)$comment['id'] . '">';
+@@ -1925,7 +1925,7 @@ function renderProfileCommentThread(array $comment, bool $canReply, int $profile
+     if ($canReply) {
+         $formId = 'pc-reply-form-' . (int)$comment['id'];
+         $html .= '<button type="button" class="reply-toggle" title="Reply" onclick="document.getElementById(\'' . $formId . '\').classList.toggle(\'open\')"><img src="/assets/icons/reply.svg" class="icon-svg-sm" alt=""> Reply</button>';
+-        $html .= '<form method="post" action="/profile-comment.php" class="reply-form" id="' . $formId . '">';
++        $html .= '<form method="post" action="/profile-comment" class="reply-form" id="' . $formId . '">';
+         $html .= csrfField();
+         $html .= '<input type="hidden" name="profile_user_id" value="' . (int)$profileUserId . '">';
+         $html .= '<input type="hidden" name="parent_id" value="' . (int)$comment['id'] . '">';
+@@ -1996,7 +1996,7 @@ function saveArticleForUser(int $articleId, int $userId): void {
+ 
+     $article = getArticleById($articleId);
+     if ($article && !empty($article['user_id']) && (int)$article['user_id'] !== $userId) {
+-        createNotification((int)$article['user_id'], 'article_saved', $userId, '/article.php?id=' . $articleId);
++        createNotification((int)$article['user_id'], 'article_saved', $userId, '/article/' . $articleId);
+     }
+ }
+ 
+diff --git a/includes/footer.php b/includes/footer.php
+index 886d03f..f03915a 100644
+--- a/includes/footer.php
++++ b/includes/footer.php
+@@ -7,23 +7,23 @@
+         <div class="footer-columns">
+             <div class="footer-col">
+                 <h4>Info</h4>
+-                <a href="/about.php">About</a>
+-                <a href="/changelog.php">Changelog</a>
+-                <a href="/community-guidelines.php">Community Guidelines</a>
++                <a href="/about">About</a>
++                <a href="/changelog">Changelog</a>
++                <a href="/community-guidelines">Community Guidelines</a>
+             </div>
+             <div class="footer-col">
+                 <h4>Developers</h4>
+-                <a href="/stats.php">Stats</a>
++                <a href="/stats">Stats</a>
+                 <a href="/api.php">API</a>
+             </div>
+             <div class="footer-col">
+                 <h4>Account</h4>
+-                <a href="/feedback.php">Feedback</a>
++                <a href="/feedback">Feedback</a>
+                 <?php if (!empty($_SESSION['reader_username'])): ?><a href="/delete-account">Delete Account</a><?php endif; ?>
+             </div>
+             <div class="footer-col">
+                 <h4>More</h4>
+-                <a href="/random-article.php">Random Article</a>
++                <a href="/random-article">Random Article</a>
+                 <a href="https://ko-fi.com/scratchnews">Donate</a>
+             </div>
+         </div>
+@@ -62,9 +62,9 @@ document.addEventListener('DOMContentLoaded', function() {
+         if (document.hidden) return;
+         var data = new URLSearchParams({ session_key: key, source: source });
+         if (navigator.sendBeacon) {
+-            navigator.sendBeacon('/heartbeat.php', data);
++            navigator.sendBeacon('/heartbeat', data);
+         } else {
+-            fetch('/heartbeat.php', { method: 'POST', body: data, keepalive: true });
++            fetch('/heartbeat', { method: 'POST', body: data, keepalive: true });
+         }
+     }
+     setInterval(ping, INTERVAL_MS);
+diff --git a/includes/header.php b/includes/header.php
+index 198881c..6d22770 100644
+--- a/includes/header.php
++++ b/includes/header.php
+@@ -4,7 +4,7 @@
+ <svg viewBox="0,0,136.90609,31.33279" class="logo-svg" xmlns="http://www.w3.org/2000/svg"><g transform="translate(-172.33195,-164.3336)"><g stroke-miterlimit="10"><text transform="translate(217.16808,185.69599) scale(0.5,0.5)" font-size="40" fill="#ffffff" stroke="#ffaa33" stroke-width="3" font-family="Scratch" font-weight="normal" text-anchor="start"><tspan x="0" dy="0">ScratchNews</tspan></text><text transform="translate(217.16808,185.69599) scale(0.5,0.5)" font-size="40" fill="#ffffff" stroke="none" stroke-width="1" font-family="Scratch" font-weight="normal" text-anchor="start"><tspan x="0" dy="0">ScratchNews</tspan></text><path d="M181.04509,195.64879h-8.71313v-10.6397h8.71313z" fill="#cc8829" stroke="none"/><path d="M176.88045,195.6664v-20.46677l3.90302,-0.07587l0.09189,-5.0222h6.64479v20.71239l-3.91923,0.16783l-0.04923,4.68462z" fill="#ffaa33" stroke="none"/><path d="M201.40189,164.35122h8.71313v10.6397h-8.71313z" fill="#cc8829" stroke="none"/><path d="M205.56653,164.33361v20.46677l-3.90302,0.07587l-0.09189,5.0222h-6.64479v-20.71239l3.91923,-0.16783l0.04923,-4.68462z" fill="#ffaa33" stroke="none"/><path d="M190.06459,189.91166l-0.03808,-3.62362l-3.03158,-0.12982v-16.02128h5.13983l0.07108,3.88473l3.01904,0.05869v15.8313z" fill="#ffaa33" stroke="none"/></g></g></svg>
+ </a>
+         <div class="header-quick-links">
+-            <a href="/submit.php" class="header-quick-link">Submit Article</a>
++            <a href="/submit" class="header-quick-link">Submit Article</a>
+             <a href="/explore" class="header-quick-link">Explore</a>
+             <a href="/api.php" class="header-quick-link">API</a>
+             <a href="https://ko-fi.com/scratchnews" class="header-quick-link">Donate</a>
+@@ -19,7 +19,7 @@
+         $navAvatar = $navUser['avatar_url'] ?? null;
+         $unreadCount = getUnreadNotificationCount($_SESSION['reader_id']);
+     ?>
+-        <a href="/messages.php" class="nav-messages-link" title="Messages">
++        <a href="/messages" class="nav-messages-link" title="Messages">
+             <img src="/assets/icons/message.svg" class="icon-svg" alt="Messages">
+             <?php if ($unreadCount > 0): ?>
+                 <span class="nav-messages-badge"><?= $unreadCount > 99 ? '99+' : $unreadCount ?></span>
+@@ -36,11 +36,11 @@
+             </button>
+             <div id="userMenu" class="user-nav-menu">
+                 <a href="/@<?= e($_SESSION['reader_username']) ?>">Profile</a>
+-                <a href="/my-articles.php">My Articles</a>
++                <a href="/my-articles">My Articles</a>
+                 <?php if (!empty($_SESSION['is_admin'])): ?>
+                 <a href="/admin/">Admin</a>
+                 <?php endif; ?>
+-                <a href="/settings.php">Settings</a>
++                <a href="/settings">Settings</a>
+                 <a href="/logout">Log Out</a>
+             </div>
+         </div>
+diff --git a/includes/subscribe-widget.php b/includes/subscribe-widget.php
+index 67e1e5f..0e31f55 100644
+--- a/includes/subscribe-widget.php
++++ b/includes/subscribe-widget.php
+@@ -20,7 +20,7 @@ $cleanRedirect = $uriParts[0] . (!empty($redirectQuery) ? '?' . http_build_query
+     <?php if (($_GET['subscribe_error'] ?? '') === '1'): ?>
+     <div class="subscribe-popup subscribe-popup-error">Please enter a valid email address.</div>
+     <?php endif; ?>
+-    <form method="post" action="/subscribe.php" class="subscribe-form">
++    <form method="post" action="/subscribe" class="subscribe-form">
+         <?= csrfField() ?>
+         <input type="hidden" name="redirect" value="<?= e($cleanRedirect) ?>">
+         <div class="subscribe-categories">
+diff --git a/index.php b/index.php
+index 006582b..9e60503 100644
+--- a/index.php
++++ b/index.php
+@@ -21,7 +21,7 @@ $popular = getPopularArticles(4);
+ <?php if (!empty($_SESSION['impersonator_admin_username'])): ?>
+ <div class="impersonation-banner">
+     Viewing as <strong><?= e($_SESSION['reader_username']) ?></strong> (impersonating)
+-    <form method="post" action="/stop-impersonating.php" class="impersonation-form">
++    <form method="post" action="/stop-impersonating" class="impersonation-form">
+         <?= csrfField() ?>
+         <button type="submit" class="text-action">Return to Admin</button>
+     </form>
+diff --git a/my-articles.php b/my-articles.php
+index b5ae036..df52a6e 100644
+--- a/my-articles.php
++++ b/my-articles.php
+@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'unsav
+     requireCsrf();
+     $articleId = (int)($_POST['article_id'] ?? 0);
+     if ($articleId > 0) unsaveArticleForUser($articleId, (int)$_SESSION['reader_id']);
+-    header('Location: /my-articles.php?view=saved');
++    header('Location: /my-articles?view=saved');
+     exit;
+ }
+ 
+@@ -52,13 +52,13 @@ if ($view === 'drafts') {
+ <main>
+     <h2>My Articles</h2>
+     <div class="my-articles-tabs">
+-        <a href="/my-articles.php?view=saved" class="my-articles-tab <?= $view === 'saved' ? 'active' : '' ?>">Saved Articles</a>
+-        <a href="/my-articles.php?view=mine" class="my-articles-tab <?= $view === 'mine' ? 'active' : '' ?>">My Articles</a>
+-        <a href="/my-articles.php?view=drafts" class="my-articles-tab <?= $view === 'drafts' ? 'active' : '' ?>">Drafts</a>
++        <a href="/my-articles?view=saved" class="my-articles-tab <?= $view === 'saved' ? 'active' : '' ?>">Saved Articles</a>
++        <a href="/my-articles?view=mine" class="my-articles-tab <?= $view === 'mine' ? 'active' : '' ?>">My Articles</a>
++        <a href="/my-articles?view=drafts" class="my-articles-tab <?= $view === 'drafts' ? 'active' : '' ?>">Drafts</a>
+     </div>
+     <?php if ($view === 'drafts'): ?>
+         <?php if (empty($drafts)): ?>
+-            <p>No drafts yet. <a href="/submit.php">Start a new article</a> and save it as a draft any time.</p>
++            <p>No drafts yet. <a href="/submit">Start a new article</a> and save it as a draft any time.</p>
+         <?php else: ?>
+             <div class="search-results-list">
+                 <?php foreach ($drafts as $i => $d): ?>
+@@ -67,7 +67,7 @@ if ($view === 'drafts') {
+                         if (mb_strlen($desc) > 140) $desc = mb_substr($desc, 0, 140) . '...';
+                     ?>
+                     <div class="search-result <?= $i === 0 ? 'search-result-first' : '' ?>" style="flex-direction:column;">
+-                        <a href="/submit.php?draft_id=<?= (int)$d['id'] ?>" style="display:flex; gap:1rem; text-decoration:none; color:inherit;">
++                        <a href="/submit?draft_id=<?= (int)$d['id'] ?>" style="display:flex; gap:1rem; text-decoration:none; color:inherit;">
+                             <?php if (!empty($d['image_url'])): ?>
+                                 <img src="<?= e($d['image_url']) ?>" alt="" class="search-result-thumb">
+                             <?php else: ?>
+diff --git a/profile.php b/profile.php
+index ce1d93b..11287e9 100644
+--- a/profile.php
++++ b/profile.php
+@@ -98,7 +98,7 @@ $bioHasMore = $bioRaw !== '' && strpos($bioRaw, "\n") !== false;
+                 &middot; <?= (int)$followerCount ?> follower<?= $followerCount === 1 ? '' : 's' ?>
+             </p>
+             <?php if (!$isOwnProfile && !empty($_SESSION['reader_id'])): ?>
+-                <form method="post" action="/follow.php" class="profile-follow-form">
++                <form method="post" action="/follow" class="profile-follow-form">
+                     <?= csrfField() ?>
+                     <input type="hidden" name="user_id" value="<?= (int)$user['id'] ?>">
+                     <button type="submit" class="profile-follow-btn <?= $viewerFollowing ? 'following' : 'not-following' ?>">
+@@ -149,7 +149,7 @@ $bioHasMore = $bioRaw !== '' && strpos($bioRaw, "\n") !== false;
+             <button type="button" class="bio-modal-close" aria-label="Close">&times;</button>
+             <h3 style="margin-top:0;">Customize Profile</h3>
+             <div class="customize-panel">
+-                <form method="post" action="/update-profile.php" enctype="multipart/form-data">
++                <form method="post" action="/update-profile" enctype="multipart/form-data">
+                     <?= csrfField() ?>
+                     <label>Profile picture
+                         <input type="file" name="avatar" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml">
+@@ -211,7 +211,7 @@ $bioHasMore = $bioRaw !== '' && strpos($bioRaw, "\n") !== false;
+             <div class="alert error moderation-banner"><?= e($_GET['modError']) ?></div>
+         <?php endif; ?>
+         <?php if (!empty($_SESSION['reader_id'])): ?>
+-        <form method="post" action="/profile-comment.php" class="profile-comment-box">
++        <form method="post" action="/profile-comment" class="profile-comment-box">
+             <?= csrfField() ?>
+             <input type="hidden" name="profile_user_id" value="<?= (int)$user['id'] ?>">
+             <textarea name="content" rows="2" maxlength="1000" placeholder="Write something..." required></textarea>
+diff --git a/register.php b/register.php
+index 9cebca9..3e94086 100644
+--- a/register.php
++++ b/register.php
+@@ -173,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+ <script src="https://accounts.google.com/gsi/client" async defer></script>
+ <script>
+ function handleGoogleCredential(response) {
+-    fetch('/google-auth.php', {
++    fetch('/google-auth', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+         body: 'credential=' + encodeURIComponent(response.credential)
+diff --git a/robots.txt b/robots.txt
+index c14fe1c..c0f5a03 100644
+--- a/robots.txt
++++ b/robots.txt
+@@ -2,4 +2,4 @@ User-agent: *
+ Allow: /
+ Disallow: /admin/
+ 
+-Sitemap: https://scratchnews.freedev.app/sitemap.php
++Sitemap: https://scratchnews.freedev.app/sitemap
+diff --git a/settings.php b/settings.php
+index f760f24..e73af32 100644
+--- a/settings.php
++++ b/settings.php
+@@ -92,9 +92,9 @@ form.settings-row { background: transparent !important; padding: 0.9rem 0 !impor
+     <?php if ($message): ?><div class="alert success"><?= e($message) ?></div><?php endif; ?>
+     <div class="settings-layout">
+         <div class="settings-tabs">
+-            <a href="/settings.php?tab=general" class="settings-tab <?= $activeTab === 'general' ? 'active' : '' ?>">General</a>
+-            <a href="/settings.php?tab=customization" class="settings-tab <?= $activeTab === 'customization' ? 'active' : '' ?>">Customization</a>
+-            <a href="/settings.php?tab=security" class="settings-tab <?= $activeTab === 'security' ? 'active' : '' ?>">Security</a>
++            <a href="/settings?tab=general" class="settings-tab <?= $activeTab === 'general' ? 'active' : '' ?>">General</a>
++            <a href="/settings?tab=customization" class="settings-tab <?= $activeTab === 'customization' ? 'active' : '' ?>">Customization</a>
++            <a href="/settings?tab=security" class="settings-tab <?= $activeTab === 'security' ? 'active' : '' ?>">Security</a>
+         </div>
+ 
+         <div class="settings-panel">
+diff --git a/signin.php b/signin.php
+index 510e179..63b4ff0 100644
+--- a/signin.php
++++ b/signin.php
+@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+ <script src="https://accounts.google.com/gsi/client" async defer></script>
+ <script>
+ function handleGoogleCredential(response) {
+-    fetch('/google-auth.php', {
++    fetch('/google-auth', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+         body: 'credential=' + encodeURIComponent(response.credential)
+diff --git a/submit.php b/submit.php
+index ef52341..ffb4a9a 100644
+--- a/submit.php
++++ b/submit.php
+@@ -26,7 +26,7 @@ $draftCategoryIds = [];
+ if ($draftId > 0) {
+     $draft = getUserSubmissionById($draftId, $readerId);
+     if (!$draft || $draft['status'] !== 'draft') {
+-        header('Location: /my-articles.php?view=drafts');
++        header('Location: /my-articles?view=drafts');
+         exit;
+     }
+     $draftCategoryIds = getSubmissionCategoryIds($draftId);
+@@ -150,7 +150,7 @@ body.dark .editor-copy-icon-btn { color:#ccc; }
+         </div>
+     <?php else: ?>
+         <?php if ($error): ?><div class="alert error"><?= e($error) ?></div><?php endif; ?>
+-        <?php if ($savedDraft): ?><div class="draft-saved-note">Draft saved. You can keep editing or find it later under <a href="/my-articles.php?view=drafts">My Articles &rarr; Drafts</a>.</div><?php endif; ?>
++        <?php if ($savedDraft): ?><div class="draft-saved-note">Draft saved. You can keep editing or find it later under <a href="/my-articles?view=drafts">My Articles &rarr; Drafts</a>.</div><?php endif; ?>
+         <form method="post" id="submitForm" enctype="multipart/form-data">
+             <?= csrfField() ?>
+             <input type="hidden" name="draft_id" value="<?= $formDraftId ?>">
+@@ -213,7 +213,7 @@ body.dark .editor-copy-icon-btn { color:#ccc; }
+ 
+             <button class="btn" type="submit" name="submit_action" value="submit">Submit for Review</button>
+             <button class="btn secondary" type="submit" name="submit_action" value="draft">Save as Draft</button>
+-            <a href="/my-articles.php?view=drafts" class="btn secondary">Cancel</a>
++            <a href="/my-articles?view=drafts" class="btn secondary">Cancel</a>
+         </form>
+     <?php endif; ?>
+ </main>
+@@ -238,7 +238,7 @@ quill.getModule('toolbar').addHandler('image', function() {
+         if (!file) return;
+         var formData = new FormData();
+         formData.append('image', file);
+-        fetch('/upload-image.php', { method: 'POST', body: formData })
++        fetch('/upload-image', { method: 'POST', body: formData })
+             .then(function(r) { return r.json(); })
+             .then(function(data) {
+                 if (data.url) {
