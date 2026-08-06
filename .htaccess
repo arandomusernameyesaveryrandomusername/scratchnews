@@ -16,15 +16,30 @@ RewriteRule ^search$ search.php [L]
 RewriteRule ^explore/?$ explore.php [L,QSA]
 
 # Clean URLs: strip .php extension (top-level pages only, for now).
-# /foo -> foo.php, but only if /foo isn't a real directory (avoids
-# colliding with admin/ and api/) and foo.php actually exists.
-# (Uses REQUEST_FILENAME, not DOCUMENT_ROOT — InfinityFree's proxy
-# setup reports a DOCUMENT_ROOT that doesn't match the real htdocs
-# path, which broke the -f check and caused 500s.)
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME}.php -f
-RewriteRule ^([a-zA-Z0-9_-]+)/?$ $1.php [L,QSA]
+# Explicit rules, not a dynamic -f check — InfinityFree's setup makes
+# both DOCUMENT_ROOT and REQUEST_FILENAME unreliable for filesystem
+# existence checks, which caused 500s. These mirror the same pattern
+# as the rules above, which are already proven to work on this host.
+RewriteRule ^about/?$ about.php [L,QSA]
+RewriteRule ^changelog/?$ changelog.php [L,QSA]
+RewriteRule ^community-guidelines/?$ community-guidelines.php [L,QSA]
+RewriteRule ^stats/?$ stats.php [L,QSA]
+RewriteRule ^feedback/?$ feedback.php [L,QSA]
+RewriteRule ^random-article/?$ random-article.php [L,QSA]
+RewriteRule ^heartbeat/?$ heartbeat.php [L,QSA]
+RewriteRule ^subscribe/?$ subscribe.php [L,QSA]
+RewriteRule ^unsubscribe/?$ unsubscribe.php [L,QSA]
+RewriteRule ^confirm-subscription/?$ confirm-subscription.php [L,QSA]
+RewriteRule ^stop-impersonating/?$ stop-impersonating.php [L,QSA]
+RewriteRule ^follow/?$ follow.php [L,QSA]
+RewriteRule ^update-profile/?$ update-profile.php [L,QSA]
+RewriteRule ^profile-comment/?$ profile-comment.php [L,QSA]
+RewriteRule ^my-articles/?$ my-articles.php [L,QSA]
+RewriteRule ^submit/?$ submit.php [L,QSA]
+RewriteRule ^settings/?$ settings.php [L,QSA]
+RewriteRule ^google-auth/?$ google-auth.php [L,QSA]
+RewriteRule ^upload-image/?$ upload-image.php [L,QSA]
+RewriteRule ^messages/?$ messages.php [L,QSA]
 
 <FilesMatch "\.(css|js|php)$">
     Header set Cache-Control "no-cache, must-revalidate"
